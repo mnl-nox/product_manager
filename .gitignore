@@ -9,3 +9,4 @@ __pycache__/
 exports/
 *.sqlite
 *.sqlite3
+db/*.db

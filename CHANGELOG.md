@@ -2,6 +2,14 @@
 
 Mudanças notáveis do projeto são registradas neste arquivo.
 
+## [v0.3.1] - 2026-10-12
+
+### Aprimorado
+
+- CI valida as mensagens de cada commit no padrão Conventional Commits.
+- Issues recebem labels de tipo e status conforme criação, fechamento e reabertura.
+- Release workflow filtra tags SemVer e calcula incremento major/minor/patch sem falha para valores zero.
+
 ## [v0.3.0] - 2026-10-12
 
 ### Implementado

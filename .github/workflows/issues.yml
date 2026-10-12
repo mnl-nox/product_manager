@@ -1,0 +1,89 @@
+name: Issue automation
+
+on:
+  issues:
+    types: [opened, edited, reopened, closed]
+
+permissions:
+  issues: write
+
+jobs:
+  labels-and-status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply type and lifecycle labels
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const issueNumber = issue.number;
+            const existing = new Set(issue.labels.map((label) => label.name));
+            const validTypes = new Set([
+              'feat', 'fix', 'docs', 'style', 'refactor', 'perf',
+              'test', 'build', 'ci', 'chore', 'revert'
+            ]);
+
+            const titleMatch = issue.title.match(/^([a-z]+)(?:\([^)]*\))?(!)?:\s+.+$/);
+            if (titleMatch && validTypes.has(titleMatch[1])) {
+              const target = titleMatch[2] ? 'type: breaking' : `type: ${titleMatch[1]}`;
+              for (const name of existing) {
+                if (name.startsWith('type: ') && name !== target) {
+                  await github.rest.issues.removeLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    name
+                  });
+                }
+              }
+              if (!existing.has(target)) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  labels: [target]
+                });
+              }
+            }
+
+            const statuses = [...existing].filter((name) => name.startsWith('status: '));
+            if (context.payload.action === 'closed') {
+              for (const name of statuses) {
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  name
+                });
+              }
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                labels: ['status: done']
+              });
+            } else if (context.payload.action === 'reopened') {
+              if (existing.has('status: done')) {
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  name: 'status: done'
+                });
+              }
+              if (statuses.length === 0 || statuses.every((name) => name === 'status: done')) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  labels: ['status: ready']
+                });
+              }
+            } else if (context.payload.action === 'opened' && statuses.length === 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                labels: ['status: ready']
+              });
+            }

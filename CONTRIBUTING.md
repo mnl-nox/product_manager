@@ -11,10 +11,11 @@
 ```bash
 make test
 python3 -m compileall -q api scripts tests
+python3 scripts/check_conventional_commits.py --range origin/main..HEAD
 ```
 
 Para mudanças no núcleo legado em C, compile também com `make`.
 
 ## Commits e pull requests
 
-Use mensagens no padrão Conventional Commits, como `feat(products): add category filter` ou `fix(api): reject negative stock`. Descreva o problema, a solução e os comandos de validação executados. Não inclua banco local, exportações ou segredos.
+Use mensagens no padrão Conventional Commits, como `feat(products): add category filter` ou `fix(api): reject negative stock`. A CI valida o título do PR e as mensagens de cada commit. Descreva o problema, a solução e os comandos de validação executados. Não inclua banco local, exportações ou segredos.

@@ -20,6 +20,22 @@ jobs:
         run: python -m compileall -q api scripts tests
       - name: Run API tests
         run: make test
+  conventional-commits:
+    name: Validate commit messages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check Conventional Commit messages
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if [[ -z "$BASE_SHA" || "$BASE_SHA" =~ ^0+$ ]]; then
+            BASE_SHA="$(git rev-parse HEAD^)"
+          fi
+          python3 scripts/check_conventional_commits.py --range "$BASE_SHA..$HEAD_SHA"
   c23:
     runs-on: ubuntu-latest
     steps:

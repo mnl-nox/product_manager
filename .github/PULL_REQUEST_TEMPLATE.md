@@ -26,5 +26,6 @@ Describe the change and its purpose.
 ## Checklist
 
 - [ ] PR title follows Conventional Commits
+- [ ] Every commit follows Conventional Commits
 - [ ] Breaking change is marked with `!` or documented as `BREAKING CHANGE`
 - [ ] Changes are limited to the intended scope

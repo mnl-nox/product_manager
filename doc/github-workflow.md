@@ -27,9 +27,12 @@ refactor(menu): split input handling
 
 The workflow `.github/workflows/conventional.yml` validates the title and applies a matching `type: ...` label.
 
+The CI workflow also checks every commit in the pull request using `scripts/check_conventional_commits.py`. PRs need both a valid title and valid commit subjects before merging.
+
 ## Labels
 
 Labels are provisioned by `.github/workflows/labels.yml`.
+The issue workflow applies a type label from a Conventional Commit style issue title, marks new issues `status: ready`, moves closed issues to `status: done`, and returns reopened issues to `status: ready`.
 
 ### Type
 
@@ -60,6 +63,14 @@ vMAJOR.MINOR.PATCH
 ```
 
 The workflow runs on pushes to `main`. It only creates a new tag when new Conventional Commit messages exist since the previous SemVer tag. Manually pushed `vMAJOR.MINOR.PATCH` tags also publish a release from the matching changelog section.
+
+## Automation files
+
+- `.github/workflows/ci.yml`: tests, build, and commit subject validation.
+- `.github/workflows/conventional.yml`: PR title validation and type labels.
+- `.github/workflows/issues.yml`: issue type and lifecycle labels.
+- `.github/workflows/labels.yml`: provisions the repository label catalog.
+- `.github/workflows/release.yml`: derives SemVer tags and publishes GitHub Releases from `CHANGELOG.md`.
 
 ## GitHub Projects
 

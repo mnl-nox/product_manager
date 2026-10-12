@@ -28,3 +28,7 @@ area: terminal | C5DEF5 | Terminal interface
 area: persistence | BFD4F2 | Persistence
 area: security | D73A4A | Security
 area: documentation | 0075CA | Documentation
+area: products | 1D76DB | Product catalog
+area: api | 0366D6 | HTTP API
+area: web | 5319E7 | Web interface
+area: testing | 7057FF | Automated tests
