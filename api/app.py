@@ -8,6 +8,8 @@ import os
 import re
 import sqlite3
 import sys
+from zipfile import ZIP_DEFLATED, ZipFile
+import xml.sax.saxutils as xml_utils
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -141,6 +143,102 @@ def spreadsheet_safe(value) -> str:
     return text
 
 
+def dashboard_export_rows() -> list[list[object]]:
+    with get_db() as conn:
+        metrics = [
+            ('Clientes', conn.execute('SELECT COUNT(*) FROM clients').fetchone()[0]),
+            ('Produtos', conn.execute('SELECT COUNT(*) FROM products').fetchone()[0]),
+            ('Clientes ativos', conn.execute("SELECT COUNT(*) FROM clients WHERE status = 'active'").fetchone()[0]),
+            ('Estoque total', conn.execute('SELECT COALESCE(SUM(quantity), 0) FROM products').fetchone()[0]),
+        ]
+        categories = conn.execute(
+            'SELECT category, COUNT(*) AS total, COALESCE(SUM(quantity), 0) AS stock '
+            'FROM products GROUP BY category ORDER BY category'
+        ).fetchall()
+        products = conn.execute(
+            'SELECT id, name, category, sku, brand, price, quantity, status '
+            'FROM products ORDER BY id'
+        ).fetchall()
+
+    rows: list[list[object]] = [
+        ['Product Manager — Dashboard', f'Versão {APP_VERSION}'],
+        [],
+        ['Indicador', 'Valor'],
+        *[[name, value] for name, value in metrics],
+        [],
+        ['Categoria', 'Produtos', 'Estoque'],
+        *[[row['category'], row['total'], row['stock']] for row in categories],
+        [],
+        ['ID', 'Produto', 'Categoria', 'SKU', 'Marca', 'Preço', 'Quantidade', 'Status'],
+        *[[row['id'], row['name'], row['category'], row['sku'], row['brand'], row['price'], row['quantity'], row['status']] for row in products],
+    ]
+    return rows
+
+
+def _column_name(number: int) -> str:
+    result = ''
+    while number:
+        number, remainder = divmod(number - 1, 26)
+        result = chr(65 + remainder) + result
+    return result
+
+
+def build_dashboard_xlsx(rows: list[list[object]]) -> bytes:
+    """Create a small dependency-free XLSX workbook using inline string cells."""
+    sheet_rows = []
+    for row_index, row in enumerate(rows, start=1):
+        cells = []
+        for col_index, value in enumerate(row, start=1):
+            if value is None or value == '':
+                continue
+            reference = f'{_column_name(col_index)}{row_index}'
+            if isinstance(value, (int, float)) and not isinstance(value, bool):
+                cells.append(f'<c r="{reference}"><v>{value}</v></c>')
+            else:
+                escaped = xml_utils.escape(str(value))
+                cells.append(f'<c r="{reference}" t="inlineStr"><is><t xml:space="preserve">{escaped}</t></is></c>')
+        sheet_rows.append(f'<row r="{row_index}">{"".join(cells)}</row>')
+    worksheet = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        f'<sheetData>{"".join(sheet_rows)}</sheetData></worksheet>')
+    workbook = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+        'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        '<sheets><sheet name="Dashboard" sheetId="1" r:id="rId1"/></sheets></workbook>')
+    content_types = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        '<Default Extension="xml" ContentType="application/xml"/>'
+        '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+        '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+        '</Types>')
+    package_rels = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
+        '</Relationships>')
+    workbook_rels = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
+        '</Relationships>')
+    output = io.BytesIO()
+    with ZipFile(output, 'w', ZIP_DEFLATED) as archive:
+        archive.writestr('[Content_Types].xml', content_types)
+        archive.writestr('_rels/.rels', package_rels)
+        archive.writestr('xl/workbook.xml', workbook)
+        archive.writestr('xl/_rels/workbook.xml.rels', workbook_rels)
+        archive.writestr('xl/worksheets/sheet1.xml', worksheet)
+    return output.getvalue()
+
+
+def google_sheets_configured() -> bool:
+    spreadsheet_id = os.environ.get('PRODUCT_MANAGER_GOOGLE_SHEETS_SPREADSHEET_ID', '').strip()
+    access_token = os.environ.get('PRODUCT_MANAGER_GOOGLE_SHEETS_ACCESS_TOKEN', '').strip()
+    cell_range = os.environ.get('PRODUCT_MANAGER_GOOGLE_SHEETS_RANGE', 'Export!A1').strip() or 'Export!A1'
+    valid_range = re.fullmatch(r"(?:'[A-Za-z0-9_ -]+'|[A-Za-z0-9_ -]+)!\$?[A-Z]{1,3}\$?[1-9][0-9]*(?::\$?[A-Z]{1,3}\$?[1-9][0-9]*)?", cell_range)
+    valid_token = bool(access_token) and not any(character.isspace() or ord(character) < 32 for character in access_token)
+    return bool(re.fullmatch(r'[A-Za-z0-9_-]+', spreadsheet_id) and valid_token and valid_range)
+
+
 def seed_default_data() -> None:
     with get_db() as conn:
         clients_count = conn.execute('SELECT COUNT(*) AS total FROM clients').fetchone()['total']
@@ -240,6 +338,10 @@ class AppHandler(BaseHTTPRequestHandler):
             self.export_dashboard()
             return
 
+        if path == '/api/dashboard/export.xlsx':
+            self.export_dashboard_xlsx()
+            return
+
         if path == '/api/dashboard':
             with get_db() as conn:
                 clients_count = conn.execute('SELECT COUNT(*) AS total FROM clients').fetchone()['total']
@@ -315,6 +417,10 @@ class AppHandler(BaseHTTPRequestHandler):
             self.send_json({'available': telemetry_endpoint_configured()})
             return
 
+        if path == '/api/integrations/google-sheets/status':
+            self.send_json({'available': google_sheets_configured()})
+            return
+
         self.send_json({'error': 'Rota não encontrada.'}, status=404)
 
     def do_POST(self):
@@ -348,6 +454,13 @@ class AppHandler(BaseHTTPRequestHandler):
                 self.send_json({'received': True}, status=202)
             else:
                 self.send_json({'received': False}, status=503)
+            return
+
+        if path == '/api/integrations/google-sheets/export':
+            if not google_sheets_configured():
+                self.send_json({'error': 'A integração Google Sheets não está configurada pelo administrador.'}, status=503)
+                return
+            self.export_to_google_sheets()
             return
 
         if path == '/api/clients':
@@ -432,45 +545,11 @@ class AppHandler(BaseHTTPRequestHandler):
         self.send_json({'message': 'Produto criado com sucesso.', 'id': cursor.lastrowid}, status=201)
 
     def export_dashboard(self):
-        with get_db() as conn:
-            metrics = [
-                ('Clientes', conn.execute('SELECT COUNT(*) FROM clients').fetchone()[0]),
-                ('Produtos', conn.execute('SELECT COUNT(*) FROM products').fetchone()[0]),
-                ('Clientes ativos', conn.execute("SELECT COUNT(*) FROM clients WHERE status = 'active'").fetchone()[0]),
-                ('Estoque total', conn.execute('SELECT COALESCE(SUM(quantity), 0) FROM products').fetchone()[0]),
-            ]
-            categories = conn.execute(
-                'SELECT category, COUNT(*) AS total, COALESCE(SUM(quantity), 0) AS stock '
-                'FROM products GROUP BY category ORDER BY category'
-            ).fetchall()
-            products = conn.execute(
-                'SELECT id, name, category, sku, brand, price, quantity, status '
-                'FROM products ORDER BY id'
-            ).fetchall()
-
+        rows = dashboard_export_rows()
         output = io.StringIO(newline='')
         writer = csv.writer(output)
-        writer.writerow(['Dashboard Product Manager'])
-        writer.writerow(['Indicador', 'Valor'])
-        writer.writerows(metrics)
-        writer.writerow([])
-        writer.writerow(['Categoria', 'Produtos', 'Estoque'])
-        writer.writerows((spreadsheet_safe(row['category']), row['total'], row['stock']) for row in categories)
-        writer.writerow([])
-        writer.writerow(['ID', 'Produto', 'Categoria', 'SKU', 'Marca', 'Preço', 'Quantidade', 'Status'])
-        writer.writerows(
-            (
-                row['id'],
-                spreadsheet_safe(row['name']),
-                spreadsheet_safe(row['category']),
-                spreadsheet_safe(row['sku']),
-                spreadsheet_safe(row['brand']),
-                row['price'],
-                row['quantity'],
-                spreadsheet_safe(row['status']),
-            )
-            for row in products
-        )
+        for row in rows:
+            writer.writerow([spreadsheet_safe(value) if isinstance(value, str) else value for value in row])
 
         body = ('\ufeff' + output.getvalue()).encode('utf-8')
         self.send_response(200)
@@ -480,6 +559,57 @@ class AppHandler(BaseHTTPRequestHandler):
         self.send_security_headers()
         self.end_headers()
         self.wfile.write(body)
+
+    def export_dashboard_xlsx(self):
+        body = build_dashboard_xlsx(dashboard_export_rows())
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        self.send_header('Content-Disposition', 'attachment; filename="product-manager-dashboard.xlsx"')
+        self.send_header('Content-Length', str(len(body)))
+        self.send_security_headers()
+        self.end_headers()
+        self.wfile.write(body)
+
+    def export_to_google_sheets(self):
+        spreadsheet_id = os.environ['PRODUCT_MANAGER_GOOGLE_SHEETS_SPREADSHEET_ID'].strip()
+        access_token = os.environ['PRODUCT_MANAGER_GOOGLE_SHEETS_ACCESS_TOKEN'].strip()
+        cell_range = os.environ.get('PRODUCT_MANAGER_GOOGLE_SHEETS_RANGE', 'Export!A1').strip() or 'Export!A1'
+        if not re.fullmatch(r'[A-Za-z0-9_-]+', spreadsheet_id):
+            self.send_json({'error': 'O ID da planilha Google configurado é inválido.'}, status=503)
+            return
+
+        encoded_range = urllib.parse.quote(cell_range, safe="!:$'")
+        query = urllib.parse.urlencode({'valueInputOption': 'RAW'})
+        url = (f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/'
+               f'{encoded_range}?{query}')
+        body = json.dumps({'majorDimension': 'ROWS', 'values': dashboard_export_rows()}, ensure_ascii=False).encode('utf-8')
+        request = urllib.request.Request(
+            url,
+            data=body,
+            headers={
+                'Authorization': f'Bearer {access_token}',
+                'Content-Type': 'application/json; charset=utf-8',
+            },
+            method='PUT',
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=15) as response:
+                if not 200 <= response.status < 300:
+                    self.send_json({'error': 'O Google Sheets recusou a exportação.'}, status=502)
+                    return
+        except urllib.error.HTTPError as error:
+            status = 401 if error.code == 401 else 403 if error.code == 403 else 502
+            message = 'Credencial Google Sheets inválida ou expirada.' if status == 401 else 'Não foi possível gravar na planilha configurada.'
+            self.send_json({'error': message}, status=status)
+            return
+        except (urllib.error.URLError, TimeoutError, ValueError):
+            self.send_json({'error': 'Falha de conexão com o Google Sheets.'}, status=502)
+            return
+
+        self.send_json({
+            'message': 'Dashboard exportado para Google Sheets.',
+            'spreadsheetUrl': f'https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit',
+        }, status=200)
 
     @staticmethod
     def _content_type_for(file_path: Path) -> str:

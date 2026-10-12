@@ -43,10 +43,13 @@
             <p class="eyebrow muted">Distribuição</p>
             <h2>Resumo por categoria</h2>
           </div>
-          <a class="secondary-action" href="/api/dashboard/export.csv" download="dashboard-product-manager.csv">
-            Exportar para Excel / Google Sheets
-          </a>
+          <div class="export-actions">
+            <a class="secondary-action" href="/api/dashboard/export.csv" download="dashboard-product-manager.csv">Baixar CSV</a>
+            <a class="secondary-action" href="/api/dashboard/export.xlsx" download="product-manager-dashboard.xlsx">Baixar Excel (.xlsx)</a>
+            <button id="export-google-sheets" class="secondary-action" type="button" disabled>Exportar para Google Sheets</button>
+          </div>
         </div>
+        <small id="google-sheets-status" role="status" aria-live="polite">Integração Google Sheets não configurada.</small>
         <div id="category-breakdown" class="breakdown-grid" aria-live="polite"></div>
       </section>
 

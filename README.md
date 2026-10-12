@@ -6,14 +6,14 @@ Aplicação web para organizar clientes e catálogo de produtos, acompanhar indi
 
 O Product Manager foi criado para reunir cadastros de clientes e produtos que podem ficar espalhados em planilhas ou sistemas diferentes. Ele ajuda equipes pequenas a consultar o catálogo, acompanhar quantidades e identificar itens que precisam de atenção em um painel simples.
 
-Hoje, o app oferece cadastro e consulta de clientes e produtos, filtro por categoria, indicadores de estoque e exportação CSV. Ele funciona localmente com SQLite. Não possui ainda autenticação, operação multiusuário ou integração direta com Excel/Google Sheets; financeiro, alertas avançados e outras evoluções estão planejados. Leia [o objetivo e os limites atuais](doc/objective.md).
+Hoje, o app oferece cadastro e consulta de clientes e produtos, filtro por categoria, indicadores de estoque, exportação CSV e Excel (`.xlsx`) e envio opcional do dashboard a uma planilha Google configurada pelo administrador. Ele funciona localmente com SQLite. Ainda não possui autenticação nem operação multiusuário; financeiro e alertas avançados continuam planejados. Leia [o objetivo e os limites atuais](doc/objective.md) e [como configurar as exportações](docs/development.md#exportacoes-para-planilhas).
 
 ## Funcionalidades
 
 - Dashboard com totais, distribuição por categoria, clientes recentes e estoque crítico.
 - Cadastro de clientes e produtos com validação de campos e unicidade.
 - Filtro do catálogo por categoria e resumo de unidades e valor em estoque.
-- Exportação do dashboard em CSV compatível com Excel e Google Sheets.
+- Exportação do dashboard em CSV e Excel (`.xlsx`), além de integração opcional com Google Sheets.
 - API JSON e banco SQLite inicializado com dados de demonstração quando vazio.
 
 ## Tela de exemplo
@@ -82,7 +82,7 @@ make
 ./build/product_manager
 ```
 
-## Exportar CSV
+## Exportar planilhas
 
 Com o servidor em execução:
 
@@ -90,7 +90,7 @@ Com o servidor em execução:
 python3 scripts/export_dashboard.py
 ```
 
-O arquivo é salvo em `exports/`. A exportação é local e não envia dados a serviços externos.
+O arquivo CSV é salvo em `exports/`. Pela interface ou API, também é possível baixar um arquivo `.xlsx`. Esses downloads são locais. O envio direto ao Google Sheets é opcional e só ocorre se o administrador configurar as credenciais e a planilha de destino; os dados exportados passam então a ser processados pela conta Google configurada.
 
 ## Estrutura
 

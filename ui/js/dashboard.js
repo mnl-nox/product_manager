@@ -1,10 +1,12 @@
-import { createClient, getDashboardData } from './api.js';
+import { createClient, exportToGoogleSheets, getDashboardData, getGoogleSheetsIntegrationStatus } from './api.js';
 
 const summaryEl = document.getElementById('summary');
 const categoryBreakdownEl = document.getElementById('category-breakdown');
 const clientsTableEl = document.getElementById('clients-table');
 const productsTableEl = document.getElementById('products-table');
 const pageStatusEl = document.getElementById('page-status');
+const googleSheetsButton = document.getElementById('export-google-sheets');
+const googleSheetsStatus = document.getElementById('google-sheets-status');
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -133,10 +135,36 @@ async function handleClientSubmit(event) {
   }
 }
 
+async function handleGoogleSheetsExport() {
+  googleSheetsButton.disabled = true;
+  setStatus('Exportando dashboard para Google Sheets.');
+  try {
+    const result = await exportToGoogleSheets();
+    setStatus(result.message || 'Exportação concluída.');
+    if (googleSheetsStatus && result.spreadsheetUrl) {
+      googleSheetsStatus.innerHTML = `Exportação concluída. <a href="${escapeHtml(result.spreadsheetUrl)}" target="_blank" rel="noopener noreferrer">Abrir planilha</a>`;
+    }
+  } catch (error) {
+    setStatus(error.message || 'Falha ao exportar para Google Sheets.');
+  } finally {
+    googleSheetsButton.disabled = false;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const clientForm = document.getElementById('client-form');
   if (clientForm) {
     clientForm.addEventListener('submit', handleClientSubmit);
+  }
+
+  if (googleSheetsButton) {
+    getGoogleSheetsIntegrationStatus().then((status) => {
+      googleSheetsButton.disabled = !status.available;
+      if (googleSheetsStatus && status.available) googleSheetsStatus.textContent = 'Planilha Google configurada pelo administrador.';
+    }).catch(() => {
+      googleSheetsButton.disabled = true;
+    });
+    googleSheetsButton.addEventListener('click', handleGoogleSheetsExport);
   }
 
   loadDashboard().catch((error) => {

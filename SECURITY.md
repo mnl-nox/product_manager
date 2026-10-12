@@ -11,6 +11,7 @@ Não publique detalhes exploráveis em issues públicas. Até existir um canal p
 ## Boas práticas de desenvolvimento
 
 - Não comite credenciais, dados pessoais nem arquivos de banco com dados reais.
+- Credenciais de Google Sheets devem permanecer em um gerenciador de segredos do servidor; nunca as inclua em arquivos versionados, frontend, URLs ou logs. Como a aplicação ainda não implementa autenticação, proteja qualquer implantação compartilhada com um proxy de identidade antes de habilitar a rota de exportação.
 - Não comite arquivos `.env` (exceto `.env.example`), bancos SQLite, chaves privadas, certificados, dumps, backups ou exportações. Esses padrões estão ignorados pelo Git; confirme também `git status` antes de cada commit.
 - Remova credenciais que tenham sido expostas e rotacione-as. Apagar um arquivo em um commit novo não apaga cópias em commits anteriores, forks ou clones.
 - Use consultas parametrizadas para SQL e escape conteúdo renderizado no HTML.

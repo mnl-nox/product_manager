@@ -2,6 +2,15 @@
 
 Mudanças notáveis do projeto são registradas neste arquivo.
 
+## [v0.6.0] - 2026-10-12
+
+### Implementado
+
+- API para download do dashboard em Excel `.xlsx`, gerado sem dependências extras.
+- Integração administrativa opcional para enviar os dados do dashboard à planilha Google configurada.
+- Ações de exportação CSV, Excel e Google Sheets na interface do dashboard.
+- Documentação de escopos, credenciais, dados enviados e configuração segura da integração.
+
 ## [v0.5.0] - 2026-10-12
 
 ### Implementado

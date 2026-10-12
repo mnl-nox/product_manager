@@ -32,7 +32,7 @@ O pacote Android é um PWA, não um APK. Abra a URL HTTPS publicada pela organiz
 
 No Windows ou Linux, inicie o aplicativo pelo menu ou terminal. Ele abre o navegador no computador e mantém a API ligada enquanto a janela do terminal/processo estiver ativa. Use Ctrl+C para encerrar quando iniciado no terminal.
 
-O dashboard resume clientes, produtos e estoque. Em **Produtos**, cadastre itens, filtre por categoria e acompanhe disponibilidade. O botão de exportação do dashboard baixa um CSV que pode ser aberto no Excel ou Google Sheets. O banco local é criado automaticamente; faça cópias de segurança com o aplicativo encerrado e proteja-as como dados corporativos.
+O dashboard resume clientes, produtos e estoque. Em **Produtos**, cadastre itens, filtre por categoria e acompanhe disponibilidade. No dashboard, baixe CSV ou Excel (`.xlsx`). Para enviar diretamente ao Google Sheets, o administrador precisa configurar o ID da planilha e um token de acesso no servidor, conforme [Desenvolvimento e operação](development.md#exportacoes-para-planilhas). O banco local é criado automaticamente; faça cópias de segurança com o aplicativo encerrado e proteja-as como dados corporativos.
 
 Os dados iniciais são exemplos de demonstração. Remova-os e verifique o banco antes de uso real. A aplicação atual não tem autenticação incorporada; não exponha o servidor desktop na rede.
 

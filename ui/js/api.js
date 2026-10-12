@@ -61,4 +61,12 @@ export function createProduct(payload) {
   });
 }
 
+export function getGoogleSheetsIntegrationStatus() {
+  return fetchJson(`${API_BASE}/integrations/google-sheets/status`);
+}
+
+export function exportToGoogleSheets() {
+  return fetchJson(`${API_BASE}/integrations/google-sheets/export`, { method: 'POST' });
+}
+
 export default fetchJson;

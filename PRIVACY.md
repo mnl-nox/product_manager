@@ -8,6 +8,8 @@ Product Manager pode ser usado localmente ou implantado por uma organização. E
 
 Clientes, produtos, notas e demais registros inseridos no app são armazenados no banco SQLite local, no caminho específico da plataforma descrito no [guia de instalação e uso](docs/installation-usage.md). No modo desktop, o servidor escuta em loopback. A aplicação não envia esses registros para os mantenedores.
 
+Downloads CSV e Excel são gerados localmente. Se o administrador configurar o Google Sheets e um usuário acionar **Exportar para Google Sheets**, o app transmite os indicadores agregados e os campos de catálogo descritos na documentação técnica para a planilha selecionada. Registros pessoais de clientes não fazem parte dessa exportação. O Google processa os dados conforme a conta, planilha e configuração da organização; o administrador deve controlar permissões e informar os usuários.
+
 ## Diagnósticos opcionais
 
 O diagnóstico de erros no navegador está desativado por padrão e só é enviado após consentimento explícito no controle da interface. A preferência é guardada no armazenamento local do navegador. O usuário pode revogá-la a qualquer momento desmarcando o controle ou apagando os dados do site.

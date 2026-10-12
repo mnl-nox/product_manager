@@ -11,13 +11,13 @@ Quando os dados de clientes e produtos ficam espalhados, é mais difícil encont
 - Cadastrar e consultar clientes e produtos por uma interface web.
 - Manter informações do catálogo, como SKU, categoria, marca, preço, quantidade, fornecedor e status.
 - Visualizar totais, categorias, clientes recentes e itens com estoque baixo no dashboard.
-- Filtrar produtos por categoria e exportar dados do painel em CSV para análise em planilhas.
+- Filtrar produtos por categoria e exportar dados do painel em CSV ou Excel (`.xlsx`); enviar o painel para uma planilha Google quando a integração for configurada pelo administrador.
 - Executar localmente com persistência SQLite, sem serviço externo obrigatório.
 
 O público inicial são equipes pequenas que precisam organizar cadastros e acompanhar produtos em um só lugar. O aplicativo também serve como base para validar fluxos e evoluir a solução com segurança.
 
 ## Limites atuais
 
-O produto ainda não oferece autenticação, autorização, operação multiusuário, trilha de auditoria ou integração direta com Excel/Google Sheets. A exportação CSV é local. Recursos como financeiro, notificações avançadas e publicação em lojas estão no planejamento e não devem ser entendidos como funcionalidades disponíveis.
+O produto ainda não oferece autenticação, autorização, operação multiusuário ou trilha de auditoria. A integração com Google Sheets depende de credenciais e configuração administrativa; recursos como financeiro, notificações avançadas e publicação em lojas estão no planejamento e não devem ser entendidos como funcionalidades disponíveis.
 
 Antes de uso compartilhado ou com dados corporativos reais, são necessários controles de identidade, acesso, implantação e operação adequados. Consulte [Segurança](../SECURITY.md).

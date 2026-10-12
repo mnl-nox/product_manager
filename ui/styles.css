@@ -430,3 +430,14 @@ th {
 .privacy-controls input {
   width: auto;
 }
+
+.export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.export-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
