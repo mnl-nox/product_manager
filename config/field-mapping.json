@@ -1,6 +1,6 @@
 {
   "database": "sqlite",
-  "databaseFile": "db/login_term.db",
+  "databaseFile": "db/product_manager.db",
   "apiBaseUrl": "/api",
   "clients": {
     "id": "id",

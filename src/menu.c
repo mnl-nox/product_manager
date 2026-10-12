@@ -482,7 +482,7 @@ int menu_run(UserStore *store, ProductStore *product_store)
                 handle_list_inactive_users(store);
                 break;
             case '0':
-                puts("Encerrando login_term.");
+                puts("Encerrando Product Manager.");
                 return 0;
             default:
                 puts("Opção inválida.");

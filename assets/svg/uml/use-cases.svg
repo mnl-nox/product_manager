@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="920" height="520" viewBox="0 0 920 520">
 <rect width="920" height="520" fill="#fff"/><rect x="170" y="35" width="710" height="440" rx="12" fill="none" stroke="#222" stroke-width="2"/>
-<text x="525" y="70" text-anchor="middle" font-family="Arial" font-size="24" font-weight="700">login_term — Casos de Uso</text>
+<text x="525" y="70" text-anchor="middle" font-family="Arial" font-size="24" font-weight="700">Product Manager — Casos de Uso</text>
 <circle cx="85" cy="245" r="20" fill="none" stroke="#222" stroke-width="3"/><path d="M85 265v70M55 290h60M85 335l-25 45M85 335l25 45" fill="none" stroke="#222" stroke-width="3"/>
 <text x="85" y="410" text-anchor="middle" font-family="Arial" font-size="17">Operador</text>
 <g fill="#f7f7f7" stroke="#222" stroke-width="2">

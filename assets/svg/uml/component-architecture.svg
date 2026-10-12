@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="500" viewBox="0 0 1000 500">
-<rect width="1000" height="500" fill="#fff"/><text x="500" y="45" text-anchor="middle" font-family="Arial" font-size="25" font-weight="700">login_term — Arquitetura de Componentes</text>
+<rect width="1000" height="500" fill="#fff"/><text x="500" y="45" text-anchor="middle" font-family="Arial" font-size="25" font-weight="700">Product Manager — Arquitetura de Componentes</text>
 <g fill="#f7f7f7" stroke="#222" stroke-width="2"><rect x="60" y="120" width="150" height="70" rx="8"/><rect x="270" y="120" width="170" height="70" rx="8"/><rect x="500" y="120" width="150" height="70" rx="8"/><rect x="710" y="120" width="170" height="70" rx="8"/><rect x="390" y="310" width="220" height="75" rx="8"/></g>
 <g font-family="Arial" font-size="18" text-anchor="middle"><text x="135" y="162">Terminal UI</text><text x="355" y="162">Application</text><text x="575" y="162">Domain</text><text x="795" y="162">Repository</text><text x="500" y="355">Persistence</text></g>
 <g stroke="#222" stroke-width="2" fill="none"><path d="M210 155H270M440 155H500M650 155H710M795 190V275H500V310"/></g>

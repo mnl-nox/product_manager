@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'" />
+    <title>Product Manager | Produtos</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Pular para o conteúdo principal</a>
+    <header class="topbar">
+      <div class="brand-block">
+        <p class="eyebrow">Product Manager</p>
+        <h1>Gestão de produtos</h1>
+      </div>
+      <nav class="nav-links" aria-label="Navegação principal">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/products" class="active">Produtos</a>
+      </nav>
+    </header>
+
+    <main id="main-content" class="container">
+      <div id="page-status" class="sr-only" role="status" aria-live="polite"></div>
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow muted">Catálogo</p>
+            <h2>Produtos</h2>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div id="category-filters" class="chip-group" aria-label="Filtros por categoria" role="group"></div>
+        </div>
+        <div id="product-summary" class="mini-summary"></div>
+      </section>
+
+      <section class="panel two-columns">
+        <div>
+          <h2>Cadastrar produto</h2>
+          <form id="product-form" class="stacked-form">
+            <label for="product-name">
+              Nome
+              <input id="product-name" type="text" name="name" placeholder="Notebook Pro" required />
+            </label>
+            <label for="product-category">
+              Categoria
+              <input id="product-category" type="text" name="category" placeholder="Hardware" required />
+            </label>
+            <label for="product-sku">
+              SKU
+              <input id="product-sku" type="text" name="sku" placeholder="SKU-1001" required />
+            </label>
+            <label for="product-reference">
+              Referência
+              <input id="product-reference" type="text" name="reference" placeholder="REF-2304" required />
+            </label>
+            <label for="product-brand">
+              Marca
+              <input id="product-brand" type="text" name="brand" placeholder="Acme" required />
+            </label>
+            <label for="product-status">
+              Status
+              <select id="product-status" name="status" required>
+                <option value="available">Disponível</option>
+                <option value="reserved">Reservado</option>
+                <option value="out_of_stock">Sem estoque</option>
+              </select>
+            </label>
+            <label for="product-price">
+              Preço
+              <input id="product-price" type="number" min="0" step="0.01" name="price" placeholder="4999.90" required />
+            </label>
+            <label for="product-quantity">
+              Quantidade
+              <input id="product-quantity" type="number" min="0" step="1" name="quantity" placeholder="12" required />
+            </label>
+            <label for="product-supplier">
+              Fornecedor
+              <input id="product-supplier" type="text" name="supplier" placeholder="Distribuidora XYZ" required />
+            </label>
+            <label for="product-notes">
+              Observações
+              <textarea id="product-notes" name="notes" rows="3" placeholder="Detalhes do item"></textarea>
+            </label>
+            <button type="submit">Salvar produto</button>
+          </form>
+        </div>
+
+        <div class="table-panel">
+          <div class="panel-header">
+            <h2>Catálogo</h2>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <caption class="sr-only">Catálogo de produtos</caption>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nome</th>
+                  <th>Categoria</th>
+                  <th>SKU</th>
+                  <th>Marca</th>
+                  <th>Preço</th>
+                  <th>Estoque</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="products-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./js/products.js"></script>
+  </body>
+</html>
