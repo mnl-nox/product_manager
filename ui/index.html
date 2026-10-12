@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'" />
+    <title>login_term | Administração</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">login_term</p>
+        <h1>Administração de clientes e produtos</h1>
+      </div>
+      <span class="status-pill">Local / SQLite</span>
+    </header>
+
+    <main class="container">
+      <section class="summary" id="summary"></section>
+
+      <section class="panel two-columns">
+        <div>
+          <h2>Clientes</h2>
+          <form id="client-form" class="stacked-form">
+            <label>
+              Nome
+              <input type="text" name="name" placeholder="Nome completo" required />
+            </label>
+            <label>
+              Nome de usuário
+              <input type="text" name="username" placeholder="usuario" required />
+            </label>
+            <label>
+              E-mail
+              <input type="email" name="email" placeholder="nome@empresa.com" required />
+            </label>
+            <label>
+              Telefone
+              <input type="tel" name="phone" placeholder="(11) 99999-8888" required />
+            </label>
+            <label>
+              CPF
+              <input type="text" name="cpf" placeholder="123.456.789-09" required />
+            </label>
+            <label>
+              Cidade
+              <input type="text" name="city" placeholder="São Paulo" required />
+            </label>
+            <label>
+              Perfil
+              <input type="text" name="role" placeholder="admin / financeiro / suporte" required />
+            </label>
+            <label>
+              Status
+              <select name="status" required>
+                <option value="active">Ativo</option>
+                <option value="inactive">Inativo</option>
+                <option value="pending">Pendente</option>
+              </select>
+            </label>
+            <label>
+              Observações
+              <textarea name="notes" rows="3" placeholder="Observações do cliente"></textarea>
+            </label>
+            <button type="submit">Salvar cliente</button>
+          </form>
+        </div>
+
+        <div>
+          <h2>Produtos</h2>
+          <form id="product-form" class="stacked-form">
+            <label>
+              Nome
+              <input type="text" name="name" placeholder="Notebook Pro" required />
+            </label>
+            <label>
+              Categoria
+              <input type="text" name="category" placeholder="Hardware" required />
+            </label>
+            <label>
+              SKU
+              <input type="text" name="sku" placeholder="SKU-1001" required />
+            </label>
+            <label>
+              Referência
+              <input type="text" name="reference" placeholder="REF-2304" required />
+            </label>
+            <label>
+              Marca
+              <input type="text" name="brand" placeholder="Acme" required />
+            </label>
+            <label>
+              Status
+              <select name="status" required>
+                <option value="available">Disponível</option>
+                <option value="reserved">Reservado</option>
+                <option value="out_of_stock">Sem estoque</option>
+              </select>
+            </label>
+            <label>
+              Preço
+              <input type="number" min="0" step="0.01" name="price" placeholder="4999.90" required />
+            </label>
+            <label>
+              Quantidade
+              <input type="number" min="0" step="1" name="quantity" placeholder="12" required />
+            </label>
+            <label>
+              Fornecedor
+              <input type="text" name="supplier" placeholder="Distribuidora XYZ" required />
+            </label>
+            <label>
+              Observações
+              <textarea name="notes" rows="3" placeholder="Detalhes do item"></textarea>
+            </label>
+            <button type="submit">Salvar produto</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <h2>Clientes cadastrados</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Usuário</th>
+                <th>E-mail</th>
+                <th>Telefone</th>
+                <th>CPF</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="clients-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <h2>Produtos cadastrados</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Categoria</th>
+                <th>SKU</th>
+                <th>Marca</th>
+                <th>Preço</th>
+                <th>Estoque</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="products-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>JSON de mapeamento dos campos</h2>
+        <pre id="field-map"></pre>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

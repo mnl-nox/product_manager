@@ -1,0 +1,32 @@
+{
+  "database": "sqlite",
+  "databaseFile": "db/login_term.db",
+  "apiBaseUrl": "/api",
+  "clients": {
+    "id": "id",
+    "name": "name",
+    "username": "username",
+    "email": "email",
+    "phone": "phone",
+    "cpf": "cpf",
+    "status": "status",
+    "city": "city",
+    "role": "role",
+    "notes": "notes",
+    "created_at": "created_at"
+  },
+  "products": {
+    "id": "id",
+    "name": "name",
+    "category": "category",
+    "sku": "sku",
+    "reference": "reference",
+    "brand": "brand",
+    "status": "status",
+    "price": "price",
+    "quantity": "quantity",
+    "supplier": "supplier",
+    "notes": "notes",
+    "created_at": "created_at"
+  }
+}
