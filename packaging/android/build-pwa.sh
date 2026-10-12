@@ -27,7 +27,7 @@ for icon in manifest['icons']:
 
 archive = root / 'build' / 'packages' / f'product-manager-pwa-{version}.zip'
 archive.parent.mkdir(parents=True, exist_ok=True)
-included = [root / 'api', root / 'desktop.py', root / 'ui', root / 'db' / 'schema.sql', root / 'assets' / 'icons']
+included = [root / 'api', root / 'desktop.py', root / 'VERSION', root / 'LICENSE', root / 'PRIVACY.md', root / 'ui', root / 'db' / 'schema.sql', root / 'assets' / 'icons']
 with ZipFile(archive, 'w', ZIP_DEFLATED) as bundle:
     for entry in included:
         files = [entry] if entry.is_file() else entry.rglob('*')

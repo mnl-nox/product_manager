@@ -2,6 +2,19 @@
 
 Mudanças notáveis do projeto são registradas neste arquivo.
 
+## [v0.5.0] - 2026-10-12
+
+### Implementado
+
+- Licença MIT e termos claros para contribuições.
+- Guia de instalação e uso e política de privacidade acessível pelo app.
+- Telemetria de diagnóstico opcional, com consentimento explícito, desligada por padrão e limitada a eventos técnicos mínimos enviados somente a endpoint HTTPS configurado pelo operador.
+- Integração do ícone SVG do Product Manager ao tema de aplicativos Linux e inclusão da licença/política nos pacotes.
+
+### Segurança
+
+- Remoção do banco SQLite versionado e regras para ignorar bancos, arquivos de ambiente, chaves, certificados e credenciais.
+
 ## [v0.4.0] - 2026-10-12
 
 ### Implementado

@@ -23,9 +23,13 @@ rm -rf "$STAGE" "$RPM_TOP"
 mkdir -p "$OUT" "$STAGE/usr/bin" "$STAGE/usr/lib/product-manager/api" \
   "$STAGE/usr/lib/product-manager/ui" "$STAGE/usr/lib/product-manager/db" \
   "$STAGE/usr/lib/product-manager/assets/icons" \
-  "$STAGE/usr/share/applications" "$STAGE/usr/share/icons/hicolor/scalable/apps"
+  "$STAGE/usr/share/applications" "$STAGE/usr/share/icons/hicolor/scalable/apps" \
+  "$STAGE/usr/share/doc/product-manager"
 
 install -m 0644 "$ROOT/desktop.py" "$STAGE/usr/lib/product-manager/desktop.py"
+install -m 0644 "$ROOT/VERSION" "$STAGE/usr/lib/product-manager/VERSION"
+install -m 0644 "$ROOT/PRIVACY.md" "$STAGE/usr/lib/product-manager/PRIVACY.md"
+install -m 0644 "$ROOT/LICENSE" "$ROOT/PRIVACY.md" "$STAGE/usr/share/doc/product-manager/"
 install -m 0644 "$ROOT/api/__init__.py" "$ROOT/api/app.py" "$STAGE/usr/lib/product-manager/api/"
 cp -R "$ROOT/ui/." "$STAGE/usr/lib/product-manager/ui/"
 install -m 0644 "$ROOT/db/schema.sql" "$STAGE/usr/lib/product-manager/db/schema.sql"

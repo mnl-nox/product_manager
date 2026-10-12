@@ -25,10 +25,15 @@
         <a href="/dashboard" class="active">Dashboard</a>
         <a href="/products">Produtos</a>
         <button id="install-app" class="secondary-action install-action" type="button" hidden>Instalar app</button>
+        <a class="secondary-action" href="/privacy.html">Privacidade</a>
       </nav>
     </header>
 
     <main id="main-content" class="container">
+      <section class="panel privacy-controls" aria-label="Diagnóstico de erros">
+        <label><input id="telemetry-consent" type="checkbox" /> Compartilhar diagnóstico técnico de erros (opcional)</label>
+        <small>Desativado por padrão. Consulte a política de privacidade.</small>
+      </section>
       <div id="page-status" class="sr-only" role="status" aria-live="polite"></div>
       <section id="summary" class="summary-grid"></section>
 

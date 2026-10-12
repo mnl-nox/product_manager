@@ -11,5 +11,11 @@ Não publique detalhes exploráveis em issues públicas. Até existir um canal p
 ## Boas práticas de desenvolvimento
 
 - Não comite credenciais, dados pessoais nem arquivos de banco com dados reais.
+- Não comite arquivos `.env` (exceto `.env.example`), bancos SQLite, chaves privadas, certificados, dumps, backups ou exportações. Esses padrões estão ignorados pelo Git; confirme também `git status` antes de cada commit.
+- Remova credenciais que tenham sido expostas e rotacione-as. Apagar um arquivo em um commit novo não apaga cópias em commits anteriores, forks ou clones.
 - Use consultas parametrizadas para SQL e escape conteúdo renderizado no HTML.
 - Mantenha dependências mínimas e aplique atualizações de segurança antes de qualquer implantação.
+
+## Telemetria
+
+O diagnóstico no cliente exige consentimento explícito e um endpoint HTTPS configurado pelo operador. O formato permitido contém apenas tipo de evento, nome e versão do app. Não coloque segredos, conteúdo de requisições ou dados pessoais no endpoint nem em logs. Consulte [Política de privacidade](PRIVACY.md).

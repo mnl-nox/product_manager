@@ -57,6 +57,8 @@ make run-desktop
 
 Detalhes, limitações do PWA e comandos de build estão em [Plataformas e instalação](docs/platforms.md).
 
+O passo a passo de instalação, primeiro uso, backup e relato de erros está em [Guia de instalação e uso](docs/installation-usage.md).
+
 ## Testes
 
 ```bash
@@ -101,8 +103,10 @@ src/, include/ núcleo C23 legado/em evolução
 
 O modo desktop escuta somente no loopback. O PWA Android exige hospedagem HTTPS e uma implantação corporativa protegida com autenticação, autorização, TLS e gestão de segredos; a API atual ainda não implementa autenticação. O banco contém dados de demonstração e pode conter dados locais; não compartilhe o arquivo SQLite sem revisar seu conteúdo.
 
-Consulte [Política de segurança](SECURITY.md), [Contribuição](CONTRIBUTING.md), [arquitetura](doc/architecture.md), [requisitos](doc/requirements.md), [modelo de dados](doc/data-model.md) e [operação da API](docs/development.md).
+Consulte [Política de privacidade](PRIVACY.md), [Política de segurança](SECURITY.md), [Contribuição](CONTRIBUTING.md), [arquitetura](doc/architecture.md), [requisitos](doc/requirements.md), [modelo de dados](doc/data-model.md) e [operação da API](docs/development.md).
+
+O diagnóstico de erros é opcional, desativado por padrão e só transmite eventos técnicos mínimos após consentimento, caso o administrador configure um endpoint HTTPS. O app não envia os registros de clientes/produtos nem stack traces. Detalhes e limites estão na [política de privacidade](PRIVACY.md).
 
 ## Licença
 
-Ainda não definida. Todos os direitos permanecem com seus respectivos titulares até a inclusão de uma licença.
+O Product Manager é distribuído sob a licença [MIT](LICENSE). A política de contribuição e os termos aplicáveis a contribuições estão em [CONTRIBUTING.md](CONTRIBUTING.md).

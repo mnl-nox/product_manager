@@ -10,6 +10,8 @@ datas = [
     if path.is_file()
 ]
 datas.append((str(ROOT / 'db' / 'schema.sql'), 'db'))
+datas.append((str(ROOT / 'VERSION'), '.'))
+datas.append((str(ROOT / 'PRIVACY.md'), '.'))
 
 a = Analysis(
     [str(ROOT / 'desktop.py')],

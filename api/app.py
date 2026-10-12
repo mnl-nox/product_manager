@@ -8,6 +8,9 @@ import os
 import re
 import sqlite3
 import sys
+import urllib.error
+import urllib.parse
+import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -36,6 +39,39 @@ UI_DIR = BASE_DIR / 'ui'
 CLIENT_ALLOWED_STATUS = {'active', 'inactive', 'pending'}
 PRODUCT_ALLOWED_STATUS = {'available', 'reserved', 'out_of_stock'}
 MAX_BODY_BYTES = 32 * 1024
+APP_VERSION = (BASE_DIR / 'VERSION').read_text(encoding='utf-8').strip() if (BASE_DIR / 'VERSION').exists() else 'unknown'
+TELEMETRY_EVENTS = {'javascript_error', 'unhandled_rejection'}
+
+
+def telemetry_endpoint_configured() -> bool:
+    try:
+        parsed = urllib.parse.urlparse(os.environ.get('PRODUCT_MANAGER_TELEMETRY_URL', '').strip())
+    except ValueError:
+        return False
+    return parsed.scheme == 'https' and bool(parsed.netloc) and parsed.username is None and parsed.password is None
+
+
+def send_telemetry_event(event_name: str) -> bool:
+    """Forward an allow-listed, content-free diagnostic to an admin endpoint."""
+    endpoint = os.environ.get('PRODUCT_MANAGER_TELEMETRY_URL', '').strip()
+    if not telemetry_endpoint_configured() or event_name not in TELEMETRY_EVENTS:
+        return False
+    body = json.dumps({
+        'application': 'product-manager',
+        'version': APP_VERSION,
+        'event': event_name,
+    }).encode('utf-8')
+    request = urllib.request.Request(
+        endpoint,
+        data=body,
+        headers={'Content-Type': 'application/json', 'User-Agent': f'ProductManager/{APP_VERSION}'},
+        method='POST',
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=3) as response:
+            return 200 <= response.status < 300
+    except (urllib.error.URLError, TimeoutError, ValueError):
+        return False
 
 
 def get_db() -> sqlite3.Connection:
@@ -164,6 +200,14 @@ class AppHandler(BaseHTTPRequestHandler):
             self.serve_file(UI_DIR / 'products.html', 'text/html; charset=utf-8')
             return
 
+        if path == '/privacy.html':
+            self.serve_file(UI_DIR / 'privacy.html', 'text/html; charset=utf-8')
+            return
+
+        if path == '/PRIVACY.md':
+            self.serve_file(BASE_DIR / 'PRIVACY.md', 'text/markdown; charset=utf-8')
+            return
+
         if path == '/styles.css':
             self.serve_file(UI_DIR / 'styles.css', 'text/css; charset=utf-8')
             return
@@ -267,6 +311,10 @@ class AppHandler(BaseHTTPRequestHandler):
             self.send_json({'status': 'ok', 'database': 'connected'})
             return
 
+        if path == '/api/telemetry/status':
+            self.send_json({'available': telemetry_endpoint_configured()})
+            return
+
         self.send_json({'error': 'Rota não encontrada.'}, status=404)
 
     def do_POST(self):
@@ -289,6 +337,17 @@ class AppHandler(BaseHTTPRequestHandler):
             return
         if not isinstance(payload, dict):
             self.send_json({'error': 'O corpo deve ser um objeto JSON.'}, status=400)
+            return
+
+        if path == '/api/telemetry':
+            event_name = payload.get('event')
+            if not isinstance(event_name, str) or event_name not in TELEMETRY_EVENTS:
+                self.send_json({'error': 'Evento de diagnóstico não permitido.'}, status=400)
+                return
+            if send_telemetry_event(event_name):
+                self.send_json({'received': True}, status=202)
+            else:
+                self.send_json({'received': False}, status=503)
             return
 
         if path == '/api/clients':

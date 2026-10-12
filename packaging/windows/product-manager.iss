@@ -8,6 +8,7 @@ AppId={{326936AE-8633-4C52-9C1E-3A205AE2BB59}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher=Product Manager
+LicenseFile=..\..\LICENSE
 DefaultDirName={autopf}\Product Manager
 DefaultGroupName=Product Manager
 UninstallDisplayIcon={app}\ProductManager.exe

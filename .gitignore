@@ -1,4 +1,5 @@
 .vscode/
+.idea/
 build/
 obj/
 dist/
@@ -8,6 +9,17 @@ __pycache__/
 *.pyc
 .venv/
 exports/
+*.db
 *.sqlite
 *.sqlite3
-db/*.db
+*.db-wal
+*.db-shm
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.*
+credentials.*

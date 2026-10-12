@@ -2,7 +2,7 @@ Name:           product-manager
 Version:        @VERSION@
 Release:        1%{?dist}
 Summary:        Gestão corporativa de clientes e produtos
-License:        NOASSERTION
+License:        MIT
 BuildArch:      x86_64
 Requires:       python3 >= 3.10
 Requires:       xdg-utils
@@ -26,6 +26,8 @@ mkdir -p %{buildroot}/usr/share/applications
 mkdir -p %{buildroot}/usr/share/icons/hicolor/scalable/apps
 install -m 0755 usr/bin/product-manager %{buildroot}/usr/bin/product-manager
 install -m 0644 usr/lib/product-manager/desktop.py %{buildroot}/usr/lib/product-manager/desktop.py
+install -m 0644 usr/lib/product-manager/VERSION %{buildroot}/usr/lib/product-manager/VERSION
+install -m 0644 usr/lib/product-manager/PRIVACY.md %{buildroot}/usr/lib/product-manager/PRIVACY.md
 install -m 0644 usr/lib/product-manager/api/*.py %{buildroot}/usr/lib/product-manager/api/
 cp -a usr/lib/product-manager/ui/. %{buildroot}/usr/lib/product-manager/ui/
 install -m 0644 usr/lib/product-manager/db/schema.sql %{buildroot}/usr/lib/product-manager/db/schema.sql
@@ -43,6 +45,8 @@ install -m 0644 usr/share/icons/hicolor/scalable/apps/product-manager.svg %{buil
 %dir /usr/lib/product-manager/ui
 %dir /usr/lib/product-manager/ui/js
 /usr/lib/product-manager/desktop.py
+/usr/lib/product-manager/VERSION
+/usr/lib/product-manager/PRIVACY.md
 /usr/lib/product-manager/api/*.py
 /usr/lib/product-manager/db/schema.sql
 /usr/lib/product-manager/assets/icons/*
@@ -53,6 +57,8 @@ install -m 0644 usr/share/icons/hicolor/scalable/apps/product-manager.svg %{buil
 /usr/lib/product-manager/ui/js/*.js
 /usr/share/applications/product-manager.desktop
 /usr/share/icons/hicolor/scalable/apps/product-manager.svg
+%doc /usr/share/doc/product-manager/LICENSE
+%doc /usr/share/doc/product-manager/PRIVACY.md
 
 %post
 if command -v update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi
