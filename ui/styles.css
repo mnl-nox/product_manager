@@ -137,6 +137,14 @@ h1, h2, p {
   font-weight: 700;
 }
 
+.install-action {
+  cursor: pointer;
+}
+
+.install-action[hidden] {
+  display: none;
+}
+
 .container {
   max-width: 1380px;
   margin: 0 auto;

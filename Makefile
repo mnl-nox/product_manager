@@ -5,7 +5,7 @@ TARGET := build/product_manager
 SOURCES := $(wildcard src/*.c)
 OBJECTS := $(patsubst src/%.c,obj/%.o,$(SOURCES))
 
-.PHONY: all run run-api test clean
+.PHONY: all run run-api run-desktop test package-linux package-pwa clean
 
 all: $(TARGET)
 
@@ -23,6 +23,15 @@ run: $(TARGET)
 
 run-api:
 	python3 api/app.py
+
+run-desktop:
+	python3 desktop.py
+
+package-linux:
+	bash packaging/linux/build-packages.sh
+
+package-pwa:
+	bash packaging/android/build-pwa.sh
 
 test:
 	python3 -m unittest discover -s tests -v

@@ -1,6 +1,7 @@
 .vscode/
 build/
 obj/
+dist/
 *.o
 
 __pycache__/

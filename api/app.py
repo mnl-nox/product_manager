@@ -7,12 +7,29 @@ import math
 import os
 import re
 import sqlite3
-from http.server import BaseHTTPRequestHandler, HTTPServer
+import sys
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-DB_PATH = Path(os.environ.get('PRODUCT_MANAGER_DB', BASE_DIR / 'db' / 'product_manager.db')).resolve()
+BASE_DIR = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parent.parent))
+
+
+def default_data_path() -> Path:
+    if os.name == 'nt':
+        base = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local'))
+    else:
+        base = Path(os.environ.get('XDG_DATA_HOME', Path.home() / '.local' / 'share'))
+    return base / 'ProductManager' / 'product_manager.db'
+
+
+if os.environ.get('PRODUCT_MANAGER_DB'):
+    DB_PATH = Path(os.environ['PRODUCT_MANAGER_DB']).expanduser().resolve()
+elif getattr(sys, 'frozen', False):
+    DB_PATH = default_data_path()
+else:
+    DB_PATH = BASE_DIR / 'db' / 'product_manager.db'
+
 SCHEMA_PATH = BASE_DIR / 'db' / 'schema.sql'
 UI_DIR = BASE_DIR / 'ui'
 
@@ -149,6 +166,14 @@ class AppHandler(BaseHTTPRequestHandler):
 
         if path == '/styles.css':
             self.serve_file(UI_DIR / 'styles.css', 'text/css; charset=utf-8')
+            return
+
+        if path == '/manifest.webmanifest':
+            self.serve_file(UI_DIR / 'manifest.webmanifest', 'application/manifest+json; charset=utf-8')
+            return
+
+        if path == '/service-worker.js':
+            self.serve_file(UI_DIR / 'service-worker.js', 'application/javascript; charset=utf-8')
             return
 
         if path.startswith('/js/'):
@@ -406,6 +431,8 @@ class AppHandler(BaseHTTPRequestHandler):
             return 'application/javascript; charset=utf-8'
         if suffix == '.json':
             return 'application/json; charset=utf-8'
+        if suffix == '.webmanifest':
+            return 'application/manifest+json; charset=utf-8'
         if suffix == '.html':
             return 'text/html; charset=utf-8'
         return 'application/octet-stream'
@@ -465,6 +492,6 @@ class AppHandler(BaseHTTPRequestHandler):
 if __name__ == '__main__':
     host = os.environ.get('PRODUCT_MANAGER_HOST', '127.0.0.1')
     port = int(os.environ.get('PRODUCT_MANAGER_PORT', '8000'))
-    server = HTTPServer((host, port), AppHandler)
+    server = ThreadingHTTPServer((host, port), AppHandler)
     print(f'Product Manager disponível em http://{host}:{port}')
     server.serve_forever()

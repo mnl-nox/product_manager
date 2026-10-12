@@ -39,6 +39,24 @@ PRODUCT_MANAGER_DB=/caminho/product_manager.db python3 api/app.py
 
 As rotas principais são `GET /api/health`, `GET /api/dashboard`, `GET /api/products`, `POST /api/products` e `POST /api/clients`. Veja [API e desenvolvimento](docs/development.md) para exemplos.
 
+## Instalar por plataforma
+
+- **Windows 10/11 x64:** o workflow para tags `v*` gera um instalador `.exe` com Inno Setup.
+- **Linux x64:** `make package-linux` gera `.deb` e também `.rpm` quando `rpmbuild` estiver instalado.
+- **Android:** o frontend é um PWA instalável pelo Chrome. Hospede a aplicação atrás de HTTPS e escolha **Instalar app** ou **Adicionar à tela inicial**. O workflow publica um ZIP do PWA para implantação.
+
+Para criar localmente o ZIP de implantação do PWA, use `make package-pwa`.
+
+No Linux, os pacotes guardam o banco no diretório de dados do usuário. Para obter o instalador Windows e pacotes Linux construídos em seus ambientes nativos, execute o workflow **Cross-platform packages** no GitHub Actions. Os artefatos aparecem na execução do workflow.
+
+O desktop inicia um servidor local e abre o navegador padrão:
+
+```bash
+make run-desktop
+```
+
+Detalhes, limitações do PWA e comandos de build estão em [Plataformas e instalação](docs/platforms.md).
+
 ## Testes
 
 ```bash
@@ -81,7 +99,7 @@ src/, include/ núcleo C23 legado/em evolução
 
 ## Segurança e dados
 
-O servidor é destinado a desenvolvimento local e escuta em `127.0.0.1`. Não há autenticação nem proteção para exposição pública; não o publique na internet sem implementar autenticação, autorização, gestão de segredos, TLS e controles de produção. O banco contém dados de demonstração e pode conter dados locais; não compartilhe o arquivo SQLite sem revisar seu conteúdo.
+O modo desktop escuta somente no loopback. O PWA Android exige hospedagem HTTPS e uma implantação corporativa protegida com autenticação, autorização, TLS e gestão de segredos; a API atual ainda não implementa autenticação. O banco contém dados de demonstração e pode conter dados locais; não compartilhe o arquivo SQLite sem revisar seu conteúdo.
 
 Consulte [Política de segurança](SECURITY.md), [Contribuição](CONTRIBUTING.md), [arquitetura](doc/architecture.md), [requisitos](doc/requirements.md), [modelo de dados](doc/data-model.md) e [operação da API](docs/development.md).
 

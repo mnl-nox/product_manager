@@ -50,6 +50,18 @@ class ProductManagerApiTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(body, {'status': 'ok', 'database': 'connected'})
 
+    def test_pwa_resources_are_served_with_installable_content_types(self):
+        for path, content_type in (
+            ('/manifest.webmanifest', 'application/manifest+json; charset=utf-8'),
+            ('/service-worker.js', 'application/javascript; charset=utf-8'),
+        ):
+            handler = self.handler(path)
+            handler.served = None
+            handler.serve_file = lambda file_path, mime: setattr(handler, 'served', (file_path, mime))
+            handler.do_GET()
+            self.assertEqual(handler.served[1], content_type)
+            self.assertTrue(handler.served[0].is_file())
+
     def test_product_can_be_created_and_listed(self):
         status, created = self.request_json('/api/products', self.product_payload())
         self.assertEqual(status, 201)

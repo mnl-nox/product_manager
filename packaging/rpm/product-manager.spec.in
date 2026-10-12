@@ -1,0 +1,65 @@
+Name:           product-manager
+Version:        @VERSION@
+Release:        1%{?dist}
+Summary:        Gestão corporativa de clientes e produtos
+License:        NOASSERTION
+BuildArch:      x86_64
+Requires:       python3 >= 3.10
+Requires:       xdg-utils
+Source0:        %{name}-%{version}.tar.gz
+
+%description
+Aplicação local de gestão de clientes e catálogo de produtos.
+
+%prep
+%setup -q -n product-manager
+
+%build
+
+%install
+mkdir -p %{buildroot}/usr/bin
+mkdir -p %{buildroot}/usr/lib/product-manager/api
+mkdir -p %{buildroot}/usr/lib/product-manager/ui
+mkdir -p %{buildroot}/usr/lib/product-manager/db
+mkdir -p %{buildroot}/usr/lib/product-manager/assets/icons
+mkdir -p %{buildroot}/usr/share/applications
+mkdir -p %{buildroot}/usr/share/icons/hicolor/scalable/apps
+install -m 0755 usr/bin/product-manager %{buildroot}/usr/bin/product-manager
+install -m 0644 usr/lib/product-manager/desktop.py %{buildroot}/usr/lib/product-manager/desktop.py
+install -m 0644 usr/lib/product-manager/api/*.py %{buildroot}/usr/lib/product-manager/api/
+cp -a usr/lib/product-manager/ui/. %{buildroot}/usr/lib/product-manager/ui/
+install -m 0644 usr/lib/product-manager/db/schema.sql %{buildroot}/usr/lib/product-manager/db/schema.sql
+install -m 0644 usr/lib/product-manager/assets/icons/* %{buildroot}/usr/lib/product-manager/assets/icons/
+install -m 0644 usr/share/applications/product-manager.desktop %{buildroot}/usr/share/applications/product-manager.desktop
+install -m 0644 usr/share/icons/hicolor/scalable/apps/product-manager.svg %{buildroot}/usr/share/icons/hicolor/scalable/apps/product-manager.svg
+
+%files
+%attr(0755,root,root) /usr/bin/product-manager
+%dir /usr/lib/product-manager
+%dir /usr/lib/product-manager/api
+%dir /usr/lib/product-manager/db
+%dir /usr/lib/product-manager/assets
+%dir /usr/lib/product-manager/assets/icons
+%dir /usr/lib/product-manager/ui
+%dir /usr/lib/product-manager/ui/js
+/usr/lib/product-manager/desktop.py
+/usr/lib/product-manager/api/*.py
+/usr/lib/product-manager/db/schema.sql
+/usr/lib/product-manager/assets/icons/*
+/usr/lib/product-manager/ui/*.html
+/usr/lib/product-manager/ui/*.css
+/usr/lib/product-manager/ui/*.webmanifest
+/usr/lib/product-manager/ui/*.js
+/usr/lib/product-manager/ui/js/*.js
+/usr/share/applications/product-manager.desktop
+/usr/share/icons/hicolor/scalable/apps/product-manager.svg
+
+%post
+if command -v update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi
+
+%postun
+if command -v update-desktop-database >/dev/null 2>&1; then update-desktop-database -q; fi
+
+%changelog
+* Mon Oct 12 2026 Product Manager maintainers - @VERSION@-1
+- Initial cross-platform application package

@@ -1,0 +1,104 @@
+name: Cross-platform packages
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: availability
+        name: Check package sources exist in this version
+        shell: pwsh
+        run: |
+          if (Test-Path 'packaging/product_manager.spec') {
+            "ready=true" >> $env:GITHUB_OUTPUT
+          } else {
+            "ready=false" >> $env:GITHUB_OUTPUT
+            Write-Host 'This historical tag predates desktop packaging; skipping.'
+          }
+      - uses: actions/setup-python@v5
+        if: steps.availability.outputs.ready == 'true'
+        with:
+          python-version: '3.12'
+      - name: Select package version
+        if: steps.availability.outputs.ready == 'true'
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME -replace '^v', ''
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            $version = (Get-Content VERSION -Raw).Trim()
+          }
+          "PRODUCT_MANAGER_VERSION=$version" >> $env:GITHUB_ENV
+      - name: Build Windows installer
+        if: steps.availability.outputs.ready == 'true'
+        shell: pwsh
+        run: ./packaging/windows/build.ps1
+      - uses: actions/upload-artifact@v4
+        if: steps.availability.outputs.ready == 'true'
+        with:
+          name: product-manager-windows
+          path: build/packages/ProductManager-*-windows-x64-setup.exe
+          if-no-files-found: error
+
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - id: availability
+        name: Check package sources exist in this version
+        run: |
+          if test -f packaging/linux/build-packages.sh; then
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+            echo 'This historical tag predates desktop packaging; skipping.'
+          fi
+      - name: Install RPM build tools
+        if: steps.availability.outputs.ready == 'true'
+        run: sudo apt-get update && sudo apt-get install -y rpm
+      - name: Build Debian and RPM packages
+        if: steps.availability.outputs.ready == 'true'
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then version="$(cat VERSION)"; fi
+          bash packaging/linux/build-packages.sh "$version" --require-rpm
+      - uses: actions/upload-artifact@v4
+        if: steps.availability.outputs.ready == 'true'
+        with:
+          name: product-manager-linux
+          path: build/packages/*
+          if-no-files-found: error
+
+  android-pwa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: availability
+        name: Check PWA sources exist in this version
+        run: |
+          if test -f ui/manifest.webmanifest && test -f ui/service-worker.js; then
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+            echo 'This historical tag predates PWA packaging; skipping.'
+          fi
+      - name: Build and validate PWA deployment archive
+        if: steps.availability.outputs.ready == 'true'
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then version="$(cat VERSION)"; fi
+          bash packaging/android/build-pwa.sh "$version"
+      - uses: actions/upload-artifact@v4
+        if: steps.availability.outputs.ready == 'true'
+        with:
+          name: product-manager-android-pwa
+          path: build/packages/product-manager-pwa-*.zip
+          if-no-files-found: error

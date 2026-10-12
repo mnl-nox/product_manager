@@ -2,6 +2,21 @@
 
 Mudanças notáveis do projeto são registradas neste arquivo.
 
+## [v0.4.0] - 2026-10-12
+
+### Implementado
+
+- Launcher desktop que inicia o serviço local e abre a interface no navegador padrão.
+- PWA instalável no Android, com manifest, ícones, botão de instalação e cache do shell offline.
+- Build Windows x64 com PyInstaller e instalador Inno Setup.
+- Geração de pacotes Linux `.deb` e `.rpm`, com build local e workflow multiplataforma.
+- ZIP de implantação PWA e pipeline de artefatos para Windows, Linux e Android.
+
+### Aprimorado
+
+- Banco do desktop passa a usar diretório de dados do usuário em Windows/Linux.
+- Documentação de instalação e execução multiplataforma.
+
 ## [v0.3.1] - 2026-10-12
 
 ### Aprimorado

@@ -2,7 +2,7 @@
 
 ## Visão geral
 
-O produto atual é uma aplicação web local. A interface HTML/CSS/JavaScript consome uma API HTTP escrita com a biblioteca padrão do Python; a API valida entradas e persiste os dados em SQLite.
+O produto atual é uma aplicação local multiplataforma. Windows e Linux iniciam um servidor HTTP local e abrem a interface no navegador padrão; Android instala a mesma interface como PWA. A API escrita com a biblioteca padrão do Python valida entradas e persiste os dados em SQLite.
 
 ```text
 Navegador (ui/)
@@ -22,6 +22,9 @@ SQLite (db/schema.sql → db/product_manager.db)
 - `config/field-mapping.json`: mapeamento explícito entre os nomes de campos do produto e do banco.
 - `tests/`: testes de integração da API usando banco temporário.
 - `src/` e `include/`: núcleo C23 legado/em evolução, não usado pelo servidor web atual.
+- `desktop.py`: launcher do servidor local para os pacotes desktop.
+- `packaging/`: build PyInstaller/Inno Setup para Windows e pacotes `.deb`/`.rpm` para Linux.
+- `ui/manifest.webmanifest` e `ui/service-worker.js`: instalação e cache offline do shell PWA.
 
 ## Fluxo de uma requisição
 
@@ -33,8 +36,8 @@ SQLite (db/schema.sql → db/product_manager.db)
 
 ## Persistência e dados de demonstração
 
-O caminho padrão é `db/product_manager.db`; `PRODUCT_MANAGER_DB` permite selecionar outro arquivo. A aplicação cria as tabelas se necessário e insere registros de exemplo quando cada tabela está vazia. O arquivo de banco é dado de runtime e deve permanecer fora do controle de versão.
+Em desenvolvimento, o caminho padrão é `db/product_manager.db`; `PRODUCT_MANAGER_DB` permite selecionar outro arquivo. Pacotes desktop usam o diretório de dados do usuário. A aplicação cria as tabelas se necessário e insere registros de exemplo quando cada tabela está vazia. O arquivo de banco é dado de runtime.
 
 ## Limites atuais
 
-O servidor atende desenvolvimento local, sem autenticação, autorização, controle de concorrência avançado ou implantação de produção. O núcleo C não é conectado à aplicação web. As rotas atuais não incluem edição/exclusão, paginação ou busca textual.
+O modo desktop é local e não tem autenticação. O PWA deve ser hospedado em HTTPS atrás de infraestrutura corporativa apropriada; a API ainda requer autenticação e autorização antes de ser aberta a uma rede. O núcleo C não é conectado à aplicação web. As rotas atuais não incluem edição/exclusão, paginação ou busca textual.

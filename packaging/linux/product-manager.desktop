@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Product Manager
+Comment=Gestão corporativa de clientes e produtos
+Exec=product-manager
+Icon=product-manager
+Terminal=false
+Type=Application
+Categories=Office;Utility;
+StartupNotify=true
