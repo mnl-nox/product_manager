@@ -1,16 +1,23 @@
-# Objetivo
+# Objetivo do produto
 
-Product Manager oferece uma visão simples do cadastro de clientes e do catálogo de produtos, com indicadores úteis para acompanhar quantidades e categorias em uma aplicação local leve.
+O Product Manager foi criado para reunir, em uma ferramenta simples, informações que equipes pequenas costumam manter separadas em planilhas ou cadastros diferentes: clientes, produtos e quantidades em estoque. A ideia é facilitar a consulta do catálogo e dar uma visão rápida da operação sem exigir, para começar, a implantação de uma plataforma empresarial complexa.
 
-## Público e valor
+## Por que foi criado
 
-O sistema atende equipes pequenas que precisam consultar um catálogo e dados cadastrais em um único painel, sem depender inicialmente de serviços externos.
+Quando os dados de clientes e produtos ficam espalhados, é mais difícil encontrar informações, acompanhar o estoque e perceber itens que precisam de atenção. O Product Manager busca reduzir essa fragmentação com um cadastro central, validações básicas e um painel que resume os dados importantes para o acompanhamento diário.
 
-## Resultado esperado
+## Para que serve hoje
 
-- manter dados de clientes e produtos em SQLite;
-- permitir cadastro e consulta pela interface web;
-- apresentar indicadores agregados para orientar o acompanhamento operacional;
-- permitir exportação local de dados tabulares.
+- Cadastrar e consultar clientes e produtos por uma interface web.
+- Manter informações do catálogo, como SKU, categoria, marca, preço, quantidade, fornecedor e status.
+- Visualizar totais, categorias, clientes recentes e itens com estoque baixo no dashboard.
+- Filtrar produtos por categoria e exportar dados do painel em CSV para análise em planilhas.
+- Executar localmente com persistência SQLite, sem serviço externo obrigatório.
 
-Autenticação e operação multiusuário são evoluções futuras, não capacidades atuais.
+O público inicial são equipes pequenas que precisam organizar cadastros e acompanhar produtos em um só lugar. O aplicativo também serve como base para validar fluxos e evoluir a solução com segurança.
+
+## Limites atuais
+
+O produto ainda não oferece autenticação, autorização, operação multiusuário, trilha de auditoria ou integração direta com Excel/Google Sheets. A exportação CSV é local. Recursos como financeiro, notificações avançadas e publicação em lojas estão no planejamento e não devem ser entendidos como funcionalidades disponíveis.
+
+Antes de uso compartilhado ou com dados corporativos reais, são necessários controles de identidade, acesso, implantação e operação adequados. Consulte [Segurança](../SECURITY.md).

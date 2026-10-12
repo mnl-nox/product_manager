@@ -1,6 +1,12 @@
 # Product Manager
 
-Aplicação web local para gestão de clientes e catálogo de produtos, com dashboard, estoque, API HTTP em Python e persistência SQLite.
+Aplicação web para organizar clientes e catálogo de produtos, acompanhar indicadores de estoque e exportar dados para análise.
+
+## Objetivo do produto
+
+O Product Manager foi criado para reunir cadastros de clientes e produtos que podem ficar espalhados em planilhas ou sistemas diferentes. Ele ajuda equipes pequenas a consultar o catálogo, acompanhar quantidades e identificar itens que precisam de atenção em um painel simples.
+
+Hoje, o app oferece cadastro e consulta de clientes e produtos, filtro por categoria, indicadores de estoque e exportação CSV. Ele funciona localmente com SQLite. Não possui ainda autenticação, operação multiusuário ou integração direta com Excel/Google Sheets; financeiro, alertas avançados e outras evoluções estão planejados. Leia [o objetivo e os limites atuais](doc/objective.md).
 
 ## Funcionalidades
 
