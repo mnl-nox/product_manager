@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1d4ed8" />
+    <title>Acesso | Product Manager</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="auth-container">
+      <section class="panel auth-panel">
+        <p class="eyebrow">Product Manager</p>
+        <h1>Entrar</h1>
+        <form id="login-form" class="stacked-form" autocomplete="on">
+          <label for="login-username">Usuário<input id="login-username" name="username" autocomplete="username" required /></label>
+          <label for="login-password">Senha<input id="login-password" type="password" name="password" autocomplete="current-password" required /></label>
+          <button type="submit">Entrar</button>
+        </form>
+        <p id="login-message" class="form-message" role="status" aria-live="polite"></p>
+      </section>
+      <section id="setup-panel" class="panel auth-panel" hidden>
+        <h2>Configuração inicial</h2>
+        <p>Crie a conta administradora. O token deve ser configurado pelo operador no servidor e será invalidado após o primeiro cadastro.</p>
+        <form id="setup-form" class="stacked-form" autocomplete="off">
+          <label for="setup-token">Token de configuração<input id="setup-token" type="password" name="setup_token" required /></label>
+          <label for="setup-username">Usuário administrador<input id="setup-username" name="username" autocomplete="username" minlength="3" maxlength="64" required /></label>
+          <label for="setup-password">Senha (mínimo 12 caracteres)<input id="setup-password" type="password" name="password" autocomplete="new-password" minlength="12" required /></label>
+          <button type="submit">Criar administrador</button>
+        </form>
+        <p id="setup-message" class="form-message" role="status" aria-live="polite"></p>
+      </section>
+    </main>
+    <script type="module" src="/js/login.js"></script>
+    <script type="module" src="/js/brand.js"></script>
+  </body>
+</html>

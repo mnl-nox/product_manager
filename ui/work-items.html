@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1d4ed8" />
+    <title>Riscos e bugs | Product Manager</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Pular para o conteúdo principal</a>
+    <header class="topbar"><div class="brand-block"><p class="eyebrow">Product Manager</p><h1>Riscos e bugs</h1></div><nav class="nav-links"><a href="/dashboard">Dashboard</a><a href="/products">Produtos</a><a href="/alerts">Alertas</a><a href="/privacy.html">Privacidade</a></nav></header>
+    <main id="main-content" class="container">
+      <div id="page-status" class="sr-only" role="status" aria-live="polite"></div>
+      <section class="panel"><p>Registre riscos operacionais e problemas encontrados. Os registros ficam nesta instalação e não são enviados automaticamente.</p></section>
+      <section class="panel">
+        <h2>Novo registro</h2>
+        <form id="work-item-form" class="stacked-form">
+          <label>Tipo<select name="item_type" id="item-type"><option value="bug">Bug</option><option value="risk">Risco</option></select></label>
+          <label>Título<input name="title" maxlength="160" required /></label>
+          <label>Descrição<textarea name="description" rows="4" maxlength="2000" required></textarea></label>
+          <label>Prioridade<select name="severity"><option value="low">Baixa</option><option value="medium">Média</option><option value="high">Alta</option><option value="critical">Crítica</option></select></label>
+          <div id="risk-fields" class="inline-form" hidden>
+            <label>Probabilidade (1 a 5)<input name="probability" type="number" min="1" max="5" value="3" /></label>
+            <label>Impacto (1 a 5)<input name="impact" type="number" min="1" max="5" value="3" /></label>
+          </div>
+          <label>Responsável (opcional)<input name="owner" maxlength="64" /></label>
+          <label>Prazo (opcional)<input name="due_date" type="date" /></label>
+          <button type="submit">Registrar</button>
+        </form>
+      </section>
+      <section class="panel"><h2>Acompanhamento</h2><div class="table-wrap"><table><caption class="sr-only">Riscos e bugs registrados</caption><thead><tr><th>Tipo</th><th>Título</th><th>Prioridade</th><th>Risco</th><th>Responsável</th><th>Prazo</th><th>Estado</th><th>Ações</th></tr></thead><tbody id="work-item-rows"></tbody></table></div></section>
+    </main>
+    <script type="module" src="/js/work-items.js"></script>
+    <script type="module" src="/js/auth.js"></script>
+    <script type="module" src="/js/brand.js"></script>
+  </body>
+</html>

@@ -30,11 +30,50 @@ O pacote Android é um PWA, não um APK. Abra a URL HTTPS publicada pela organiz
 
 ## Primeiro uso
 
-No Windows ou Linux, inicie o aplicativo pelo menu ou terminal. Ele abre o navegador no computador e mantém a API ligada enquanto a janela do terminal/processo estiver ativa. Use Ctrl+C para encerrar quando iniciado no terminal.
+### Primeira configuração
 
-O dashboard resume clientes, produtos e estoque. Em **Produtos**, cadastre itens, filtre por categoria e acompanhe disponibilidade. No dashboard, baixe CSV ou Excel (`.xlsx`). Para enviar diretamente ao Google Sheets, o administrador precisa configurar o ID da planilha e um token de acesso no servidor, conforme [Desenvolvimento e operação](development.md#exportacoes-para-planilhas). O banco local é criado automaticamente; faça cópias de segurança com o aplicativo encerrado e proteja-as como dados corporativos.
+Não há conta ou senha padrão. No aplicativo desktop instalado, a primeira execução gera um token temporário no processo local e abre diretamente o formulário de configuração inicial. Crie a conta administradora com uma senha de pelo menos 12 caracteres. O token não aparece nos logs e é invalidado depois do primeiro cadastro.
 
-Os dados iniciais são exemplos de demonstração. Remova-os e verifique o banco antes de uso real. A aplicação atual não tem autenticação incorporada; não exponha o servidor desktop na rede.
+Ao executar o servidor diretamente ou preparar uma instalação PWA, gere um token aleatório, defina-o no ambiente do servidor e inicie o app. Exemplo no Linux/macOS:
+
+```bash
+export PRODUCT_MANAGER_SETUP_TOKEN="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
+printf 'Token de configuração: %s\n' "$PRODUCT_MANAGER_SETUP_TOKEN"
+python3 api/app.py
+```
+
+No Windows PowerShell:
+
+```powershell
+$rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+$bytes = New-Object byte[] 32
+$rng.GetBytes($bytes)
+$env:PRODUCT_MANAGER_SETUP_TOKEN = ([BitConverter]::ToString($bytes) -replace '-', '').ToLowerInvariant()
+$rng.Dispose()
+Write-Host "Token de configuração: $env:PRODUCT_MANAGER_SETUP_TOKEN"
+python api/app.py
+```
+
+Abra `/login`, use o token no formulário **Configuração inicial** e crie o usuário administrador. O token é removido do processo após o uso; os próximos usuários são criados pelo administrador em **Usuários**.
+
+No Windows ou Linux, depois da configuração, inicie o aplicativo pelo menu ou terminal. Ele abre o navegador no computador e mantém a API ligada enquanto a janela do terminal/processo estiver ativa. Use Ctrl+C para encerrar quando iniciado no terminal. Para implantação atrás de HTTPS, configure `PRODUCT_MANAGER_COOKIE_SECURE=1`.
+
+### Papéis
+
+- **Administrador:** usuários, catálogo, financeiro, alertas e exportação Google Sheets.
+- **Operação:** leitura e escrita de clientes/produtos, limites e alertas de estoque.
+- **Financeiro:** leitura do catálogo e escrita/consulta da área financeira.
+- **Somente leitura:** consulta de catálogo, dashboard e alertas.
+
+As contas compartilham o mesmo espaço de trabalho e banco. Não há isolamento entre organizações nem recuperação automatizada de senha. A administração de usuários permite criar contas e desativá-las, revogando suas sessões.
+
+O dashboard resume clientes, produtos e estoque. Em **Produtos**, cadastre, edite, desative e reative itens; administradores também podem removê-los definitivamente. Produtos desativados ficam ocultos das consultas e relatórios comuns. Em **Alertas**, configure o limite por item e reconheça alertas; o padrão é `PRODUCT_MANAGER_LOW_STOCK_DEFAULT` (5 unidades se não configurado). Em **Financeiro**, usuários autorizados registram receitas/despesas previstas ou realizadas, consultam saldo e removem lançamentos incorretos. Isso não substitui contabilidade ou sistema fiscal.
+
+Em **Riscos e bugs**, qualquer conta pode registrar um problema ou risco. Administração/operação pode atualizar o estado e o responsável. O formulário não envia anexos nem transmite os registros para fora da instalação.
+
+No dashboard, baixe CSV ou Excel (`.xlsx`). Para enviar diretamente ao Google Sheets, o administrador configura o ID da planilha e um token de acesso no servidor, conforme [Desenvolvimento e operação](development.md#exportacoes-para-planilhas). O banco local é criado automaticamente; faça cópias de segurança com o aplicativo encerrado e proteja-as como dados corporativos.
+
+O workspace começa vazio. Se `PRODUCT_MANAGER_DEMO_DATA=1` estiver definido, a aplicação cria registros de exemplo para avaliação local; não use os dados fictícios como dados de clientes reais. Não exponha o servidor desktop na rede; para serviço compartilhado use HTTPS, cookies Secure, controle de acesso de rede, backups e gestão segura dos segredos.
 
 ## Relato de erros e telemetria
 

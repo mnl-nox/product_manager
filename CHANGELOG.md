@@ -2,6 +2,43 @@
 
 Mudanças notáveis do projeto são registradas neste arquivo.
 
+## [v1.0.0] - 2026-10-12
+
+### Implementado
+
+- Primeira versão completa da aplicação web multiplataforma para desktop Windows/Linux e PWA Android.
+- Provisionamento local seguro do primeiro administrador ao abrir o aplicativo desktop.
+- Ciclo de vida do produto: criar, editar, desativar, reativar e remover com permissões administrativas.
+- Remoção de lançamentos financeiros com confirmação e auditoria.
+- Registro e acompanhamento interno de bugs e riscos com prioridade e estados.
+- Selo visual próprio Open Source · MIT na interface e no README.
+- Indicadores, categorias, exportações e alertas passam a desconsiderar produtos desativados.
+- Busca e filtro de catálogo e selo Open Source próprio distribuído nos pacotes.
+- Atualizações da documentação de instalação, segurança, operação e limites multiempresa.
+
+### Limites conhecidos
+
+- O app trabalha em um espaço SQLite compartilhado, sem isolamento multiempresa ou login corporativo.
+- A área financeira é operacional; alertas são apresentados no app e não enviam e-mail/push.
+- O PWA Android requer implantação HTTPS administrada pela organização.
+
+## [v0.7.0] - 2026-10-12
+
+### Implementado
+
+- Autenticação local com bootstrap do primeiro administrador, sessões revogáveis e proteção CSRF.
+- Papéis de administrador, operação, financeiro e leitura, aplicados nas rotas da API.
+- Gerenciamento de usuários com desativação e revogação das sessões.
+- Área financeira para receitas e despesas previstas ou realizadas, com saldo operacional.
+- Central de alertas de estoque com limites globais e por produto e reconhecimento de alertas.
+- Registro de auditoria para autenticação e operações administrativas, financeiras e de alertas.
+- Atualização das políticas, requisitos, guia de instalação e documentação de operação.
+
+### Limites
+
+- Contas compartilham um único espaço de trabalho; não há SSO, recuperação de senha, isolamento multiempresa ou alertas externos.
+- Financeiro é operacional, não contábil/fiscal.
+
 ## [v0.6.0] - 2026-10-12
 
 ### Implementado

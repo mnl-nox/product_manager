@@ -56,7 +56,7 @@
       <section class="panel two-columns">
         <div>
           <h2>Adicionar cliente</h2>
-          <form id="client-form" class="stacked-form">
+          <form id="client-form" class="stacked-form" data-permission="catalog:write">
             <label for="client-name">
               Nome
               <input id="client-name" type="text" name="name" placeholder="Nome completo" autocomplete="name" required />
@@ -151,6 +151,8 @@
     </main>
 
     <script type="module" src="./js/dashboard.js"></script>
+    <script type="module" src="./js/auth.js"></script>
     <script src="./js/pwa.js" defer></script>
+    <script type="module" src="/js/brand.js"></script>
   </body>
 </html>

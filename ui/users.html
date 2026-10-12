@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1d4ed8" />
+    <title>Usuários | Product Manager</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Pular para o conteúdo principal</a>
+    <header class="topbar"><div class="brand-block"><p class="eyebrow">Product Manager</p><h1>Usuários e permissões</h1></div><nav class="nav-links"><a href="/dashboard">Dashboard</a><a href="/products">Produtos</a><a href="/finance">Financeiro</a><a href="/alerts">Alertas</a></nav></header>
+    <main id="main-content" class="container">
+      <div id="page-status" class="sr-only" role="status" aria-live="polite"></div>
+      <section class="panel"><h2>Adicionar usuário</h2><form id="user-form" class="inline-form"><label>Usuário<input name="username" minlength="3" maxlength="64" required /></label><label>Senha inicial (mínimo 12 caracteres)<input name="password" type="password" minlength="12" required /></label><label>Papel<select name="role"><option value="viewer">Somente leitura</option><option value="operator">Operação</option><option value="finance">Financeiro</option><option value="admin">Administrador</option></select></label><button type="submit">Criar usuário</button></form></section>
+      <section class="panel"><h2>Contas</h2><div class="table-wrap"><table><caption class="sr-only">Usuários e situação</caption><thead><tr><th>Usuário</th><th>Papel</th><th>Situação</th><th>Criado em</th><th>Ação</th></tr></thead><tbody id="user-rows"></tbody></table></div></section>
+    </main>
+    <script type="module" src="/js/users.js"></script>
+    <script type="module" src="/js/auth.js"></script>
+    <script type="module" src="/js/brand.js"></script>
+  </body>
+</html>

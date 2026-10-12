@@ -2,42 +2,38 @@
 
 ## Visão geral
 
-O produto atual é uma aplicação local multiplataforma. Windows e Linux iniciam um servidor HTTP local e abrem a interface no navegador padrão; Android instala a mesma interface como PWA. A API escrita com a biblioteca padrão do Python valida entradas e persiste os dados em SQLite.
+O Product Manager é uma aplicação web responsiva com empacotamento desktop para Windows/Linux e instalação PWA para Android. O desktop abre um servidor local no loopback; a instalação PWA usa um servidor HTTPS administrado pela organização. A API Python usa bibliotecas padrão e persiste o workspace em SQLite.
 
 ```text
-Navegador (ui/)
-      │ HTTP / JSON
-      ▼
-API Python (api/app.py)
-      │ consultas parametrizadas
-      ▼
-SQLite (db/schema.sql → db/product_manager.db)
+UI web / PWA / desktop
+       │ mesma origem: HTML, CSS, JS e API JSON
+       ▼
+API Python ─ autenticação, papéis, CSRF, validação e auditoria
+       │ SQL parametrizado
+       ▼
+SQLite ─ contas, catálogo, limites/alertas e financeiro operacional
 ```
 
 ## Componentes
 
-- `ui/`: dashboard, catálogo, formulários e renderização dos resultados.
-- `api/`: servidor HTTP, validação, operações SQL, resposta JSON e exportação CSV.
-- `db/schema.sql`: tabelas `clients` e `products`, chaves, unicidade e restrições.
-- `config/field-mapping.json`: mapeamento explícito entre os nomes de campos do produto e do banco.
-- `tests/`: testes de integração da API usando banco temporário.
-- `src/` e `include/`: núcleo C23 legado/em evolução, não usado pelo servidor web atual.
-- `desktop.py`: launcher do servidor local para os pacotes desktop.
-- `packaging/`: build PyInstaller/Inno Setup para Windows e pacotes `.deb`/`.rpm` para Linux.
-- `ui/manifest.webmanifest` e `ui/service-worker.js`: instalação e cache offline do shell PWA.
+- `ui/`: login, dashboard, catálogo, usuários, financeiro, alertas, registro de riscos/bugs e instalação PWA.
+- `api/`: servidor HTTP, sessão, controle de acesso, validação, auditoria, integrações e exportações.
+- `db/schema.sql`: esquema inicial; `ensure_database()` aplica atualizações compatíveis ao banco existente.
+- `assets/icons/`: ícones do aplicativo e selo vetorial próprio Open Source · MIT.
+- `desktop.py`: launcher que mantém o servidor local e abre o navegador. Na primeira execução, cria um segredo efêmero e conduz o bootstrap do administrador sem senha padrão.
+- `packaging/`: instalador Windows, pacotes Linux e ZIP de implantação do PWA Android.
+- `src/` e `include/`: núcleo C23 legado, ainda separado da aplicação web.
 
-## Fluxo de uma requisição
+## Acesso e sessão
 
-1. O JavaScript envia uma requisição para `/api`.
-2. O handler valida formato, tamanho, valores permitidos e campos obrigatórios.
-3. A API usa parâmetros SQL para ler ou alterar o SQLite.
-4. A resposta inclui JSON e cabeçalhos HTTP de segurança básicos.
-5. A interface escapa valores dinâmicos antes de incluí-los no HTML.
+As rotas de negócio exigem uma conta ativa. A senha é derivada com scrypt. O servidor persiste somente o hash do token de sessão; o navegador recebe cookie HttpOnly/SameSite com prazo de 12 horas. Escritas verificam o token CSRF e o papel do usuário. Administradores gerenciam contas; papéis de operação, financeiro e leitura limitam as operações autorizadas também na API.
 
-## Persistência e dados de demonstração
+## Persistência e atualização
 
-Em desenvolvimento, o caminho padrão é `db/product_manager.db`; `PRODUCT_MANAGER_DB` permite selecionar outro arquivo. Pacotes desktop usam o diretório de dados do usuário. A aplicação cria as tabelas se necessário e insere registros de exemplo quando cada tabela está vazia. O arquivo de banco é dado de runtime.
+O desktop usa diretório de dados do usuário; `PRODUCT_MANAGER_DB` permite selecionar outro caminho. O modo fonte usa `db/product_manager.db`. O workspace começa vazio; `PRODUCT_MANAGER_DEMO_DATA=1` habilita registros de avaliação. O banco contém dados pessoais e financeiros e deve entrar na política de backup e controle de acesso da instalação.
 
-## Limites atuais
+Atualizações de esquema são idempotentes para os campos de autoria e estado de produto; a migração financeira converte valores decimais anteriores em centavos inteiros. Backups prévios são recomendados antes de atualizar a instalação.
 
-O modo desktop é local e não tem autenticação. O PWA deve ser hospedado em HTTPS atrás de infraestrutura corporativa apropriada; a API ainda requer autenticação e autorização antes de ser aberta a uma rede. O núcleo C não é conectado à aplicação web. As rotas atuais não incluem edição/exclusão, paginação ou busca textual.
+## Limites
+
+As contas compartilham um workspace. Não há isolamento entre organizações, identidade federada, TLS embutido, recuperação de senha, movimentações imutáveis de estoque, notificações externas ou contabilidade fiscal. O PWA exige serviço HTTPS/proxy e operação de infraestrutura pela organização. O selo Open Source · MIT usa arte própria e identifica a licença do repositório; não representa certificação de terceiros.

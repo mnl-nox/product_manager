@@ -1,13 +1,13 @@
-const CACHE_NAME = 'product-manager-shell-v0.4.0';
+const CACHE_NAME = 'product-manager-shell-v1.0.0';
 const APP_SHELL = [
-  '/dashboard',
-  '/products',
   '/styles.css',
   '/manifest.webmanifest',
   '/js/api.js',
   '/js/dashboard.js',
   '/js/products.js',
   '/js/pwa.js',
+  '/js/brand.js',
+  '/assets/icons/open-source-mark.svg',
   '/assets/icons/product-manager-192.png',
   '/assets/icons/product-manager-512.png',
 ];
@@ -32,16 +32,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
 
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request).then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-        return response;
-      }).catch(async () => (await caches.match(request)) || caches.match('/dashboard')),
-    );
-    return;
-  }
+  if (request.mode === 'navigate') return;
 
   event.respondWith(
     caches.match(request).then((cached) => {

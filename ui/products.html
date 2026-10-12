@@ -44,14 +44,18 @@
         </div>
         <div class="toolbar">
           <div id="category-filters" class="chip-group" aria-label="Filtros por categoria" role="group"></div>
+          <label>Buscar<input id="product-search" type="search" placeholder="Nome, SKU, marca ou fornecedor" /></label>
+          <label>Status<select id="product-status-filter"><option value="all">Todos</option><option value="available">Disponível</option><option value="reserved">Reservado</option><option value="out_of_stock">Sem estoque</option></select></label>
         </div>
         <div id="product-summary" class="mini-summary"></div>
+        <label class="toggle-control" data-permission="catalog:write"><input id="show-inactive-products" type="checkbox" /> Mostrar produtos desativados</label>
       </section>
 
       <section class="panel two-columns">
         <div>
-          <h2>Cadastrar produto</h2>
-          <form id="product-form" class="stacked-form">
+          <h2 id="product-form-title">Cadastrar produto</h2>
+          <form id="product-form" class="stacked-form" data-permission="catalog:write">
+            <input type="hidden" name="id" />
             <label for="product-name">
               Nome
               <input id="product-name" type="text" name="name" placeholder="Notebook Pro" required />
@@ -96,7 +100,7 @@
               Observações
               <textarea id="product-notes" name="notes" rows="3" placeholder="Detalhes do item"></textarea>
             </label>
-            <button type="submit">Salvar produto</button>
+            <div class="form-actions"><button id="save-product" type="submit">Salvar produto</button><button id="cancel-product-edit" class="secondary-action" type="button" hidden>Cancelar edição</button></div>
           </form>
         </div>
 
@@ -117,6 +121,7 @@
                   <th>Preço</th>
                   <th>Estoque</th>
                   <th>Status</th>
+                  <th>Ações</th>
                 </tr>
               </thead>
               <tbody id="products-table"></tbody>
@@ -127,6 +132,8 @@
     </main>
 
     <script type="module" src="./js/products.js"></script>
+    <script type="module" src="./js/auth.js"></script>
     <script src="./js/pwa.js" defer></script>
+    <script type="module" src="/js/brand.js"></script>
   </body>
 </html>

@@ -36,7 +36,7 @@ Para RPM use `sudo dnf install ./build/packages/product-manager-<versão>-1.x86_
 
 O PWA usa `ui/manifest.webmanifest`, o service worker e os ícones em `assets/icons/`. O usuário abre o endereço HTTPS no Chrome para Android e escolhe **Instalar app** ou **Adicionar à tela inicial**. O botão de instalação aparece quando o navegador considera o site instalável.
 
-O deployment ZIP gerado pelo workflow inclui API, frontend, esquema SQLite e ícones. Configure o serviço atrás de um proxy HTTPS corporativo e exponha uma única origem para a UI e `/api`. O server Python não fornece TLS nem autenticação; o proxy e a aplicação precisam receber os controles de identidade e acesso da organização antes do uso com dados reais.
+O deployment ZIP gerado pelo workflow inclui API, frontend, esquema SQLite e ícones. Configure o serviço atrás de um proxy HTTPS corporativo e exponha uma única origem para a UI e `/api`. A aplicação fornece autenticação local e autorização por papel, mas o servidor Python não fornece TLS. Defina `PRODUCT_MANAGER_COOKIE_SECURE=1`, restrinja o acesso de rede e proteja banco, backups e segredos. As contas compartilham o mesmo espaço de trabalho; não há isolamento entre organizações ou login corporativo.
 
 O service worker mantém apenas o shell da interface em cache. Requisições `/api/` permanecem online e não são guardadas no dispositivo.
 

@@ -10,11 +10,12 @@
   <body>
     <header class="topbar"><div class="brand-block"><p class="eyebrow">Product Manager</p><h1>Privacidade</h1></div><nav class="nav-links"><a href="/dashboard">Voltar ao app</a></nav></header>
     <main class="container"><section class="panel">
-      <p>Clientes, produtos e demais registros são armazenados no banco SQLite local ou na infraestrutura configurada pela organização. O Product Manager não envia esses dados aos mantenedores.</p>
+      <p>Contas, sessões, dados de clientes/produtos, lançamentos financeiros, limites de estoque e auditoria são armazenados no banco SQLite da instalação. Senhas são guardadas como hashes; o navegador mantém um cookie de sessão HttpOnly. O Product Manager não envia esses registros aos mantenedores.</p>
       <h2>Diagnóstico opcional</h2>
       <p>O compartilhamento de erros está desativado por padrão e depende de consentimento explícito. Quando ativado e configurado pelo administrador, são enviados apenas o tipo de erro permitido e a versão do app a um endpoint HTTPS organizacional. Não são enviados conteúdo de formulários, registros do banco, stack traces, URL ou identificador persistente. O destino pode registrar metadados de conexão, como endereço IP.</p>
       <p>Revogue o consentimento desmarcando a opção de diagnóstico no dashboard. Sem um endpoint HTTPS configurado, nada é transmitido. A organização que opera o serviço define retenção e atendimento a solicitações sobre dados empresariais.</p>
       <p>Leia a <a href="/PRIVACY.md">política completa</a>.</p>
     </section></main>
+    <script type="module" src="/js/brand.js"></script>
   </body>
 </html>

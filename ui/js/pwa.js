@@ -18,9 +18,12 @@ try {
 async function reportDiagnostic(event) {
   if (!telemetryEnabled) return;
   try {
+    const sessionResponse = await fetch('/api/auth/me');
+    if (!sessionResponse.ok) return;
+    const session = await sessionResponse.json();
     await fetch('/api/telemetry', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': session.csrfToken },
       body: JSON.stringify({ event }),
       keepalive: true,
     });

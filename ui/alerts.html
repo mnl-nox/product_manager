@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1d4ed8" />
+    <title>Alertas de estoque | Product Manager</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Pular para o conteúdo principal</a>
+    <header class="topbar"><div class="brand-block"><p class="eyebrow">Product Manager</p><h1>Alertas de estoque</h1></div><nav class="nav-links"><a href="/dashboard">Dashboard</a><a href="/products">Produtos</a><a href="/finance">Financeiro</a><a href="/privacy.html">Privacidade</a></nav></header>
+    <main id="main-content" class="container">
+      <div id="page-status" class="sr-only" role="status" aria-live="polite"></div>
+      <section class="panel"><p>Alertas ativos usam limite padrão configurável no servidor e podem ter um limite próprio por produto. Estoque zerado recebe prioridade crítica.</p><p id="alert-default" class="muted"></p></section>
+      <section class="panel"><h2>Itens que precisam de atenção</h2><div class="table-wrap"><table><caption class="sr-only">Alertas de estoque ativos</caption><thead><tr><th>Prioridade</th><th>Produto</th><th>SKU</th><th>Estoque</th><th>Limite</th><th>Ações</th></tr></thead><tbody id="stock-alerts"></tbody></table></div></section>
+      <section class="panel" data-permission="catalog:write"><h2>Configurar limite por produto</h2><form id="threshold-form" class="inline-form"><label>Produto<select name="product_id" required><option value="">Selecione um produto</option></select></label><label>Estoque mínimo<input name="minimum_quantity" type="number" min="0" required /></label><button type="submit">Salvar limite</button></form></section>
+    </main>
+    <script type="module" src="/js/alerts.js"></script>
+    <script type="module" src="/js/auth.js"></script>
+    <script type="module" src="/js/brand.js"></script>
+  </body>
+</html>

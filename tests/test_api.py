@@ -19,12 +19,26 @@ class ProductManagerApiTests(unittest.TestCase):
         with app.get_db() as conn:
             conn.execute('DELETE FROM products')
             conn.execute('DELETE FROM clients')
+            conn.execute(
+                "INSERT OR IGNORE INTO app_users (username, password_hash, role) VALUES (?, ?, ?)",
+                ('api-test-admin', 'unused-test-hash', 'admin'),
+            )
+            self.user = dict(conn.execute(
+                'SELECT id, username, role FROM app_users WHERE username=?',
+                ('api-test-admin',),
+            ).fetchone())
 
-    def handler(self, path='/'):
+    def handler(self, path='/', authenticated=True):
         handler = app.AppHandler.__new__(app.AppHandler)
         handler.path = path
         handler.result = None
         handler.send_json = lambda payload, status=200: setattr(handler, 'result', (status, payload))
+        handler.headers = {}
+        handler.client_address = ('127.0.0.1', 0)
+        if authenticated:
+            handler.current_user = self.user
+            handler.require_authenticated_request = lambda request_path: self.user
+            handler.require_permission = lambda user, permission: True
         return handler
 
     def request_json(self, path, payload=None):
@@ -49,6 +63,12 @@ class ProductManagerApiTests(unittest.TestCase):
         status, body = self.request_json('/api/health')
         self.assertEqual(status, 200)
         self.assertEqual(body, {'status': 'ok', 'database': 'connected'})
+
+    def test_health_requires_authentication(self):
+        handler = self.handler('/api/health', authenticated=False)
+        handler.do_GET()
+        self.assertEqual(handler.result[0], 401)
+        self.assertIn('Autenticação necessária', handler.result[1]['error'])
 
     def test_pwa_resources_are_served_with_installable_content_types(self):
         for path, content_type in (

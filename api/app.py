@@ -2,12 +2,19 @@ from __future__ import annotations
 
 import json
 import csv
+from datetime import date
+from decimal import Decimal, InvalidOperation
+import hashlib
+import hmac
 import io
 import math
 import os
 import re
+import secrets
 import sqlite3
 import sys
+import time
+from http.cookies import SimpleCookie
 from zipfile import ZIP_DEFLATED, ZipFile
 import xml.sax.saxutils as xml_utils
 import urllib.error
@@ -41,6 +48,14 @@ UI_DIR = BASE_DIR / 'ui'
 CLIENT_ALLOWED_STATUS = {'active', 'inactive', 'pending'}
 PRODUCT_ALLOWED_STATUS = {'available', 'reserved', 'out_of_stock'}
 MAX_BODY_BYTES = 32 * 1024
+SESSION_TTL_SECONDS = 12 * 60 * 60
+USER_ROLES = {'admin', 'operator', 'finance', 'viewer'}
+ROLE_PERMISSIONS = {
+    'admin': {'*'},
+    'operator': {'read', 'catalog:write', 'alerts:write'},
+    'finance': {'read', 'finance:read', 'finance:write'},
+    'viewer': {'read'},
+}
 APP_VERSION = (BASE_DIR / 'VERSION').read_text(encoding='utf-8').strip() if (BASE_DIR / 'VERSION').exists() else 'unknown'
 TELEMETRY_EVENTS = {'javascript_error', 'unhandled_rejection'}
 
@@ -79,15 +94,133 @@ def send_telemetry_event(event_name: str) -> bool:
 def get_db() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    conn.execute('PRAGMA foreign_keys = ON')
     return conn
 
 
 def ensure_database() -> None:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    if not DB_PATH.exists():
-        schema_sql = SCHEMA_PATH.read_text(encoding='utf-8')
-        with sqlite3.connect(DB_PATH) as conn:
-            conn.executescript(schema_sql)
+    schema_sql = SCHEMA_PATH.read_text(encoding='utf-8')
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute('PRAGMA foreign_keys = ON')
+        conn.executescript(schema_sql)
+        for table in ('clients', 'products'):
+            columns = {row[1] for row in conn.execute(f'PRAGMA table_info({table})')}
+            if 'created_by' not in columns:
+                conn.execute(f'ALTER TABLE {table} ADD COLUMN created_by INTEGER REFERENCES app_users(id)')
+            if table == 'products' and 'active' not in columns:
+                conn.execute('ALTER TABLE products ADD COLUMN active INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0,1))')
+        finance_columns = {row[1] for row in conn.execute('PRAGMA table_info(finance_entries)')}
+        if 'amount' in finance_columns and 'amount_cents' not in finance_columns:
+            conn.executescript('''
+                BEGIN IMMEDIATE;
+                CREATE TABLE finance_entries_v2 (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    entry_type TEXT NOT NULL CHECK(entry_type IN ('income','expense')),
+                    category TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    amount_cents INTEGER NOT NULL CHECK(amount_cents > 0),
+                    entry_date TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'paid' CHECK(status IN ('planned','paid','cancelled')),
+                    created_by INTEGER REFERENCES app_users(id),
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+                INSERT INTO finance_entries_v2 (id, entry_type, category, description, amount_cents, entry_date, status, created_by, created_at)
+                    SELECT id, entry_type, category, description, CAST(ROUND(amount * 100) AS INTEGER), entry_date, status, created_by, created_at
+                    FROM finance_entries WHERE amount > 0;
+                DROP TABLE finance_entries;
+                ALTER TABLE finance_entries_v2 RENAME TO finance_entries;
+                CREATE INDEX IF NOT EXISTS idx_finance_entries_date ON finance_entries(entry_date, id);
+                COMMIT;
+            ''')
+        conn.commit()
+
+
+def hash_password(password: str, salt: bytes | None = None) -> str:
+    salt = salt or secrets.token_bytes(16)
+    digest = hashlib.scrypt(password.encode('utf-8'), salt=salt, n=2**14, r=8, p=1, dklen=32)
+    return f'scrypt$16384$8$1${salt.hex()}${digest.hex()}'
+
+
+def verify_password(password: str, encoded: str) -> bool:
+    try:
+        algorithm, n, r, p, salt_hex, expected_hex = encoded.split('$')
+        if algorithm != 'scrypt':
+            return False
+        digest = hashlib.scrypt(
+            password.encode('utf-8'), salt=bytes.fromhex(salt_hex),
+            n=int(n), r=int(r), p=int(p), dklen=len(bytes.fromhex(expected_hex)),
+        )
+        return hmac.compare_digest(digest.hex(), expected_hex)
+    except (ValueError, TypeError):
+        return False
+
+
+def token_digest(token: str) -> str:
+    return hashlib.sha256(token.encode('utf-8')).hexdigest()
+
+
+def audit_record(actor_id: int | None, action: str, entity: str, entity_id: int | None = None) -> None:
+    with get_db() as conn:
+        conn.execute(
+            'INSERT INTO audit_log (actor_id, action, entity, entity_id) VALUES (?, ?, ?, ?)',
+            (actor_id, action, entity, entity_id),
+        )
+
+
+def low_stock_default() -> int:
+    try:
+        return max(0, min(int(os.environ.get('PRODUCT_MANAGER_LOW_STOCK_DEFAULT', '5')), 1_000_000))
+    except ValueError:
+        return 5
+
+
+def user_count() -> int:
+    with get_db() as conn:
+        return conn.execute('SELECT COUNT(*) FROM app_users WHERE active=1').fetchone()[0]
+
+
+def login_rate_key(username: str, remote_address: str) -> str:
+    normalized = username.strip().casefold().encode('utf-8')
+    address_hash = hashlib.sha256(remote_address.encode('utf-8')).digest()
+    return hashlib.sha256(b'product-manager-login:' + normalized + address_hash).hexdigest()
+
+
+def login_is_limited(key: str) -> bool:
+    with get_db() as conn:
+        conn.execute('DELETE FROM auth_login_limits WHERE window_started < ?', (int(time.time()) - 3600,))
+        row = conn.execute('SELECT locked_until FROM auth_login_limits WHERE username_hash=?', (key,)).fetchone()
+        return bool(row and row['locked_until'] > int(time.time()))
+
+
+def record_login_failure(key: str) -> None:
+    now = int(time.time())
+    with get_db() as conn:
+        row = conn.execute('SELECT failed_count, window_started FROM auth_login_limits WHERE username_hash=?', (key,)).fetchone()
+        if row is None or now - row['window_started'] > 900:
+            conn.execute(
+                'INSERT OR REPLACE INTO auth_login_limits (username_hash, failed_count, window_started, locked_until) VALUES (?, 1, ?, 0)',
+                (key, now),
+            )
+            return
+        failures = row['failed_count'] + 1
+        locked_until = now + 900 if failures >= 8 else 0
+        conn.execute(
+            'UPDATE auth_login_limits SET failed_count=?, locked_until=? WHERE username_hash=?',
+            (failures, locked_until, key),
+        )
+
+
+def issue_session(user_id: int) -> tuple[str, str]:
+    raw_token = secrets.token_urlsafe(32)
+    csrf_token = secrets.token_urlsafe(32)
+    with get_db() as conn:
+        conn.execute('DELETE FROM app_sessions WHERE expires_at <= ?', (int(time.time()),))
+        conn.execute(
+            'INSERT INTO app_sessions (token_hash, csrf_token, user_id, expires_at) VALUES (?, ?, ?, ?)',
+            (token_digest(raw_token), csrf_token, user_id, int(time.time()) + SESSION_TTL_SECONDS),
+        )
+    return raw_token, csrf_token
 
 
 def sanitize_text(value, field_name: str, max_length: int = 128) -> str:
@@ -136,6 +269,32 @@ def validate_cpf(cpf: str) -> str:
     return cpf
 
 
+def validate_product_payload(payload: dict) -> tuple[str, str, str, str, str, str, float, int, str, str]:
+    name = sanitize_text(payload.get('name'), 'nome', 128)
+    category = sanitize_text(payload.get('category'), 'categoria', 64)
+    sku = sanitize_text(payload.get('sku'), 'sku', 64)
+    reference = sanitize_text(payload.get('reference'), 'referência', 64)
+    brand = sanitize_text(payload.get('brand'), 'marca', 64)
+    status = normalize_status(payload.get('status'), PRODUCT_ALLOWED_STATUS, 'status')
+    price_value = payload.get('price')
+    if price_value is None:
+        raise ValueError('O campo preço é obrigatório.')
+    price = float(price_value)
+    if not math.isfinite(price) or price < 0:
+        raise ValueError('O preço não pode ser negativo.')
+    quantity_value = payload.get('quantity')
+    if quantity_value is None:
+        raise ValueError('O campo quantidade é obrigatório.')
+    quantity = int(quantity_value)
+    if isinstance(quantity_value, bool) or str(quantity) != str(quantity_value).strip():
+        raise ValueError('A quantidade deve ser um número inteiro.')
+    if quantity < 0:
+        raise ValueError('A quantidade não pode ser negativa.')
+    supplier = sanitize_text(payload.get('supplier'), 'fornecedor', 128)
+    notes = sanitize_optional_text(payload.get('notes'), 'observações', 512)
+    return name, category, sku, reference, brand, status, price, quantity, supplier, notes
+
+
 def spreadsheet_safe(value) -> str:
     text = str(value if value is not None else '')
     if text.startswith(('=', '+', '-', '@')):
@@ -147,17 +306,17 @@ def dashboard_export_rows() -> list[list[object]]:
     with get_db() as conn:
         metrics = [
             ('Clientes', conn.execute('SELECT COUNT(*) FROM clients').fetchone()[0]),
-            ('Produtos', conn.execute('SELECT COUNT(*) FROM products').fetchone()[0]),
+            ('Produtos', conn.execute('SELECT COUNT(*) FROM products WHERE active=1').fetchone()[0]),
             ('Clientes ativos', conn.execute("SELECT COUNT(*) FROM clients WHERE status = 'active'").fetchone()[0]),
-            ('Estoque total', conn.execute('SELECT COALESCE(SUM(quantity), 0) FROM products').fetchone()[0]),
+            ('Estoque total', conn.execute('SELECT COALESCE(SUM(quantity), 0) FROM products WHERE active=1').fetchone()[0]),
         ]
         categories = conn.execute(
             'SELECT category, COUNT(*) AS total, COALESCE(SUM(quantity), 0) AS stock '
-            'FROM products GROUP BY category ORDER BY category'
+            'FROM products WHERE active=1 GROUP BY category ORDER BY category'
         ).fetchall()
         products = conn.execute(
             'SELECT id, name, category, sku, brand, price, quantity, status '
-            'FROM products ORDER BY id'
+            'FROM products WHERE active=1 ORDER BY id'
         ).fetchall()
 
     rows: list[list[object]] = [
@@ -240,6 +399,8 @@ def google_sheets_configured() -> bool:
 
 
 def seed_default_data() -> None:
+    if os.environ.get('PRODUCT_MANAGER_DEMO_DATA', '').strip().lower() not in {'1', 'true', 'yes'}:
+        return
     with get_db() as conn:
         clients_count = conn.execute('SELECT COUNT(*) AS total FROM clients').fetchone()['total']
         products_count = conn.execute('SELECT COUNT(*) AS total FROM products').fetchone()['total']
@@ -286,9 +447,186 @@ seed_default_data()
 class AppHandler(BaseHTTPRequestHandler):
     server_version = 'ProductManager/1.0'
 
+    def current_session(self):
+        cookie = SimpleCookie()
+        try:
+            cookie.load(self.headers.get('Cookie', ''))
+        except Exception:
+            return None
+        morsel = cookie.get('pm_session')
+        if morsel is None:
+            return None
+        session_hash = token_digest(morsel.value)
+        with get_db() as conn:
+            row = conn.execute(
+                '''SELECT s.token_hash, s.csrf_token, u.id, u.username, u.role
+                   FROM app_sessions s JOIN app_users u ON u.id = s.user_id
+                   WHERE s.token_hash = ? AND s.expires_at > ? AND u.active = 1''',
+                (session_hash, int(time.time())),
+            ).fetchone()
+            if row is None:
+                conn.execute('DELETE FROM app_sessions WHERE token_hash = ?', (session_hash,))
+                return None
+            return dict(row)
+
+    def send_login_redirect(self):
+        self.send_response(302)
+        self.send_header('Location', '/login')
+        self.send_security_headers()
+        self.end_headers()
+
+    def require_permission(self, user, permission: str) -> bool:
+        if user['role'] == 'admin' or permission in ROLE_PERMISSIONS.get(user['role'], set()):
+            return True
+        self.send_json({'error': 'Você não tem permissão para esta ação.'}, status=403)
+        return False
+
+    @staticmethod
+    def secure_cookie_enabled() -> bool:
+        configured = os.environ.get('PRODUCT_MANAGER_COOKIE_SECURE')
+        if configured is not None:
+            return configured.strip().lower() in {'1', 'true', 'yes'}
+        return os.environ.get('PRODUCT_MANAGER_HOST', '127.0.0.1') not in {'127.0.0.1', 'localhost', '::1'}
+
+    def send_auth_cookie(self, token: str | None, clear: bool = False):
+        parts = ['pm_session=', 'Path=/', 'HttpOnly', 'SameSite=Strict']
+        if token:
+            parts[0] = f'pm_session={token}'
+        if clear:
+            parts.append('Max-Age=0')
+        else:
+            parts.append(f'Max-Age={SESSION_TTL_SECONDS}')
+        if self.secure_cookie_enabled():
+            parts.append('Secure')
+        self.send_header('Set-Cookie', '; '.join(parts))
+
+    def send_json_with_session(self, payload, token: str):
+        body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
+        self.send_response(200)
+        self.send_auth_cookie(token)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Content-Length', str(len(body)))
+        self.send_security_headers()
+        self.end_headers()
+        self.wfile.write(body)
+
+    def login_user(self, username: str, password: str):
+        username = username.strip()
+        remote_address = getattr(self, 'client_address', ('unknown',))[0]
+        key = login_rate_key(username, remote_address)
+        if login_is_limited(key):
+            self.send_json({'error': 'Muitas tentativas. Aguarde 15 minutos antes de tentar novamente.'}, status=429)
+            return
+        with get_db() as conn:
+            user = conn.execute(
+                'SELECT id, username, password_hash, role FROM app_users WHERE username=? AND active=1',
+                (username,),
+            ).fetchone()
+        dummy_hash = 'scrypt$16384$8$1$00112233445566778899aabbccddeeff$' + ('0' * 64)
+        password_ok = verify_password(password, user['password_hash'] if user else dummy_hash)
+        if user is None or not password_ok:
+            record_login_failure(key)
+            self.send_json({'error': 'Usuário ou senha inválidos.'}, status=401)
+            return
+        with get_db() as conn:
+            conn.execute('DELETE FROM auth_login_limits WHERE username_hash=?', (key,))
+        token, csrf_token = issue_session(user['id'])
+        audit_record(user['id'], 'login', 'session')
+        self.send_json_with_session({
+            'user': {'id': user['id'], 'username': user['username'], 'role': user['role']},
+            'csrfToken': csrf_token,
+        }, token)
+
+    def handle_first_admin_setup(self, payload):
+        setup_token = os.environ.get('PRODUCT_MANAGER_SETUP_TOKEN', '')
+        provided_token = payload.get('setup_token', '')
+        if not setup_token or not isinstance(provided_token, str) or not hmac.compare_digest(setup_token, provided_token):
+            self.send_json({'error': 'Token de configuração inválido ou não configurado no servidor.'}, status=403)
+            return
+        username = payload.get('username', '')
+        password = payload.get('password', '')
+        if not isinstance(username, str) or not re.fullmatch(r'[A-Za-z0-9_.-]{3,64}', username.strip()):
+            self.send_json({'error': 'Usuário deve ter 3 a 64 caracteres: letras, números, ponto, hífen ou sublinhado.'}, status=400)
+            return
+        if not isinstance(password, str) or len(password) < 12 or len(password) > 256:
+            self.send_json({'error': 'A senha deve ter entre 12 e 256 caracteres.'}, status=400)
+            return
+        try:
+            with get_db() as conn:
+                conn.execute('BEGIN IMMEDIATE')
+                if conn.execute('SELECT COUNT(*) FROM app_users WHERE active=1').fetchone()[0] != 0:
+                    conn.rollback()
+                    self.send_json({'error': 'A configuração inicial já foi concluída.'}, status=409)
+                    return
+                cursor = conn.execute(
+                    'INSERT INTO app_users (username, password_hash, role) VALUES (?, ?, ?)',
+                    (username.strip(), hash_password(password), 'admin'),
+                )
+                admin_id = cursor.lastrowid
+            audit_record(admin_id, 'create', 'user', admin_id)
+        except sqlite3.IntegrityError:
+            self.send_json({'error': 'Não foi possível criar o administrador inicial.'}, status=409)
+            return
+        os.environ.pop('PRODUCT_MANAGER_SETUP_TOKEN', None)
+        token, csrf_token = issue_session(admin_id)
+        self.send_json_with_session({
+            'user': {'id': admin_id, 'username': username.strip(), 'role': 'admin'},
+            'csrfToken': csrf_token,
+        }, token)
+
+    def validate_csrf(self, user) -> bool:
+        origin = self.headers.get('Origin')
+        if origin:
+            parsed_origin = urllib.parse.urlparse(origin)
+            if parsed_origin.netloc != self.headers.get('Host'):
+                self.send_json({'error': 'Origem da requisição inválida.'}, status=403)
+                return False
+        csrf_token = self.headers.get('X-CSRF-Token', '')
+        if not csrf_token or not hmac.compare_digest(user['csrf_token'], csrf_token):
+            self.send_json({'error': 'Token CSRF ausente ou inválido.'}, status=403)
+            return False
+        return True
+
+    def require_authenticated_request(self, path: str):
+        user = self.current_session()
+        if user is None:
+            if path.startswith('/api/'):
+                self.send_json({'error': 'Autenticação necessária.'}, status=401)
+            else:
+                self.send_login_redirect()
+            return None
+        return user
+
     def do_GET(self):
         parsed = urlparse(self.path)
         path = parsed.path
+
+        if path == '/login':
+            self.serve_file(UI_DIR / 'login.html', 'text/html; charset=utf-8')
+            return
+
+        if path in {'/', '/dashboard', '/products', '/finance', '/alerts', '/admin/users', '/work-items'} or path.startswith('/api/'):
+            if path == '/api/auth/setup-status':
+                with get_db() as conn:
+                    user_count = conn.execute('SELECT COUNT(*) FROM app_users WHERE active = 1').fetchone()[0]
+                self.send_json({'setupRequired': user_count == 0, 'setupAvailable': bool(os.environ.get('PRODUCT_MANAGER_SETUP_TOKEN'))})
+                return
+            user = self.require_authenticated_request(path)
+            if user is None:
+                return
+            self.current_user = user
+            if path == '/finance' and not self.require_permission(user, 'finance:read'):
+                return
+            if path == '/alerts' and not self.require_permission(user, 'read'):
+                return
+            if path == '/admin/users' and user['role'] != 'admin':
+                self.send_login_redirect()
+                return
+            if path.startswith('/api/auth/users') and user['role'] != 'admin':
+                self.send_json({'error': 'Apenas administradores podem gerenciar usuários.'}, status=403)
+                return
+            if path.startswith('/api/finance') and not self.require_permission(user, 'finance:read'):
+                return
 
         if path in ('/', '/dashboard'):
             self.serve_file(UI_DIR / 'index.html', 'text/html; charset=utf-8')
@@ -296,6 +634,22 @@ class AppHandler(BaseHTTPRequestHandler):
 
         if path == '/products':
             self.serve_file(UI_DIR / 'products.html', 'text/html; charset=utf-8')
+            return
+
+        if path == '/finance':
+            self.serve_file(UI_DIR / 'finance.html', 'text/html; charset=utf-8')
+            return
+
+        if path == '/alerts':
+            self.serve_file(UI_DIR / 'alerts.html', 'text/html; charset=utf-8')
+            return
+
+        if path == '/admin/users':
+            self.serve_file(UI_DIR / 'users.html', 'text/html; charset=utf-8')
+            return
+
+        if path == '/work-items':
+            self.serve_file(UI_DIR / 'work-items.html', 'text/html; charset=utf-8')
             return
 
         if path == '/privacy.html':
@@ -345,17 +699,20 @@ class AppHandler(BaseHTTPRequestHandler):
         if path == '/api/dashboard':
             with get_db() as conn:
                 clients_count = conn.execute('SELECT COUNT(*) AS total FROM clients').fetchone()['total']
-                products_count = conn.execute('SELECT COUNT(*) AS total FROM products').fetchone()['total']
+                products_count = conn.execute('SELECT COUNT(*) AS total FROM products WHERE active=1').fetchone()['total']
                 active_count = conn.execute("SELECT COUNT(*) AS total FROM clients WHERE status = 'active'").fetchone()['total']
-                stock_total = conn.execute('SELECT COALESCE(SUM(quantity), 0) AS total FROM products').fetchone()['total']
+                stock_total = conn.execute('SELECT COALESCE(SUM(quantity), 0) AS total FROM products WHERE active=1').fetchone()['total']
                 categories = conn.execute(
-                    'SELECT category, COUNT(*) AS total, COALESCE(SUM(quantity), 0) AS stock FROM products GROUP BY category ORDER BY total DESC'
+                    'SELECT category, COUNT(*) AS total, COALESCE(SUM(quantity), 0) AS stock FROM products WHERE active=1 GROUP BY category ORDER BY total DESC'
                 ).fetchall()
                 recent_clients = conn.execute(
                     'SELECT * FROM clients ORDER BY id DESC LIMIT 5'
                 ).fetchall()
                 low_stock_products = conn.execute(
-                    'SELECT * FROM products WHERE quantity <= 5 ORDER BY quantity ASC, id ASC LIMIT 5'
+                    '''SELECT p.* FROM products p LEFT JOIN stock_thresholds t ON t.product_id=p.id
+                       WHERE p.active=1 AND p.quantity <= COALESCE(t.minimum_quantity, ?)
+                       ORDER BY p.quantity ASC, p.id ASC LIMIT 5''',
+                    (low_stock_default(),),
                 ).fetchall()
 
             self.send_json({
@@ -371,7 +728,7 @@ class AppHandler(BaseHTTPRequestHandler):
 
         if path == '/api/categories':
             with get_db() as conn:
-                rows = conn.execute('SELECT category, COUNT(*) AS total FROM products GROUP BY category ORDER BY category ASC').fetchall()
+                rows = conn.execute('SELECT category, COUNT(*) AS total FROM products WHERE active=1 GROUP BY category ORDER BY category ASC').fetchall()
             self.send_json([dict(row) for row in rows])
             return
 
@@ -384,10 +741,11 @@ class AppHandler(BaseHTTPRequestHandler):
         if path == '/api/products':
             params = parse_qs(urlparse(self.path).query)
             category_filter = params.get('category', ['all'])[0]
-            sql = 'SELECT * FROM products'
+            include_inactive = params.get('include_inactive', ['0'])[0] == '1' and self.current_user['role'] in {'admin', 'operator'}
+            sql = 'SELECT * FROM products' if include_inactive else 'SELECT * FROM products WHERE active=1'
             values = []
             if category_filter and category_filter != 'all':
-                sql += ' WHERE category = ?'
+                sql += ' AND category = ?' if 'WHERE' in sql else ' WHERE category = ?'
                 values.append(category_filter)
             sql += ' ORDER BY id ASC'
             with get_db() as conn:
@@ -398,9 +756,9 @@ class AppHandler(BaseHTTPRequestHandler):
         if path == '/api/summary':
             with get_db() as conn:
                 clients_count = conn.execute('SELECT COUNT(*) AS total FROM clients').fetchone()['total']
-                products_count = conn.execute('SELECT COUNT(*) AS total FROM products').fetchone()['total']
+                products_count = conn.execute('SELECT COUNT(*) AS total FROM products WHERE active=1').fetchone()['total']
                 active_count = conn.execute("SELECT COUNT(*) AS total FROM clients WHERE status = 'active'").fetchone()['total']
-                stock_total = conn.execute('SELECT COALESCE(SUM(quantity), 0) AS total FROM products').fetchone()['total']
+                stock_total = conn.execute('SELECT COALESCE(SUM(quantity), 0) AS total FROM products WHERE active=1').fetchone()['total']
             self.send_json({
                 'clients': clients_count,
                 'products': products_count,
@@ -419,6 +777,81 @@ class AppHandler(BaseHTTPRequestHandler):
 
         if path == '/api/integrations/google-sheets/status':
             self.send_json({'available': google_sheets_configured()})
+            return
+
+        if path == '/api/auth/me':
+            self.send_json({
+                'user': {key: self.current_user[key] for key in ('id', 'username', 'role')},
+                'csrfToken': self.current_user['csrf_token'],
+            })
+            return
+
+        if path == '/api/auth/users':
+            with get_db() as conn:
+                users = conn.execute('SELECT id, username, role, active, created_at FROM app_users ORDER BY id').fetchall()
+            self.send_json([dict(row) for row in users])
+            return
+
+        if path == '/api/work-items':
+            with get_db() as conn:
+                items = conn.execute(
+                    '''SELECT w.*, u.username AS reporter FROM work_items w
+                       LEFT JOIN app_users u ON u.id=w.created_by ORDER BY w.updated_at DESC, w.id DESC'''
+                ).fetchall()
+            self.send_json([dict(row) for row in items])
+            return
+
+        if path == '/api/finance/summary':
+            with get_db() as conn:
+                totals = conn.execute(
+                    """SELECT
+                        COALESCE(SUM(CASE WHEN entry_type='income' AND status='paid' THEN amount_cents ELSE 0 END),0) income,
+                        COALESCE(SUM(CASE WHEN entry_type='expense' AND status='paid' THEN amount_cents ELSE 0 END),0) expenses,
+                        COALESCE(SUM(CASE WHEN entry_type='income' AND status='planned' THEN amount_cents ELSE 0 END),0) planned_income,
+                        COALESCE(SUM(CASE WHEN entry_type='expense' AND status='planned' THEN amount_cents ELSE 0 END),0) planned_expenses
+                        FROM finance_entries"""
+                ).fetchone()
+            result = dict(totals)
+            for key in ('income', 'expenses', 'planned_income', 'planned_expenses'):
+                result[key] = result[key] / 100
+            result['balance'] = result['income'] - result['expenses']
+            result['projectedBalance'] = result['balance'] + result['planned_income'] - result['planned_expenses']
+            self.send_json(result)
+            return
+
+        if path == '/api/finance/entries':
+            with get_db() as conn:
+                rows = conn.execute(
+                    '''SELECT e.id, e.entry_type, e.category, e.description, e.entry_date,
+                              e.status, e.created_at, u.username AS created_by,
+                              e.amount_cents / 100.0 AS amount
+                       FROM finance_entries e LEFT JOIN app_users u ON u.id=e.created_by
+                       ORDER BY e.entry_date DESC, e.id DESC LIMIT 500'''
+                ).fetchall()
+            self.send_json([dict(row) for row in rows])
+            return
+
+        if path == '/api/alerts/stock':
+            threshold = low_stock_default()
+            with get_db() as conn:
+                rows = conn.execute(
+                    '''SELECT p.id, p.name, p.sku, p.category, p.quantity,
+                              COALESCE(t.minimum_quantity, ?) AS minimum_quantity,
+                              CASE WHEN p.quantity = 0 THEN 'critical' ELSE 'warning' END AS severity,
+                              a.acknowledged_at
+                       FROM products p
+                       LEFT JOIN stock_thresholds t ON t.product_id=p.id
+                       LEFT JOIN stock_alert_acknowledgements a
+                         ON a.product_id=p.id AND a.acknowledged_quantity=p.quantity
+                       WHERE p.active=1 AND p.quantity <= COALESCE(t.minimum_quantity, ?) AND a.product_id IS NULL
+                       ORDER BY CASE WHEN p.quantity=0 THEN 0 ELSE 1 END, p.quantity ASC, p.name ASC''',
+                    (threshold, threshold),
+                ).fetchall()
+            self.send_json([dict(row) for row in rows])
+            return
+
+        if path == '/api/alerts/config':
+            self.send_json({'defaultMinimumQuantity': low_stock_default()})
             return
 
         self.send_json({'error': 'Rota não encontrada.'}, status=404)
@@ -445,6 +878,298 @@ class AppHandler(BaseHTTPRequestHandler):
             self.send_json({'error': 'O corpo deve ser um objeto JSON.'}, status=400)
             return
 
+        if path == '/api/auth/login':
+            username = payload.get('username', '')
+            password = payload.get('password', '')
+            if not isinstance(username, str) or not isinstance(password, str):
+                self.send_json({'error': 'Usuário ou senha inválidos.'}, status=401)
+                return
+            self.login_user(username, password)
+            return
+
+        if path == '/api/auth/setup':
+            self.handle_first_admin_setup(payload)
+            return
+
+        user = self.require_authenticated_request(path)
+        if user is None:
+            return
+        self.current_user = user
+        if not self.validate_csrf(user):
+            return
+
+        if path == '/api/auth/logout':
+            with get_db() as conn:
+                conn.execute('DELETE FROM app_sessions WHERE token_hash=?', (user['token_hash'],))
+            audit_record(user['id'], 'logout', 'session')
+            body = json.dumps({'message': 'Sessão encerrada'}, ensure_ascii=False).encode('utf-8')
+            self.send_response(200)
+            self.send_auth_cookie(None, clear=True)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Length', str(len(body)))
+            self.send_security_headers()
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
+        if path == '/api/auth/users':
+            if user['role'] != 'admin':
+                self.send_json({'error': 'Apenas administradores podem criar usuários.'}, status=403)
+                return
+            username = payload.get('username', '')
+            password = payload.get('password', '')
+            role = payload.get('role', '')
+            if not isinstance(username, str) or not re.fullmatch(r'[A-Za-z0-9_.-]{3,64}', username.strip()):
+                self.send_json({'error': 'Nome de usuário inválido.'}, status=400)
+                return
+            if not isinstance(password, str) or len(password) < 12 or len(password) > 256:
+                self.send_json({'error': 'A senha deve ter entre 12 e 256 caracteres.'}, status=400)
+                return
+            if not isinstance(role, str) or role not in USER_ROLES:
+                self.send_json({'error': 'Papel de usuário inválido.'}, status=400)
+                return
+            try:
+                with get_db() as conn:
+                    cursor = conn.execute(
+                        'INSERT INTO app_users (username, password_hash, role) VALUES (?, ?, ?)',
+                        (username.strip(), hash_password(password), role),
+                    )
+                    new_user_id = cursor.lastrowid
+            except sqlite3.IntegrityError:
+                self.send_json({'error': 'Esse nome de usuário já existe.'}, status=409)
+                return
+            audit_record(user['id'], 'create', 'user', new_user_id)
+            self.send_json({'message': 'Usuário criado.', 'id': new_user_id}, status=201)
+            return
+
+        deactivate_match = re.fullmatch(r'/api/auth/users/(\d+)/deactivate', path)
+        if deactivate_match:
+            if user['role'] != 'admin':
+                self.send_json({'error': 'Apenas administradores podem desativar usuários.'}, status=403)
+                return
+            target_id = int(deactivate_match.group(1))
+            if target_id == user['id']:
+                self.send_json({'error': 'Não é possível desativar a própria sessão administrativa.'}, status=400)
+                return
+            with get_db() as conn:
+                conn.execute('BEGIN IMMEDIATE')
+                target = conn.execute('SELECT id, role, active FROM app_users WHERE id=?', (target_id,)).fetchone()
+                if target is None or not target['active']:
+                    self.send_json({'error': 'Usuário não encontrado ou já desativado.'}, status=404)
+                    return
+                if target['role'] == 'admin' and conn.execute(
+                    "SELECT COUNT(*) FROM app_users WHERE role='admin' AND active=1"
+                ).fetchone()[0] <= 1:
+                    self.send_json({'error': 'O último administrador ativo não pode ser desativado.'}, status=409)
+                    return
+                conn.execute('UPDATE app_users SET active=0 WHERE id=?', (target_id,))
+                conn.execute('DELETE FROM app_sessions WHERE user_id=?', (target_id,))
+            audit_record(user['id'], 'deactivate', 'user', target_id)
+            self.send_json({'message': 'Usuário desativado.'})
+            return
+
+        if path == '/api/finance/entries':
+            if not self.require_permission(user, 'finance:write'):
+                return
+            entry_type = payload.get('entry_type')
+            category = payload.get('category')
+            description = payload.get('description')
+            status = payload.get('status', 'paid')
+            try:
+                if entry_type not in {'income', 'expense'} or status not in {'planned', 'paid'}:
+                    raise ValueError('Tipo ou situação financeira inválida.')
+                category = sanitize_text(category, 'categoria', 64)
+                description = sanitize_text(description, 'descrição', 256)
+                amount = Decimal(str(payload.get('amount')))
+                cents = amount * 100
+                if not amount.is_finite() or cents != cents.to_integral_value() or cents <= 0 or cents > 999_999_999_999_99:
+                    raise ValueError('O valor deve ser maior que zero.')
+                amount_cents = int(cents)
+                entry_date = date.fromisoformat(payload.get('entry_date', date.today().isoformat())).isoformat()
+            except (TypeError, ValueError, InvalidOperation) as exc:
+                self.send_json({'error': str(exc)}, status=400)
+                return
+            with get_db() as conn:
+                cursor = conn.execute(
+                    '''INSERT INTO finance_entries (entry_type, category, description, amount_cents, entry_date, status, created_by)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)''',
+                    (entry_type, category, description, amount_cents, entry_date, status, user['id']),
+                )
+                entry_id = cursor.lastrowid
+            audit_record(user['id'], 'create', 'finance_entry', entry_id)
+            self.send_json({'message': 'Lançamento financeiro criado.', 'id': entry_id}, status=201)
+            return
+
+        if path == '/api/work-items':
+            item_type = payload.get('item_type')
+            severity = payload.get('severity')
+            try:
+                if item_type not in {'bug', 'risk'} or severity not in {'low', 'medium', 'high', 'critical'}:
+                    raise ValueError('Tipo ou prioridade inválida.')
+                title = sanitize_text(payload.get('title'), 'título', 160)
+                description = sanitize_text(payload.get('description'), 'descrição', 2000)
+                owner = sanitize_optional_text(payload.get('owner'), 'responsável', 64)
+                due_date = payload.get('due_date') or None
+                if due_date:
+                    due_date = date.fromisoformat(due_date).isoformat()
+                probability = int(payload.get('probability')) if item_type == 'risk' else None
+                impact = int(payload.get('impact')) if item_type == 'risk' else None
+                if item_type == 'risk' and (probability not in range(1, 6) or impact not in range(1, 6)):
+                    raise ValueError('Probabilidade e impacto devem ficar entre 1 e 5.')
+            except (TypeError, ValueError) as exc:
+                self.send_json({'error': str(exc)}, status=400)
+                return
+            with get_db() as conn:
+                cursor = conn.execute(
+                    '''INSERT INTO work_items (item_type, title, description, severity, probability, impact,
+                                              owner, due_date, created_by)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                    (item_type, title, description, severity, probability, impact, owner, due_date, user['id']),
+                )
+                item_id = cursor.lastrowid
+            audit_record(user['id'], 'create', item_type, item_id)
+            self.send_json({'message': 'Registro criado.', 'id': item_id}, status=201)
+            return
+
+        work_item_update = re.fullmatch(r'/api/work-items/(\d+)', path)
+        if work_item_update:
+            if not self.require_permission(user, 'catalog:write'):
+                return
+            item_id = int(work_item_update.group(1))
+            try:
+                status_value = normalize_status(payload.get('status'), {'open', 'in_progress', 'resolved', 'closed'}, 'status')
+                owner = sanitize_optional_text(payload.get('owner'), 'responsável', 64)
+            except ValueError as exc:
+                self.send_json({'error': str(exc)}, status=400)
+                return
+            with get_db() as conn:
+                cursor = conn.execute(
+                    'UPDATE work_items SET status=?, owner=?, updated_at=CURRENT_TIMESTAMP WHERE id=?',
+                    (status_value, owner, item_id),
+                )
+                if not cursor.rowcount:
+                    self.send_json({'error': 'Registro não encontrado.'}, status=404)
+                    return
+            audit_record(user['id'], 'update', 'work_item', item_id)
+            self.send_json({'message': 'Registro atualizado.'})
+            return
+
+        delete_finance_match = re.fullmatch(r'/api/finance/entries/(\d+)/delete', path)
+        if delete_finance_match:
+            if user['role'] not in {'admin', 'finance'}:
+                self.send_json({'error': 'Permissão financeira necessária.'}, status=403)
+                return
+            entry_id = int(delete_finance_match.group(1))
+            with get_db() as conn:
+                result = conn.execute('DELETE FROM finance_entries WHERE id=?', (entry_id,))
+                if not result.rowcount:
+                    self.send_json({'error': 'Lançamento não encontrado.'}, status=404)
+                    return
+            audit_record(user['id'], 'delete', 'finance_entry', entry_id)
+            self.send_json({'message': 'Lançamento removido.'})
+            return
+
+        threshold_match = re.fullmatch(r'/api/alerts/stock/(\d+)/threshold', path)
+        if threshold_match:
+            if not self.require_permission(user, 'alerts:write'):
+                return
+            product_id = int(threshold_match.group(1))
+            try:
+                minimum = int(payload.get('minimum_quantity'))
+                if minimum < 0 or minimum > 1_000_000:
+                    raise ValueError('Limite deve estar entre 0 e 1.000.000.')
+            except (TypeError, ValueError) as exc:
+                self.send_json({'error': str(exc)}, status=400)
+                return
+            with get_db() as conn:
+                if not conn.execute('SELECT 1 FROM products WHERE id=?', (product_id,)).fetchone():
+                    self.send_json({'error': 'Produto não encontrado.'}, status=404)
+                    return
+                conn.execute(
+                    '''INSERT INTO stock_thresholds (product_id, minimum_quantity, updated_by, updated_at)
+                       VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                       ON CONFLICT(product_id) DO UPDATE SET minimum_quantity=excluded.minimum_quantity,
+                         updated_by=excluded.updated_by, updated_at=CURRENT_TIMESTAMP''',
+                    (product_id, minimum, user['id']),
+                )
+                conn.execute('DELETE FROM stock_alert_acknowledgements WHERE product_id=?', (product_id,))
+            audit_record(user['id'], 'set_threshold', 'product', product_id)
+            self.send_json({'message': 'Limite de estoque atualizado.'})
+            return
+
+        acknowledge_match = re.fullmatch(r'/api/alerts/stock/(\d+)/acknowledge', path)
+        if acknowledge_match:
+            product_id = int(acknowledge_match.group(1))
+            with get_db() as conn:
+                product = conn.execute('SELECT quantity FROM products WHERE id=?', (product_id,)).fetchone()
+                if product is None:
+                    self.send_json({'error': 'Produto não encontrado.'}, status=404)
+                    return
+                conn.execute(
+                    '''INSERT INTO stock_alert_acknowledgements (product_id, acknowledged_quantity, acknowledged_by)
+                       VALUES (?, ?, ?)
+                       ON CONFLICT(product_id) DO UPDATE SET acknowledged_quantity=excluded.acknowledged_quantity,
+                         acknowledged_by=excluded.acknowledged_by, acknowledged_at=CURRENT_TIMESTAMP''',
+                    (product_id, product['quantity'], user['id']),
+                )
+            audit_record(user['id'], 'acknowledge', 'stock_alert', product_id)
+            self.send_json({'message': 'Alerta marcado como visto.'})
+            return
+
+        product_action = re.fullmatch(r'/api/products/(\d+)/(deactivate|activate|delete)', path)
+        if product_action:
+            if not self.require_permission(user, 'catalog:write'):
+                return
+            product_id = int(product_action.group(1))
+            action = product_action.group(2)
+            if action == 'delete' and user['role'] != 'admin':
+                self.send_json({'error': 'A remoção definitiva exige perfil administrador.'}, status=403)
+                return
+            with get_db() as conn:
+                exists = conn.execute('SELECT id FROM products WHERE id=?', (product_id,)).fetchone()
+                if exists is None:
+                    self.send_json({'error': 'Produto não encontrado.'}, status=404)
+                    return
+                if action == 'delete':
+                    conn.execute('DELETE FROM products WHERE id=?', (product_id,))
+                    audit_action = 'delete'
+                    message = 'Produto removido definitivamente.'
+                else:
+                    active = 0 if action == 'deactivate' else 1
+                    conn.execute('UPDATE products SET active=? WHERE id=?', (active, product_id))
+                    audit_action = action
+                    message = 'Produto desativado.' if not active else 'Produto reativado.'
+            audit_record(user['id'], audit_action, 'product', product_id)
+            self.send_json({'message': message})
+            return
+
+        product_update = re.fullmatch(r'/api/products/(\d+)', path)
+        if product_update:
+            if not self.require_permission(user, 'catalog:write'):
+                return
+            product_id = int(product_update.group(1))
+            try:
+                values = validate_product_payload(payload)
+            except (TypeError, ValueError) as exc:
+                self.send_json({'error': str(exc)}, status=400)
+                return
+            try:
+                with get_db() as conn:
+                    cursor = conn.execute(
+                        '''UPDATE products SET name=?, category=?, sku=?, reference=?, brand=?, status=?, price=?,
+                                  quantity=?, supplier=?, notes=? WHERE id=?''',
+                        (*values, product_id),
+                    )
+                    if not cursor.rowcount:
+                        self.send_json({'error': 'Produto não encontrado.'}, status=404)
+                        return
+            except sqlite3.IntegrityError as exc:
+                self.send_json({'error': f'Outro produto já usa esse SKU: {exc}'}, status=409)
+                return
+            audit_record(user['id'], 'update', 'product', product_id)
+            self.send_json({'message': 'Produto atualizado.'})
+            return
+
         if path == '/api/telemetry':
             event_name = payload.get('event')
             if not isinstance(event_name, str) or event_name not in TELEMETRY_EVENTS:
@@ -457,6 +1182,9 @@ class AppHandler(BaseHTTPRequestHandler):
             return
 
         if path == '/api/integrations/google-sheets/export':
+            if user['role'] != 'admin':
+                self.send_json({'error': 'Apenas administradores podem exportar diretamente para a planilha configurada.'}, status=403)
+                return
             if not google_sheets_configured():
                 self.send_json({'error': 'A integração Google Sheets não está configurada pelo administrador.'}, status=503)
                 return
@@ -464,10 +1192,14 @@ class AppHandler(BaseHTTPRequestHandler):
             return
 
         if path == '/api/clients':
+            if not self.require_permission(user, 'catalog:write'):
+                return
             self.create_client(payload)
             return
 
         if path == '/api/products':
+            if not self.require_permission(user, 'catalog:write'):
+                return
             self.create_product(payload)
             return
 
@@ -491,41 +1223,21 @@ class AppHandler(BaseHTTPRequestHandler):
         try:
             with get_db() as conn:
                 cursor = conn.execute(
-                    '''INSERT INTO clients (name, username, email, phone, cpf, status, city, role, notes)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                    (name, username, email, phone, cpf, status, city, role, notes),
+                    '''INSERT INTO clients (name, username, email, phone, cpf, status, city, role, notes, created_by)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                    (name, username, email, phone, cpf, status, city, role, notes, self.current_user['id']),
                 )
                 conn.commit()
         except sqlite3.IntegrityError as exc:
             self.send_json({'error': f'Usuário duplicado ou campo único já existente: {exc}'}, status=409)
             return
 
+        audit_record(self.current_user['id'], 'create', 'client', cursor.lastrowid)
         self.send_json({'message': 'Cliente criado com sucesso.', 'id': cursor.lastrowid}, status=201)
 
     def create_product(self, payload):
         try:
-            name = sanitize_text(payload.get('name'), 'nome', 128)
-            category = sanitize_text(payload.get('category'), 'categoria', 64)
-            sku = sanitize_text(payload.get('sku'), 'sku', 64)
-            reference = sanitize_text(payload.get('reference'), 'referência', 64)
-            brand = sanitize_text(payload.get('brand'), 'marca', 64)
-            status = normalize_status(payload.get('status'), PRODUCT_ALLOWED_STATUS, 'status')
-            price_value = payload.get('price')
-            if price_value is None:
-                raise ValueError('O campo preço é obrigatório.')
-            price = float(price_value)
-            if not math.isfinite(price) or price < 0:
-                raise ValueError('O preço não pode ser negativo.')
-            quantity_value = payload.get('quantity')
-            if quantity_value is None:
-                raise ValueError('O campo quantidade é obrigatório.')
-            quantity = int(quantity_value)
-            if isinstance(quantity_value, bool) or str(quantity) != str(quantity_value).strip():
-                raise ValueError('A quantidade deve ser um número inteiro.')
-            if quantity < 0:
-                raise ValueError('A quantidade não pode ser negativa.')
-            supplier = sanitize_text(payload.get('supplier'), 'fornecedor', 128)
-            notes = sanitize_optional_text(payload.get('notes'), 'observações', 512)
+            values = validate_product_payload(payload)
         except (TypeError, ValueError) as exc:
             self.send_json({'error': str(exc)}, status=400)
             return
@@ -533,15 +1245,16 @@ class AppHandler(BaseHTTPRequestHandler):
         try:
             with get_db() as conn:
                 cursor = conn.execute(
-                    '''INSERT INTO products (name, category, sku, reference, brand, status, price, quantity, supplier, notes)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                    (name, category, sku, reference, brand, status, price, quantity, supplier, notes),
+                    '''INSERT INTO products (name, category, sku, reference, brand, status, price, quantity, supplier, notes, created_by)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                    (*values, self.current_user['id']),
                 )
                 conn.commit()
         except sqlite3.IntegrityError as exc:
             self.send_json({'error': f'Produto duplicado ou campo único já existente: {exc}'}, status=409)
             return
 
+        audit_record(self.current_user['id'], 'create', 'product', cursor.lastrowid)
         self.send_json({'message': 'Produto criado com sucesso.', 'id': cursor.lastrowid}, status=201)
 
     def export_dashboard(self):
@@ -622,6 +1335,8 @@ class AppHandler(BaseHTTPRequestHandler):
             return 'application/json; charset=utf-8'
         if suffix == '.webmanifest':
             return 'application/manifest+json; charset=utf-8'
+        if suffix == '.svg':
+            return 'image/svg+xml; charset=utf-8'
         if suffix == '.html':
             return 'text/html; charset=utf-8'
         return 'application/octet-stream'

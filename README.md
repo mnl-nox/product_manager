@@ -1,20 +1,27 @@
 # Product Manager
 
-Aplicação web para organizar clientes e catálogo de produtos, acompanhar indicadores de estoque e exportar dados para análise.
+[![Open Source](assets/icons/open-source-mark.svg)](LICENSE) **Open Source · Licença MIT**
+
+Aplicativo de gestão de produtos para desktop Windows/Linux e PWA Android, com catálogo, estoque, usuários, financeiro operacional e exportação de dados.
 
 ## Objetivo do produto
 
 O Product Manager foi criado para reunir cadastros de clientes e produtos que podem ficar espalhados em planilhas ou sistemas diferentes. Ele ajuda equipes pequenas a consultar o catálogo, acompanhar quantidades e identificar itens que precisam de atenção em um painel simples.
 
-Hoje, o app oferece cadastro e consulta de clientes e produtos, filtro por categoria, indicadores de estoque, exportação CSV e Excel (`.xlsx`) e envio opcional do dashboard a uma planilha Google configurada pelo administrador. Ele funciona localmente com SQLite. Ainda não possui autenticação nem operação multiusuário; financeiro e alertas avançados continuam planejados. Leia [o objetivo e os limites atuais](doc/objective.md) e [como configurar as exportações](docs/development.md#exportacoes-para-planilhas).
+Hoje, o app oferece cadastro de clientes e produtos em um espaço de trabalho compartilhado por usuários autenticados, papéis de acesso, lançamentos financeiros operacionais, alertas de estoque configuráveis e exportação CSV/Excel/Google Sheets. A autenticação usa contas locais e o banco SQLite. Leia [o objetivo e os limites atuais](doc/objective.md), [o guia de instalação e uso](docs/installation-usage.md) e [a configuração técnica](docs/development.md).
 
 ## Funcionalidades
 
 - Dashboard com totais, distribuição por categoria, clientes recentes e estoque crítico.
 - Cadastro de clientes e produtos com validação de campos e unicidade.
-- Filtro do catálogo por categoria e resumo de unidades e valor em estoque.
+- Edição, desativação, reativação e remoção administrativa de produtos.
+- Busca por nome/SKU/marca/fornecedor, filtro por categoria e resumo de unidades e valor em estoque.
 - Exportação do dashboard em CSV e Excel (`.xlsx`), além de integração opcional com Google Sheets.
-- API JSON e banco SQLite inicializado com dados de demonstração quando vazio.
+- Contas com papéis de administrador, operação, financeiro e leitura; sessões seguras e proteção CSRF.
+- Área financeira para registrar receitas/despesas realizadas ou previstas e consultar saldo operacional.
+- Central de alertas de estoque com prioridade, limite padrão e limite mínimo por produto.
+- Registro interno de bugs e riscos com prioridade e acompanhamento de estado.
+- API JSON, banco SQLite e dados demonstrativos opcionais por configuração.
 
 ## Tela de exemplo
 
@@ -33,6 +40,8 @@ Catálogo de produtos:
 
 ## Executar a aplicação web
 
+No aplicativo desktop, o primeiro acesso cria um token temporário local e abre o formulário seguro para provisionar o administrador, sem conta ou senha padrão. Para executar o servidor direto ou implantar o PWA, defina o token temporário de configuração. Siga [Instalação e primeiro acesso](docs/installation-usage.md#primeira-configuracao). Depois do bootstrap, toda a API de negócio exige sessão autenticada.
+
 ```bash
 python3 api/app.py
 ```
@@ -43,13 +52,13 @@ Abra <http://127.0.0.1:8000>. O banco padrão é `db/product_manager.db`. Para u
 PRODUCT_MANAGER_DB=/caminho/product_manager.db python3 api/app.py
 ```
 
-As rotas principais são `GET /api/health`, `GET /api/dashboard`, `GET /api/products`, `POST /api/products` e `POST /api/clients`. Veja [API e desenvolvimento](docs/development.md) para exemplos.
+As rotas principais incluem `GET /api/health`, `GET /api/dashboard`, `GET /api/products`, `POST /api/products`, `POST /api/clients`, além das APIs financeira e de alertas. Veja [API e desenvolvimento](docs/development.md) para detalhes de sessão e permissões.
 
 ## Instalar por plataforma
 
-- **Windows 10/11 x64:** o workflow para tags `v*` gera um instalador `.exe` com Inno Setup.
+- **Windows 10/11 x64:** o workflow de release gera um instalador `.exe` com Inno Setup.
 - **Linux x64:** `make package-linux` gera `.deb` e também `.rpm` quando `rpmbuild` estiver instalado.
-- **Android:** o frontend é um PWA instalável pelo Chrome. Hospede a aplicação atrás de HTTPS e escolha **Instalar app** ou **Adicionar à tela inicial**. O workflow publica um ZIP do PWA para implantação.
+- **Android:** o frontend é um PWA instalável pelo Chrome. Hospede a aplicação atrás de HTTPS e escolha **Instalar app** ou **Adicionar à tela inicial**. O workflow publica um ZIP de implantação.
 
 Para criar localmente o ZIP de implantação do PWA, use `make package-pwa`.
 
@@ -71,7 +80,7 @@ O passo a passo de instalação, primeiro uso, backup e relato de erros está em
 make test
 ```
 
-Os testes usam banco temporário e não alteram o banco de desenvolvimento.
+Os testes usam banco temporário e não alteram o banco de desenvolvimento. Consulte o [resultado da validação por ambiente](docs/test-results.md), incluindo os builds de pacotes e as plataformas que não estavam disponíveis para teste nativo.
 
 ## Núcleo C
 
@@ -107,7 +116,7 @@ src/, include/ núcleo C23 legado/em evolução
 
 ## Segurança e dados
 
-O modo desktop escuta somente no loopback. O PWA Android exige hospedagem HTTPS e uma implantação corporativa protegida com autenticação, autorização, TLS e gestão de segredos; a API atual ainda não implementa autenticação. O banco contém dados de demonstração e pode conter dados locais; não compartilhe o arquivo SQLite sem revisar seu conteúdo.
+O modo desktop escuta somente no loopback. O PWA Android exige HTTPS; contas e papéis são aplicados também na API. Configure cookies Secure atrás de TLS e proteja tokens Google e segredos de configuração. As contas compartilham um espaço de trabalho SQLite, sem isolamento entre organizações. O banco pode conter dados pessoais e financeiros; proteja o arquivo e seus backups. Veja os [limites e requisitos de implantação](docs/platforms.md) antes de usar em produção.
 
 Consulte [Política de privacidade](PRIVACY.md), [Política de segurança](SECURITY.md), [Contribuição](CONTRIBUTING.md), [arquitetura](doc/architecture.md), [requisitos](doc/requirements.md), [modelo de dados](doc/data-model.md) e [operação da API](docs/development.md).
 

@@ -35,6 +35,7 @@ cp -R "$ROOT/ui/." "$STAGE/usr/lib/product-manager/ui/"
 install -m 0644 "$ROOT/db/schema.sql" "$STAGE/usr/lib/product-manager/db/schema.sql"
 install -m 0644 "$ROOT/assets/icons/product-manager.svg" \
   "$ROOT/assets/icons/product-manager-192.png" "$ROOT/assets/icons/product-manager-512.png" \
+  "$ROOT/assets/icons/open-source-mark.svg" \
   "$STAGE/usr/lib/product-manager/assets/icons/"
 install -m 0644 "$ROOT/assets/icons/product-manager.svg" \
   "$STAGE/usr/share/icons/hicolor/scalable/apps/product-manager.svg"
