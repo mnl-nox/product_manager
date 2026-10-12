@@ -1,44 +1,17 @@
 # Roadmap
 
-## Fase 1 — Arquitetura
-- estrutura de diretórios;
-- modelo de dados;
-- documentação;
-- interfaces públicas;
-- regras de ID e status.
+## Atual
 
-## Fase 2 — Núcleo C
-- User;
-- UserProduct;
-- UserStore;
-- operações CRUD;
-- validações.
+- Dashboard e catálogo em interface web.
+- API local para cadastro e leitura de clientes e produtos.
+- SQLite, exportação CSV e dados demonstrativos.
+- Cobertura inicial de testes de integração.
 
-## Fase 3 — Interface terminal
-- menu principal;
-- cadastro;
-- listagem;
-- busca por ID;
-- atualização;
-- desativação/reativação;
-- gerenciamento de produtos/serviços.
+## Próximas evoluções
 
-## Fase 4 — Persistência
-- salvar;
-- carregar;
-- tratamento de arquivo corrompido;
-- backup;
-- versão do formato.
-
-## Fase 5 — Autenticação
-- contas;
-- hash de senha;
-- sessão;
-- papéis/permissões.
-
-## Fase 6 — Evolução
-- SQLite;
-- filtros avançados;
-- pesquisa textual;
-- auditoria;
-- relatórios.
+- Atualizar e desativar cadastros com histórico de alterações.
+- Busca, ordenação e paginação de clientes e produtos.
+- Melhorar validação de identificadores e mensagens localizadas.
+- Configurar logging estruturado, backups e migrações do banco.
+- Adicionar autenticação e autorização antes de qualquer uso compartilhado.
+- Decidir se o núcleo C23 será mantido ou removido após estabilização do produto web.

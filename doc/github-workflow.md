@@ -45,7 +45,7 @@ Labels are provisioned by `.github/workflows/labels.yml`.
 
 ## Semantic versioning
 
-The release workflow derives Git tags from Conventional Commit history:
+The release workflow derives Git tags from Conventional Commit history and creates a GitHub Release using the matching `CHANGELOG.md` section. Existing non-SemVer tags such as `ui-v1` are ignored:
 
 ```text
 BREAKING CHANGE or type!:  -> MAJOR
@@ -59,7 +59,7 @@ Tags use:
 vMAJOR.MINOR.PATCH
 ```
 
-The workflow runs on pushes to `main`. It only creates a new tag when new Conventional Commit messages exist since the previous tag.
+The workflow runs on pushes to `main`. It only creates a new tag when new Conventional Commit messages exist since the previous SemVer tag. Manually pushed `vMAJOR.MINOR.PATCH` tags also publish a release from the matching changelog section.
 
 ## GitHub Projects
 

@@ -1,113 +1,90 @@
-# login_term
+# Product Manager
 
-Sistema de gerenciamento de usuários em terminal, desenvolvido em **C23**.
-
-<p>
-  <img src="assets/svg/c23.svg" alt="C23" height="40">
-  <img src="assets/svg/gcc.svg" alt="GCC" height="40">
-  <img src="assets/svg/clang.svg" alt="Clang" height="40">
-  <img src="assets/svg/make.svg" alt="GNU Make" height="40">
-  <img src="assets/svg/linux.svg" alt="Linux" height="40">
-  <img src="assets/svg/sqlite.svg" alt="SQLite" height="40">
-</p>
-
-[![C23](https://img.shields.io/badge/C-C23-A8B9CC?logo=c&logoColor=white)](https://en.cppreference.com/w/c/23)
-[![GCC](https://img.shields.io/badge/GCC-Compiler-A42E2B?logo=gnu&logoColor=white)](https://gcc.gnu.org/)
-[![Clang](https://img.shields.io/badge/Clang-Compiler-262D3A?logo=llvm&logoColor=white)](https://clang.llvm.org/)
-[![GNU Make](https://img.shields.io/badge/GNU%20Make-Build-204866?logo=gnu&logoColor=white)](https://www.gnu.org/software/make/)
-[![Linux](https://img.shields.io/badge/Linux-Development-FCC624?logo=linux&logoColor=black)](https://www.linux.org/)
-[![SQLite](https://img.shields.io/badge/SQLite-Planned-003B57?logo=sqlite&logoColor=white)](https://sqlite.org/)
-
-## Visão geral
-
-O `login_term` centraliza o cadastro e gerenciamento de usuários em uma interface de terminal.
-
-O produto controla dados cadastrais, status e os produtos, ativos ou serviços associados a cada usuário.
-
-## O que o produto resolve
-
-- Identificação única e consulta por ID.
-- Cadastro e atualização de informações.
-- Ativação e desativação sem exclusão física.
-- Relacionamento entre usuários e produtos/serviços.
-- Preservação do histórico cadastral.
-- Base modular para futura persistência e autenticação.
+Aplicação web local para gestão de clientes e catálogo de produtos, com dashboard, estoque, API HTTP em Python e persistência SQLite.
 
 ## Funcionalidades
 
-- [ ] Cadastro de usuários
-- [ ] Geração automática de ID
-- [ ] Listagem de usuários ativos
-- [ ] Busca por ID
-- [ ] Atualização cadastral
-- [ ] Desativação e reativação
-- [ ] Produtos, ativos e serviços
-- [ ] Persistência local
-- [ ] Autenticação e permissões
+- Dashboard com totais, distribuição por categoria, clientes recentes e estoque crítico.
+- Cadastro de clientes e produtos com validação de campos e unicidade.
+- Filtro do catálogo por categoria e resumo de unidades e valor em estoque.
+- Exportação do dashboard em CSV compatível com Excel e Google Sheets.
+- API JSON e banco SQLite inicializado com dados de demonstração quando vazio.
 
+## Tela de exemplo
 
-## Arquitetura
+Captura do dashboard carregado com os dados de demonstração:
 
-```text
-Terminal UI
-    ↓
-Application / Services
-    ↓
-Domain
-    ↓
-Store / Repository
-    ↓
-Persistence
+![Dashboard do Product Manager](docs/screenshots/dashboard.png)
+
+Catálogo de produtos:
+
+![Catálogo do Product Manager](docs/screenshots/products.png)
+
+## Pré-requisitos
+
+- Python 3.10 ou superior (sem dependências externas para API e testes).
+- GCC ou Clang com suporte a C23 e GNU Make, somente para o núcleo C legado.
+
+## Executar a aplicação web
+
+```bash
+python3 api/app.py
 ```
 
-Diagramas UML:
+Abra <http://127.0.0.1:8000>. O banco padrão é `db/product_manager.db`. Para usar outro caminho, defina `PRODUCT_MANAGER_DB` antes de iniciar o servidor:
 
-- [Casos de uso](src/uml/use-cases.svg)
-- [Modelo de classes](src/uml/class-model.svg)
-- [Arquitetura de componentes](src/uml/component-architecture.svg)
+```bash
+PRODUCT_MANAGER_DB=/caminho/product_manager.db python3 api/app.py
+```
 
+As rotas principais são `GET /api/health`, `GET /api/dashboard`, `GET /api/products`, `POST /api/products` e `POST /api/clients`. Veja [API e desenvolvimento](docs/development.md) para exemplos.
 
-## Padrões e princípios
+## Testes
 
-- **C23** como padrão da linguagem.
-- **Separação de responsabilidades**.
-- **Modularidade** através de headers em `include/`.
-- **Soft delete** para usuários e itens.
-- **ID gerado pelo sistema**, único e não reutilizado.
-- **Conventional Commits**.
-- Credenciais de autenticação isoladas dos dados cadastrais.
-- Persistência desacoplada da regra de negócio.
+```bash
+make test
+```
 
-## Documentação
+Os testes usam banco temporário e não alteram o banco de desenvolvimento.
 
-- [Objetivos](doc/objective.md)
-- [Requisitos](doc/requirements.md)
-- [Arquitetura](doc/architecture.md)
-- [Modelo de dados](doc/data-model.md)
-- [Fluxo do menu](doc/menu-flow.md)
-- [Roadmap](doc/roadmap.md)
+## Núcleo C
 
-## Compilação
-
-O projeto utiliza `Makefile` e deve compilar explicitamente em C23:
+O repositório mantém um núcleo C23 em desenvolvimento, ainda separado da aplicação web:
 
 ```bash
 make
-make run
-make clean
+./build/product_manager
 ```
 
-Compiladores previstos:
+## Exportar CSV
 
-- GCC
-- Clang
+Com o servidor em execução:
 
-## Status
+```bash
+python3 scripts/export_dashboard.py
+```
 
-**Em desenvolvimento inicial.**
+O arquivo é salvo em `exports/`. A exportação é local e não envia dados a serviços externos.
 
-Prioridade atual: implementar o núcleo de gerenciamento de usuários, seguido pela interface de terminal e persistência.
+## Estrutura
+
+```text
+api/          servidor HTTP e API
+ui/           interface web
+db/           esquema SQLite e banco local
+config/       mapeamentos de campos
+tests/        testes automatizados
+docs/         arquitetura, operação e contribuição
+scripts/      utilitários locais
+src/, include/ núcleo C23 legado/em evolução
+```
+
+## Segurança e dados
+
+O servidor é destinado a desenvolvimento local e escuta em `127.0.0.1`. Não há autenticação nem proteção para exposição pública; não o publique na internet sem implementar autenticação, autorização, gestão de segredos, TLS e controles de produção. O banco contém dados de demonstração e pode conter dados locais; não compartilhe o arquivo SQLite sem revisar seu conteúdo.
+
+Consulte [Política de segurança](SECURITY.md), [Contribuição](CONTRIBUTING.md), [arquitetura](doc/architecture.md), [requisitos](doc/requirements.md), [modelo de dados](doc/data-model.md) e [operação da API](docs/development.md).
 
 ## Licença
 
-A licença do projeto ainda não foi definida.
+Ainda não definida. Todos os direitos permanecem com seus respectivos titulares até a inclusão de uma licença.

@@ -1,42 +1,30 @@
 # Modelo de dados
 
-## Entidade User
+O esquema é mantido em `db/schema.sql`.
 
-| Campo | Tipo C | Regra |
-|---|---|---|
-| id | unsigned int | obrigatório, único, gerado pelo sistema |
-| name | char[] | obrigatório |
-| phone | char[] | obrigatório na primeira versão |
-| username | char[] | obrigatório e candidato a unicidade |
-| active | bool | true = ativo; false = inativo |
-| created_at | futuro | data/hora de criação |
-| updated_at | futuro | última alteração |
+## Cliente (`clients`)
 
-## Entidade UserProduct
+| Campo | Regra |
+|---|---|
+| `id` | Chave primária autoincremental |
+| `name`, `email`, `phone`, `city`, `role` | Obrigatórios |
+| `username` | Obrigatório e único |
+| `cpf` | Obrigatório e único; a API valida formato de 11 dígitos |
+| `status` | `active`, `inactive` ou `pending` |
+| `notes` | Observações opcionais |
+| `created_at` | Data de criação gerada pelo SQLite |
 
-Representa qualquer produto, ativo ou serviço atualmente utilizado ou anteriormente associado ao usuário.
+## Produto (`products`)
 
-| Campo | Tipo C | Regra |
-|---|---|---|
-| id | unsigned int | identificador do vínculo/item |
-| user_id | unsigned int | referência ao usuário |
-| name | char[] | nome do produto/serviço |
-| type | char[] | produto, ativo ou serviço |
-| reference | char[] | código externo ou referência |
-| active | bool | estado atual do vínculo |
-| started_at | futuro | início da utilização |
-| ended_at | futuro | fim da utilização, quando houver |
+| Campo | Regra |
+|---|---|
+| `id` | Chave primária autoincremental |
+| `name`, `category`, `reference`, `brand`, `supplier` | Obrigatórios |
+| `sku` | Obrigatório e único |
+| `status` | `available`, `reserved` ou `out_of_stock` |
+| `price` | Número maior ou igual a zero |
+| `quantity` | Inteiro maior ou igual a zero |
+| `notes` | Observações opcionais |
+| `created_at` | Data de criação gerada pelo SQLite |
 
-## Relação
-
-Um usuário possui zero ou muitos produtos/ativos/serviços.
-
-`User 1 ---- N UserProduct`
-
-O ID do usuário é a chave principal lógica do cadastro. Os itens vinculados devem carregar a referência ao usuário, em vez de duplicar os dados cadastrais.
-
-## Regra de exclusão
-
-Não utilizar exclusão física para as operações normais de negócio. O padrão será soft delete/desativação por estado.
-
-Isso preserva histórico e permite auditoria e reativação.
+No dashboard, estoque total é a soma das quantidades. Valor em estoque é calculado no navegador como preço vezes quantidade para os itens filtrados/exibidos.

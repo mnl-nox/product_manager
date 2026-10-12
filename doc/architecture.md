@@ -1,172 +1,40 @@
-# Arquitetura do login_term
+# Arquitetura do Product Manager
 
-## Visão
+## Visão geral
 
-O projeto será organizado em camadas para evitar que a interface de terminal conheça detalhes de armazenamento ou das regras internas.
+O produto atual é uma aplicação web local. A interface HTML/CSS/JavaScript consome uma API HTTP escrita com a biblioteca padrão do Python; a API valida entradas e persiste os dados em SQLite.
 
-```
-+---------------------------+
-|        Terminal UI        |
-|     menu.c / input.c      |
-+-------------+-------------+
-              |
-              v
-+---------------------------+
-|       Application         |
-|    user_service.c         |
-+-------------+-------------+
-              |
-              v
-+---------------------------+
-|          Domain           |
-| user.c / product.c        |
-+-------------+-------------+
-              |
-              v
-+---------------------------+
-|       Repository          |
-| user_store.c / ...        |
-+-------------+-------------+
-              |
-              v
-+---------------------------+
-|       Persistence         |
-| file.c -> SQLite futuro   |
-+---------------------------+
+```text
+Navegador (ui/)
+      │ HTTP / JSON
+      ▼
+API Python (api/app.py)
+      │ consultas parametrizadas
+      ▼
+SQLite (db/schema.sql → db/product_manager.db)
 ```
 
 ## Componentes
 
-### 1. main
-Ponto de entrada. Inicializa dependências, carrega dados e inicia o menu.
+- `ui/`: dashboard, catálogo, formulários e renderização dos resultados.
+- `api/`: servidor HTTP, validação, operações SQL, resposta JSON e exportação CSV.
+- `db/schema.sql`: tabelas `clients` e `products`, chaves, unicidade e restrições.
+- `config/field-mapping.json`: mapeamento explícito entre os nomes de campos do produto e do banco.
+- `tests/`: testes de integração da API usando banco temporário.
+- `src/` e `include/`: núcleo C23 legado/em evolução, não usado pelo servidor web atual.
 
-### 2. menu
-Responsável por:
-- desenhar menus;
-- receber entrada;
-- validar o formato básico da entrada;
-- chamar serviços;
-- apresentar resultados.
+## Fluxo de uma requisição
 
-O menu não deve manipular diretamente arrays internos de usuários.
+1. O JavaScript envia uma requisição para `/api`.
+2. O handler valida formato, tamanho, valores permitidos e campos obrigatórios.
+3. A API usa parâmetros SQL para ler ou alterar o SQLite.
+4. A resposta inclui JSON e cabeçalhos HTTP de segurança básicos.
+5. A interface escapa valores dinâmicos antes de incluí-los no HTML.
 
-### 3. application/service
-Orquestra casos de uso como:
-- cadastrar usuário;
-- buscar usuário;
-- atualizar cadastro;
-- ativar/desativar;
-- gerenciar itens vinculados.
+## Persistência e dados de demonstração
 
-Aqui ficam regras que envolvem mais de uma entidade ou uma sequência de operações.
+O caminho padrão é `db/product_manager.db`; `PRODUCT_MANAGER_DB` permite selecionar outro arquivo. A aplicação cria as tabelas se necessário e insere registros de exemplo quando cada tabela está vazia. O arquivo de banco é dado de runtime e deve permanecer fora do controle de versão.
 
-### 4. domain
-Contém estruturas e regras próprias de usuário e itens vinculados:
-- validação;
-- inicialização;
-- mudança de estado;
-- inclusão/remoção lógica de itens.
+## Limites atuais
 
-### 5. repository/store
-Define operações sobre a coleção de usuários sem depender do terminal:
-- inserir;
-- buscar por ID;
-- listar;
-- atualizar;
-- desativar;
-- reativar.
-
-Na primeira versão pode operar em memória.
-
-### 6. persistence
-Responsável por converter o estado da aplicação para um armazenamento permanente.
-
-Primeiro alvo:
-- arquivo local controlado pela aplicação.
-
-Evolução:
-- SQLite;
-- migrações de esquema;
-- transações.
-
-## Estrutura de diretórios
-
-```
-login_term/
-├── include/
-│   ├── menu.h
-│   ├── user.h
-│   ├── product.h
-│   ├── user_service.h
-│   ├── user_store.h
-│   └── persistence.h
-├── src/
-│   ├── main.c
-│   ├── menu.c
-│   ├── user.c
-│   ├── product.c
-│   ├── user_service.c
-│   ├── user_store.c
-│   └── persistence.c
-├── core/
-│   └── README.md
-├── doc/
-│   ├── architecture.md
-│   ├── data-model.md
-│   ├── menu-flow.md
-│   ├── objective.md
-│   ├── requirements.md
-│   └── roadmap.md
-├── build/
-├── obj/
-├── .gitignore
-├── Makefile
-└── Readme.md
-```
-
-## Limites de responsabilidade
-
-O código deve seguir estas regras:
-
-1. `menu.c` não acessa estruturas globais de persistência.
-2. `user.c` não imprime mensagens no terminal.
-3. `persistence.c` não conhece o menu.
-4. `main.c` apenas inicializa e coordena o ciclo de execução.
-5. Interfaces públicas ficam em `include/`.
-6. Implementações ficam em `src/`.
-
-## IDs
-
-O ID de usuário será gerado por um componente central de armazenamento.
-
-Regras:
-- inicia em um valor positivo;
-- nunca é solicitado ao operador;
-- não é reutilizado;
-- permanece associado ao usuário mesmo após desativação.
-
-A persistência deverá salvar também o próximo ID disponível ou permitir derivá-lo com segurança a partir do armazenamento.
-
-## Autenticação
-
-Embora o nome do projeto seja login_term, autenticação não deve ser confundida com cadastro.
-
-Em uma etapa futura, credenciais poderão ser modeladas separadamente:
-
-`Account -> User`
-
-O cadastro de cliente não deverá armazenar senha. A camada de autenticação será responsável por username, hash de senha, sessão e autorização.
-
-## Extensibilidade
-
-Novos campos cadastrais devem ser introduzidos no domínio e no modelo de persistência, enquanto o menu utiliza serviços para edição.
-
-Isso permite adicionar no futuro, por exemplo:
-- e-mail;
-- documento;
-- endereço;
-- data de nascimento;
-- observações;
-- perfil/tipo de cliente;
-- datas de criação e atualização.
-
+O servidor atende desenvolvimento local, sem autenticação, autorização, controle de concorrência avançado ou implantação de produção. O núcleo C não é conectado à aplicação web. As rotas atuais não incluem edição/exclusão, paginação ou busca textual.

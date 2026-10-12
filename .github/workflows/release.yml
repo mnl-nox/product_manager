@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - 'v[0-9]*'
   workflow_dispatch:
 
 permissions:
@@ -20,13 +22,27 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - name: Publish manually pushed version tag
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          git fetch origin main
+          git checkout origin/main
+          python3 scripts/release_notes.py "$TAG" > release-notes.md
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --verify-tag --title "Product Manager $TAG" --notes-file release-notes.md
+          fi
+
       - name: Calculate version
         id: version
+        if: github.ref_type != 'tag'
         shell: bash
         run: |
           set -euo pipefail
 
-          last_tag="$(git tag --sort=-v:refname | head -n 1 || true)"
+          last_tag="$(git tag -l 'v[0-9]*' --sort=-v:refname | head -n 1 || true)"
 
           if [[ -z "$last_tag" ]]; then
             current="0.0.0"
@@ -110,3 +126,14 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "$TAG" -m "release: $TAG"
           git push origin "$TAG"
+
+      - name: Publish release
+        if: steps.version.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          python3 scripts/release_notes.py "$TAG" > release-notes.md
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --verify-tag --title "Product Manager $TAG" --notes-file release-notes.md
+          fi

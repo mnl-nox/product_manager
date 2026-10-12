@@ -1,11 +1,11 @@
 CC ?= cc
 CFLAGS ?= -std=c23 -Wall -Wextra -Wpedantic -Werror -Iinclude
 LDFLAGS ?=
-TARGET := build/login_term
+TARGET := build/product_manager
 SOURCES := $(wildcard src/*.c)
 OBJECTS := $(patsubst src/%.c,obj/%.o,$(SOURCES))
 
-.PHONY: all run clean
+.PHONY: all run run-api test clean
 
 all: $(TARGET)
 
@@ -20,6 +20,12 @@ build obj:
 
 run: $(TARGET)
 	./$(TARGET)
+
+run-api:
+	python3 api/app.py
+
+test:
+	python3 -m unittest discover -s tests -v
 
 clean:
 	rm -f obj/*.o $(TARGET)

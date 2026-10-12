@@ -1,0 +1,80 @@
+from __future__ import annotations
+
+import os
+import tempfile
+import unittest
+
+TEMP_DIR = tempfile.TemporaryDirectory(prefix='product-manager-tests-')
+os.environ['PRODUCT_MANAGER_DB'] = os.path.join(TEMP_DIR.name, 'test.db')
+
+from api import app  # noqa: E402
+
+
+class ProductManagerApiTests(unittest.TestCase):
+    @classmethod
+    def tearDownClass(cls):
+        TEMP_DIR.cleanup()
+
+    def setUp(self):
+        with app.get_db() as conn:
+            conn.execute('DELETE FROM products')
+            conn.execute('DELETE FROM clients')
+
+    def handler(self, path='/'):
+        handler = app.AppHandler.__new__(app.AppHandler)
+        handler.path = path
+        handler.result = None
+        handler.send_json = lambda payload, status=200: setattr(handler, 'result', (status, payload))
+        return handler
+
+    def request_json(self, path, payload=None):
+        handler = self.handler(path)
+        if path == '/api/health' or path == '/api/dashboard':
+            handler.do_GET()
+        elif path == '/api/products':
+            handler.create_product(payload)
+        else:
+            raise AssertionError(f'Unexpected test route: {path}')
+        return handler.result
+
+    def product_payload(self, **overrides):
+        payload = {
+            'name': 'Notebook Pro', 'category': 'Computadores', 'sku': 'NB-PRO-1',
+            'reference': 'REF-1', 'brand': 'Acme', 'status': 'available',
+            'price': 4200, 'quantity': 4, 'supplier': 'Fornecedor Exemplo', 'notes': '',
+        }
+        return payload | overrides
+
+    def test_health_reports_service_and_database(self):
+        status, body = self.request_json('/api/health')
+        self.assertEqual(status, 200)
+        self.assertEqual(body, {'status': 'ok', 'database': 'connected'})
+
+    def test_product_can_be_created_and_listed(self):
+        status, created = self.request_json('/api/products', self.product_payload())
+        self.assertEqual(status, 201)
+        self.assertGreater(created['id'], 0)
+        with app.get_db() as conn:
+            product = conn.execute('SELECT sku FROM products').fetchone()
+        self.assertEqual(product['sku'], 'NB-PRO-1')
+
+    def test_duplicate_sku_returns_conflict(self):
+        self.assertEqual(self.request_json('/api/products', self.product_payload())[0], 201)
+        status, _ = self.request_json('/api/products', self.product_payload(name='Outro produto'))
+        self.assertEqual(status, 409)
+
+    def test_negative_quantity_is_rejected(self):
+        status, body = self.request_json('/api/products', self.product_payload(quantity=-1))
+        self.assertEqual(status, 400)
+        self.assertIn('negativa', body['error'])
+
+    def test_dashboard_reflects_created_product(self):
+        self.request_json('/api/products', self.product_payload())
+        status, dashboard = self.request_json('/api/dashboard')
+        self.assertEqual(status, 200)
+        self.assertEqual(dashboard['products'], 1)
+        self.assertEqual(dashboard['totalStock'], 4)
+
+
+if __name__ == '__main__':
+    unittest.main()
