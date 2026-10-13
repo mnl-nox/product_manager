@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sqlite3
 import tempfile
 import unittest
 
@@ -63,6 +64,29 @@ class ProductManagerApiTests(unittest.TestCase):
         status, body = self.request_json('/api/health')
         self.assertEqual(status, 200)
         self.assertEqual(body, {'status': 'ok', 'database': 'connected'})
+
+    def test_liveness_probe_is_public_and_minimal(self):
+        handler = self.handler('/healthz', authenticated=False)
+        handler.do_GET()
+        self.assertEqual(handler.result, (200, {'status': 'ok'}))
+
+    def test_readiness_probe_checks_database_without_authentication(self):
+        handler = self.handler('/readyz', authenticated=False)
+        handler.do_GET()
+        self.assertEqual(handler.result, (200, {'status': 'ready'}))
+
+    def test_readiness_probe_returns_unavailable_without_database_details(self):
+        original_get_db = app.get_db
+        def unavailable_database():
+            raise sqlite3.OperationalError('private database path')
+        app.get_db = unavailable_database
+        try:
+            handler = self.handler('/readyz', authenticated=False)
+            handler.do_GET()
+            self.assertEqual(handler.result, (503, {'status': 'unavailable'}))
+            self.assertNotIn('private database path', str(handler.result))
+        finally:
+            app.get_db = original_get_db
 
     def test_health_requires_authentication(self):
         handler = self.handler('/api/health', authenticated=False)
