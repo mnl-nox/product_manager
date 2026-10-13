@@ -1,5 +1,7 @@
 # Como contribuir
 
+O Product Manager é mantido por [Manoel E. S. S. (`@mnl-nox`)](https://github.com/mnl-nox). Contribuições da comunidade são bem-vindas; siga as orientações abaixo para facilitar a revisão.
+
 ## Preparação
 
 1. Use Python 3.10+; a aplicação não exige pacotes Python externos.
