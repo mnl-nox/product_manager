@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Product Manager</title>
+  <desc id="desc">Símbolo abstrato em espiral com curvas brancas, azuis e ciano sobre fundo azul-marinho.</desc>
+  <defs>
+    <linearGradient id="whiteBlue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".58" stop-color="#e8f5ff"/><stop offset="1" stop-color="#8dc8ff"/></linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#9ed6ff"/><stop offset=".5" stop-color="#1265ff"/><stop offset="1" stop-color="#0739e8"/></linearGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#52e3ff"/><stop offset="1" stop-color="#008dff"/></linearGradient>
+    <radialGradient id="bg" cx="35%" cy="20%" r="95%"><stop stop-color="#07142d"/><stop offset="1" stop-color="#01040d"/></radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="100" fill="url(#bg)"/>
+  <path d="M83 119C153 40 280 32 362 73c71 35 104 111 81 180-17 51-55 79-106 85 46-16 69-51 66-91-4-54-47-99-107-111-70-14-148 14-213 66Z" fill="url(#whiteBlue)"/>
+  <path d="M69 230c31-70 105-124 187-130 64-5 119 22 145 71 23 44 19 96-9 135-20 28-49 44-85 49 39-18 56-49 50-83-8-42-45-70-95-74-70-6-133 26-177 83-35 45-57 103-69 174V279c0-18 18-36 53-49Z" fill="url(#blue)"/>
+  <path d="M66 449c18-73 53-143 103-193 38-38 77-60 120-69-29 17-48 43-53 76-6 38 5 76-12 109-21 41-67 53-104 77-25 16-43 36-54 62Z" fill="#0751f5"/>
+  <path d="M272 220c28-28 65-38 99-29-34-2-61 12-76 39-20 37-7 78 25 100 22 15 49 20 77 16-42 13-87 2-111-27-27-32-33-70-14-99Z" fill="url(#cyan)"/>
+</svg>
