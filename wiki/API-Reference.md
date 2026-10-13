@@ -34,7 +34,9 @@ A API é implementada em `api/app.py`. As respostas de negócio são JSON, excet
 | GET | `/api/dashboard/export.csv` | Exporta dashboard em CSV |
 | GET | `/api/dashboard/export.xlsx` | Exporta dashboard em XLSX |
 
-Exemplo de filtro: `GET /api/products?category=Hardware`. Use `category=all` para todas as categorias.\n\nO endpoint `GET /api/inventory/movements?product_id=ID&limit=100` retorna o histórico mais recente primeiro. `product_id` é opcional; `limit` deve ficar entre 1 e 500. Os movimentos incluem saldo inicial, ajustes, baixas de vendas realizadas e recebimentos de compras. Movimentos registrados não podem ser editados ou excluídos; produtos com histórico não podem ser removidos definitivamente.
+Exemplo de filtro: `GET /api/products?category=Hardware`. Use `category=all` para todas as categorias.
+
+O endpoint `GET /api/inventory/movements?product_id=ID&limit=100` retorna o histórico mais recente primeiro. `product_id` é opcional; `limit` deve ficar entre 1 e 500. Os movimentos incluem saldo inicial, ajustes, baixas de vendas realizadas e recebimentos de compras. Movimentos registrados não podem ser editados ou excluídos; produtos com histórico não podem ser removidos definitivamente.
 
 ## Financeiro, alertas e itens de trabalho
 
