@@ -1,10 +1,14 @@
 # Product Manager
 
+<p align="center"><img src="assets/icons/product-manager-brand.svg" alt="Logo do Product Manager" width="180"></p>
+
 [![Open Source](assets/icons/open-source-mark.svg)](LICENSE) **Open Source · Licença MIT**
 
 Aplicativo de gestão de produtos para desktop Windows/Linux e PWA Android, com catálogo, estoque, usuários, financeiro operacional e exportação de dados.
 
 **[Visite o site do projeto](https://mnl-nox.github.io/product_manager/)** · [Documentação completa (Wiki)](https://github.com/mnl-nox/product_manager/wiki) · [Arquitetura](docs/architecture.md)
+
+**Mantenedor:** [Manoel E. S. S. (`@mnl-nox`)](https://github.com/mnl-nox).
 
 ## Objetivo do produto
 
