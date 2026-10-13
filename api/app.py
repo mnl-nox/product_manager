@@ -621,7 +621,7 @@ class AppHandler(BaseHTTPRequestHandler):
             self.serve_file(UI_DIR / 'login.html', 'text/html; charset=utf-8')
             return
 
-        if path in {'/', '/dashboard', '/products', '/finance', '/alerts', '/admin/users', '/work-items'} or path.startswith('/api/'):
+        if path in {'/', '/dashboard', '/products', '/finance', '/alerts', '/admin/users', '/work-items', '/purchasing'} or path.startswith('/api/'):
             if path == '/api/auth/setup-status':
                 with get_db() as conn:
                     user_count = conn.execute('SELECT COUNT(*) FROM app_users WHERE active = 1').fetchone()[0]
@@ -666,6 +666,10 @@ class AppHandler(BaseHTTPRequestHandler):
 
         if path == '/work-items':
             self.serve_file(UI_DIR / 'work-items.html', 'text/html; charset=utf-8')
+            return
+
+        if path == '/purchasing':
+            self.serve_file(UI_DIR / 'purchasing.html', 'text/html; charset=utf-8')
             return
 
         if path == '/privacy.html':
@@ -783,6 +787,53 @@ class AppHandler(BaseHTTPRequestHandler):
             })
             return
 
+        if path.startswith('/api/purchasing/'):
+            if self.current_user['role'] not in {'admin', 'operator', 'finance', 'viewer'}:
+                self.send_json({'error': 'Permissão de consulta necessária.'}, status=403)
+                return
+            with get_db() as conn:
+                if path == '/api/purchasing/suppliers':
+                    rows = conn.execute("SELECT id, name, tax_id, email, phone, status, created_at FROM suppliers ORDER BY name").fetchall()
+                    self.send_json([dict(row) for row in rows])
+                    return
+                if path == '/api/purchasing/requests':
+                    rows = conn.execute("""SELECT r.*, u.username AS requester
+                        FROM purchase_requests r JOIN app_users u ON u.id=r.requested_by
+                        ORDER BY r.created_at DESC, r.id DESC""").fetchall()
+                    self.send_json([dict(row) for row in rows])
+                    return
+                if path == '/api/purchasing/orders':
+                    rows = conn.execute("""SELECT o.*, s.name AS supplier_name
+                        FROM purchase_orders o JOIN suppliers s ON s.id=o.supplier_id
+                        ORDER BY o.created_at DESC, o.id DESC""").fetchall()
+                    self.send_json([dict(row) for row in rows])
+                    return
+                order_match = re.fullmatch(r'/api/purchasing/orders/(\\d+)', path)
+                if order_match:
+                    order_id = int(order_match.group(1))
+                    order = conn.execute("""SELECT o.*, s.name AS supplier_name FROM purchase_orders o
+                        JOIN suppliers s ON s.id=o.supplier_id WHERE o.id=?""", (order_id,)).fetchone()
+                    if order is None:
+                        self.send_json({'error': 'Pedido não encontrado.'}, status=404)
+                        return
+                    items = conn.execute('SELECT * FROM purchase_order_items WHERE order_id=? ORDER BY id', (order_id,)).fetchall()
+                    self.send_json({'order': dict(order), 'items': [dict(item) for item in items]})
+                    return
+                request_match = re.fullmatch(r'/api/purchasing/requests/(\\d+)', path)
+                if request_match:
+                    request_id = int(request_match.group(1))
+                    request_row = conn.execute('SELECT * FROM purchase_requests WHERE id=?', (request_id,)).fetchone()
+                    if request_row is None:
+                        self.send_json({'error': 'Solicitação de compra não encontrada.'}, status=404)
+                        return
+                    items = conn.execute('SELECT * FROM purchase_request_items WHERE request_id=? ORDER BY id', (request_id,)).fetchall()
+                    quotes = conn.execute("""SELECT q.*, s.name AS supplier_name FROM supplier_quotes q
+                        JOIN suppliers s ON s.id=q.supplier_id WHERE q.request_id=? ORDER BY q.total_cents, q.id""", (request_id,)).fetchall()
+                    self.send_json({'request': dict(request_row), 'items': [dict(x) for x in items], 'quotes': [dict(x) for x in quotes]})
+                    return
+            self.send_json({'error': 'Rota de compras não encontrada.'}, status=404)
+            return
+
         if path == '/api/health':
             self.send_json({'status': 'ok', 'database': 'connected'})
             return
@@ -833,6 +884,241 @@ class AppHandler(BaseHTTPRequestHandler):
             result['balance'] = result['income'] - result['expenses']
             result['projectedBalance'] = result['balance'] + result['planned_income'] - result['planned_expenses']
             self.send_json(result)
+            return
+
+        if path.startswith('/api/purchasing/'):
+            if user['role'] not in {'admin', 'operator', 'finance'}:
+                self.send_json({'error': 'Permissão de compras necessária.'}, status=403)
+                return
+            if path == '/api/purchasing/suppliers':
+                if user['role'] not in {'admin', 'operator'}:
+                    self.send_json({'error': 'Apenas administração ou operação pode cadastrar fornecedores.'}, status=403)
+                    return
+                try:
+                    name = sanitize_text(payload.get('name'), 'nome do fornecedor', 160)
+                    tax_id = sanitize_optional_text(payload.get('tax_id'), 'documento fiscal', 32)
+                    email = sanitize_optional_text(payload.get('email'), 'e-mail', 128)
+                    phone = sanitize_optional_text(payload.get('phone'), 'telefone', 32)
+                except ValueError as exc:
+                    self.send_json({'error': str(exc)}, status=400)
+                    return
+                try:
+                    with get_db() as conn:
+                        cursor = conn.execute('INSERT INTO suppliers (name, tax_id, email, phone, created_by) VALUES (?, ?, ?, ?, ?)',
+                                              (name, tax_id, email, phone, user['id']))
+                except sqlite3.IntegrityError:
+                    self.send_json({'error': 'Já existe fornecedor com esse documento fiscal.'}, status=409)
+                    return
+                audit_record(user['id'], 'create', 'supplier', cursor.lastrowid)
+                self.send_json({'id': cursor.lastrowid, 'message': 'Fornecedor cadastrado.'}, status=201)
+                return
+            if path == '/api/purchasing/requests':
+                if user['role'] not in {'admin', 'operator'}:
+                    self.send_json({'error': 'Apenas administração ou operação pode abrir solicitações.'}, status=403)
+                    return
+                try:
+                    description = sanitize_text(payload.get('description'), 'descrição', 256)
+                    items = payload.get('items')
+                    if not isinstance(items, list) or not items or len(items) > 100:
+                        raise ValueError('Informe de 1 a 100 itens.')
+                    normalized = []
+                    total = 0
+                    for item in items:
+                        if not isinstance(item, dict):
+                            raise ValueError('Item de compra inválido.')
+                        item_description = sanitize_text(item.get('description'), 'descrição do item', 160)
+                        quantity = int(item.get('quantity'))
+                        unit_cents = int(item.get('estimated_unit_cents', 0))
+                        product_id = item.get('product_id')
+                        product_id = int(product_id) if product_id is not None else None
+                        if quantity < 1 or quantity > 1_000_000 or unit_cents < 0 or unit_cents > 99_999_999_999:
+                            raise ValueError('Quantidade ou valor estimado inválido.')
+                        normalized.append((product_id, item_description, quantity, unit_cents))
+                        total += quantity * unit_cents
+                    if total > 99_999_999_999_999:
+                        raise ValueError('Valor total excede o limite permitido.')
+                except (TypeError, ValueError) as exc:
+                    self.send_json({'error': str(exc)}, status=400)
+                    return
+                with get_db() as conn:
+                    conn.execute('BEGIN IMMEDIATE')
+                    for product_id, item_description, quantity, unit_cents in normalized:
+                        if product_id is not None and not conn.execute('SELECT 1 FROM products WHERE id=? AND active=1', (product_id,)).fetchone():
+                            self.send_json({'error': 'Produto vinculado ativo não encontrado.'}, status=400)
+                            return
+                    cursor = conn.execute('INSERT INTO purchase_requests (description, requested_by, estimated_total_cents) VALUES (?, ?, ?)',
+                                          (description, user['id'], total))
+                    request_id = cursor.lastrowid
+                    for product_id, item_description, quantity, unit_cents in normalized:
+                        conn.execute('INSERT INTO purchase_request_items (request_id, product_id, description, quantity, estimated_unit_cents) VALUES (?, ?, ?, ?, ?)',
+                                     (request_id, product_id, item_description, quantity, unit_cents))
+                audit_record(user['id'], 'create', 'purchase_request', request_id)
+                self.send_json({'id': request_id, 'message': 'Solicitação de compra criada.'}, status=201)
+                return
+            if path == '/api/purchasing/quotes':
+                if user['role'] not in {'admin', 'operator'}:
+                    self.send_json({'error': 'Apenas administração ou operação pode registrar cotações.'}, status=403)
+                    return
+                try:
+                    request_id = int(payload.get('request_id'))
+                    supplier_id = int(payload.get('supplier_id'))
+                    total_cents = int(payload.get('total_cents'))
+                    lead_days = int(payload.get('lead_days', 0))
+                    notes = sanitize_optional_text(payload.get('notes'), 'observações', 512)
+                    if total_cents < 0 or total_cents > 99_999_999_999_999 or lead_days < 0 or lead_days > 3650:
+                        raise ValueError('Valor da cotação ou prazo inválido.')
+                except (TypeError, ValueError) as exc:
+                    self.send_json({'error': str(exc)}, status=400)
+                    return
+                with get_db() as conn:
+                    request_row = conn.execute('SELECT status FROM purchase_requests WHERE id=?', (request_id,)).fetchone()
+                    supplier = conn.execute("SELECT id FROM suppliers WHERE id=? AND status='active'", (supplier_id,)).fetchone()
+                    if request_row is None or supplier is None:
+                        self.send_json({'error': 'Solicitação ou fornecedor ativo não encontrado.'}, status=404)
+                        return
+                    if request_row['status'] not in {'requested', 'quoted'}:
+                        self.send_json({'error': 'A solicitação não aceita novas cotações neste estado.'}, status=409)
+                        return
+                    try:
+                        cursor = conn.execute('INSERT INTO supplier_quotes (request_id, supplier_id, total_cents, lead_days, notes, quoted_by) VALUES (?, ?, ?, ?, ?, ?)',
+                                              (request_id, supplier_id, total_cents, lead_days, notes, user['id']))
+                    except sqlite3.IntegrityError:
+                        self.send_json({'error': 'Já existe cotação desse fornecedor para a solicitação.'}, status=409)
+                        return
+                    conn.execute("UPDATE purchase_requests SET status='quoted', updated_at=CURRENT_TIMESTAMP WHERE id=?", (request_id,))
+                audit_record(user['id'], 'quote', 'purchase_request', request_id)
+                self.send_json({'id': cursor.lastrowid, 'message': 'Cotação registrada.'}, status=201)
+                return
+            approve_match = re.fullmatch(r'/api/purchasing/requests/(\\d+)/approve', path)
+            if approve_match:
+                if user['role'] not in {'admin', 'finance'}:
+                    self.send_json({'error': 'Aprovação exige perfil financeiro ou administrador.'}, status=403)
+                    return
+                request_id = int(approve_match.group(1))
+                decision = payload.get('decision')
+                comments = payload.get('comments', '')
+                try:
+                    comments = sanitize_optional_text(comments, 'comentários', 512)
+                    if decision not in {'approved', 'rejected'}:
+                        raise ValueError('Decisão deve ser approved ou rejected.')
+                except ValueError as exc:
+                    self.send_json({'error': str(exc)}, status=400)
+                    return
+                with get_db() as conn:
+                    conn.execute('BEGIN IMMEDIATE')
+                    request_row = conn.execute('SELECT * FROM purchase_requests WHERE id=?', (request_id,)).fetchone()
+                    if request_row is None:
+                        self.send_json({'error': 'Solicitação não encontrada.'}, status=404)
+                        return
+                    if request_row['status'] not in {'requested', 'quoted'}:
+                        self.send_json({'error': 'Solicitação já processada ou fora da etapa de aprovação.'}, status=409)
+                        return
+                    limit = int(os.environ.get('PRODUCT_MANAGER_FINANCE_APPROVAL_LIMIT_CENTS', '10000000'))
+                    if user['role'] == 'finance' and request_row['estimated_total_cents'] > limit:
+                        self.send_json({'error': 'Valor excede a alçada do perfil financeiro; aprovação de administrador necessária.'}, status=403)
+                        return
+                    conn.execute('INSERT INTO purchase_approvals (request_id, approver_id, decision, comments) VALUES (?, ?, ?, ?)',
+                                 (request_id, user['id'], decision, comments))
+                    status_value = 'approved' if decision == 'approved' else 'rejected'
+                    conn.execute('UPDATE purchase_requests SET status=?, updated_at=CURRENT_TIMESTAMP WHERE id=?', (status_value, request_id))
+                audit_record(user['id'], decision, 'purchase_request', request_id)
+                self.send_json({'message': 'Decisão registrada.', 'status': status_value})
+                return
+            order_match = re.fullmatch(r'/api/purchasing/requests/(\\d+)/order', path)
+            if order_match:
+                if user['role'] not in {'admin', 'operator'}:
+                    self.send_json({'error': 'Apenas administração ou operação pode emitir pedidos.'}, status=403)
+                    return
+                request_id = int(order_match.group(1))
+                try:
+                    quote_id = int(payload.get('quote_id'))
+                except (TypeError, ValueError):
+                    self.send_json({'error': 'Cotação inválida.'}, status=400)
+                    return
+                with get_db() as conn:
+                    conn.execute('BEGIN IMMEDIATE')
+                    request_row = conn.execute("SELECT * FROM purchase_requests WHERE id=? AND status='approved'", (request_id,)).fetchone()
+                    quote = conn.execute('SELECT * FROM supplier_quotes WHERE id=? AND request_id=?', (quote_id, request_id)).fetchone()
+                    if request_row is None or quote is None:
+                        self.send_json({'error': 'Solicitação aprovada ou cotação não encontrada.'}, status=409)
+                        return
+                    approver = conn.execute("""SELECT u.role FROM purchase_approvals a JOIN app_users u ON u.id=a.approver_id
+                        WHERE a.request_id=? AND a.decision='approved' ORDER BY a.id DESC LIMIT 1""", (request_id,)).fetchone()
+                    limit = int(os.environ.get('PRODUCT_MANAGER_FINANCE_APPROVAL_LIMIT_CENTS', '10000000'))
+                    if approver and approver['role'] == 'finance' and quote['total_cents'] > limit:
+                        self.send_json({'error': 'A cotação selecionada excede a alçada financeira; solicite aprovação administrativa.'}, status=403)
+                        return
+                    cursor = conn.execute("INSERT INTO purchase_orders (request_id, supplier_id, quote_id, total_cents, approved_by, approved_at, created_by) VALUES (?, ?, ?, ?, (SELECT approver_id FROM purchase_approvals WHERE request_id=? AND decision='approved' ORDER BY id DESC LIMIT 1), CURRENT_TIMESTAMP, ?)",
+                                          (request_id, quote['supplier_id'], quote_id, quote['total_cents'], request_id, user['id']))
+                    order_id = cursor.lastrowid
+                    items = conn.execute('SELECT * FROM purchase_request_items WHERE request_id=? ORDER BY id', (request_id,)).fetchall()
+                    total_weight = sum(item['quantity'] * item['estimated_unit_cents'] for item in items)
+                    allocated = 0
+                    for index, item in enumerate(items):
+                        if index == len(items) - 1:
+                            line_total = quote['total_cents'] - allocated
+                        elif total_weight > 0:
+                            line_total = quote['total_cents'] * item['quantity'] * item['estimated_unit_cents'] // total_weight
+                        else:
+                            total_quantity = max(1, sum(x['quantity'] for x in items))
+                            line_total = quote['total_cents'] * item['quantity'] // total_quantity
+                        allocated += line_total
+                        unit_cents = line_total // item['quantity']
+                        conn.execute('INSERT INTO purchase_order_items (order_id, product_id, description, ordered_quantity, unit_cents) VALUES (?, ?, ?, ?, ?)',
+                                     (order_id, item['product_id'], item['description'], item['quantity'], unit_cents))
+                    conn.execute("UPDATE purchase_requests SET status='ordered', updated_at=CURRENT_TIMESTAMP WHERE id=?", (request_id,))
+                audit_record(user['id'], 'create', 'purchase_order', order_id)
+                self.send_json({'id': order_id, 'message': 'Pedido de compra emitido.'}, status=201)
+                return
+            receive_match = re.fullmatch(r'/api/purchasing/orders/(\\d+)/receive', path)
+            if receive_match:
+                if user['role'] not in {'admin', 'operator'}:
+                    self.send_json({'error': 'Apenas administração ou operação pode receber mercadorias.'}, status=403)
+                    return
+                order_id = int(receive_match.group(1))
+                try:
+                    received_items = payload.get('items')
+                    if not isinstance(received_items, list) or not received_items:
+                        raise ValueError('Informe os itens recebidos.')
+                    received = []
+                    for item in received_items:
+                        if not isinstance(item, dict):
+                            raise ValueError('Item recebido inválido.')
+                        received.append((int(item.get('item_id')), int(item.get('quantity'))))
+                    if any(item_id < 1 or quantity < 1 for item_id, quantity in received):
+                        raise ValueError('Identificadores e quantidades devem ser positivos.')
+                except (TypeError, ValueError) as exc:
+                    self.send_json({'error': str(exc)}, status=400)
+                    return
+                with get_db() as conn:
+                    conn.execute('BEGIN IMMEDIATE')
+                    order = conn.execute("SELECT * FROM purchase_orders WHERE id=? AND status IN ('ordered','partially_received')", (order_id,)).fetchone()
+                    if order is None:
+                        self.send_json({'error': 'Pedido não encontrado ou já recebido/cancelado.'}, status=409)
+                        return
+                    aggregate_received = {}
+                    for item_id, quantity in received:
+                        aggregate_received[item_id] = aggregate_received.get(item_id, 0) + quantity
+                    for item_id, quantity in aggregate_received.items():
+                        item = conn.execute('SELECT * FROM purchase_order_items WHERE id=? AND order_id=?', (item_id, order_id)).fetchone()
+                        if item is None or item['received_quantity'] + quantity > item['ordered_quantity']:
+                            self.send_json({'error': 'Item inválido ou quantidade recebida excede o pedido.'}, status=400)
+                            return
+                    received = list(aggregate_received.items())
+                    for item_id, quantity in received:
+                        item = conn.execute('SELECT * FROM purchase_order_items WHERE id=?', (item_id, order_id)).fetchone()
+                        conn.execute('UPDATE purchase_order_items SET received_quantity=received_quantity+? WHERE id=?', (quantity, item_id))
+                        if item['product_id'] is not None:
+                            conn.execute('UPDATE products SET quantity=quantity+? WHERE id=?', (quantity, item['product_id']))
+                    remaining = conn.execute('SELECT COUNT(*) FROM purchase_order_items WHERE received_quantity < ordered_quantity AND order_id=?', (order_id,)).fetchone()[0]
+                    status_value = 'partially_received' if remaining else 'received'
+                    conn.execute('UPDATE purchase_orders SET status=? WHERE id=?', (status_value, order_id))
+                    if not remaining:
+                        conn.execute("UPDATE purchase_requests SET status='received', updated_at=CURRENT_TIMESTAMP WHERE id=?", (order['request_id'],))
+                audit_record(user['id'], 'receive', 'purchase_order', order_id)
+                self.send_json({'message': 'Recebimento registrado e estoque atualizado.', 'status': status_value})
+                return
+            self.send_json({'error': 'Rota de compras não encontrada.'}, status=404)
             return
 
         if path == '/api/finance/entries':

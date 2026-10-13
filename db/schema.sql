@@ -112,3 +112,76 @@ CREATE TABLE IF NOT EXISTS products (
     created_by INTEGER REFERENCES app_users(id),
     active INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0,1))
 );
+
+CREATE TABLE IF NOT EXISTS suppliers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    tax_id TEXT NOT NULL DEFAULT '',
+    email TEXT NOT NULL DEFAULT '',
+    phone TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','inactive')),
+    created_by INTEGER REFERENCES app_users(id),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_suppliers_tax_id ON suppliers(tax_id) WHERE tax_id <> '';
+
+CREATE TABLE IF NOT EXISTS purchase_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    description TEXT NOT NULL,
+    requested_by INTEGER NOT NULL REFERENCES app_users(id),
+    status TEXT NOT NULL DEFAULT 'requested' CHECK(status IN ('requested','quoted','approved','rejected','ordered','received','cancelled')),
+    estimated_total_cents INTEGER NOT NULL DEFAULT 0 CHECK(estimated_total_cents >= 0),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS purchase_request_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    request_id INTEGER NOT NULL REFERENCES purchase_requests(id) ON DELETE CASCADE,
+    product_id INTEGER REFERENCES products(id),
+    description TEXT NOT NULL,
+    quantity INTEGER NOT NULL CHECK(quantity > 0),
+    estimated_unit_cents INTEGER NOT NULL DEFAULT 0 CHECK(estimated_unit_cents >= 0)
+);
+CREATE TABLE IF NOT EXISTS supplier_quotes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    request_id INTEGER NOT NULL REFERENCES purchase_requests(id) ON DELETE CASCADE,
+    supplier_id INTEGER NOT NULL REFERENCES suppliers(id),
+    total_cents INTEGER NOT NULL CHECK(total_cents >= 0),
+    lead_days INTEGER NOT NULL DEFAULT 0 CHECK(lead_days >= 0),
+    notes TEXT NOT NULL DEFAULT '',
+    quoted_by INTEGER REFERENCES app_users(id),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(request_id, supplier_id)
+);
+CREATE TABLE IF NOT EXISTS purchase_orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    request_id INTEGER NOT NULL UNIQUE REFERENCES purchase_requests(id),
+    supplier_id INTEGER NOT NULL REFERENCES suppliers(id),
+    quote_id INTEGER REFERENCES supplier_quotes(id),
+    total_cents INTEGER NOT NULL CHECK(total_cents >= 0),
+    status TEXT NOT NULL DEFAULT 'ordered' CHECK(status IN ('ordered','partially_received','received','cancelled')),
+    approved_by INTEGER REFERENCES app_users(id),
+    approved_at TEXT,
+    created_by INTEGER REFERENCES app_users(id),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS purchase_order_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL REFERENCES purchase_orders(id) ON DELETE CASCADE,
+    product_id INTEGER REFERENCES products(id),
+    description TEXT NOT NULL,
+    ordered_quantity INTEGER NOT NULL CHECK(ordered_quantity > 0),
+    received_quantity INTEGER NOT NULL DEFAULT 0 CHECK(received_quantity >= 0 AND received_quantity <= ordered_quantity),
+    unit_cents INTEGER NOT NULL CHECK(unit_cents >= 0)
+);
+CREATE TABLE IF NOT EXISTS purchase_approvals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    request_id INTEGER NOT NULL REFERENCES purchase_requests(id) ON DELETE CASCADE,
+    approver_id INTEGER NOT NULL REFERENCES app_users(id),
+    decision TEXT NOT NULL CHECK(decision IN ('approved','rejected')),
+    comments TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_purchase_requests_status ON purchase_requests(status, created_at);
+CREATE INDEX IF NOT EXISTS idx_purchase_orders_status ON purchase_orders(status, created_at);
+

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1d4ed8">
+<title>Compras e fornecedores | Product Manager</title>
+<link rel="stylesheet" href="/styles.css">
+<script src="/js/purchasing.js" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main-content">Pular para o conteúdo</a>
+<header class="topbar">
+  <div class="brand-block"><p class="eyebrow">Product Manager</p><h1>Compras e fornecedores</h1></div>
+  <nav class="nav-links" aria-label="Navegação principal"><a href="/dashboard">Dashboard</a><a href="/products">Produtos</a><a href="/finance">Financeiro</a></nav>
+</header>
+<main id="main-content" class="container">
+  <p id="status" class="panel" role="status" aria-live="polite">Carregando dados de compras…</p>
+  <section class="panel">
+    <div class="panel-header"><div><p class="eyebrow muted">Cadastro</p><h2>Fornecedor</h2></div></div>
+    <form id="supplier-form" class="form-grid">
+      <label>Nome<input name="name" maxlength="160" required></label>
+      <label>Documento fiscal<input name="tax_id" maxlength="32"></label>
+      <label>E-mail<input name="email" type="email" maxlength="128"></label>
+      <label>Telefone<input name="phone" maxlength="32"></label>
+      <button type="submit">Cadastrar fornecedor</button>
+    </form>
+  </section>
+  <section class="panel">
+    <div class="panel-header"><div><p class="eyebrow muted">Solicitação</p><h2>Nova solicitação de compra</h2></div></div>
+    <form id="request-form" class="form-grid">
+      <label>Descrição<input name="description" maxlength="256" required></label>
+      <label>Produto vinculado (opcional)<select name="product_id" id="product-id"><option value="">Sem vínculo</option></select></label>
+      <label>Descrição do item<input name="item_description" maxlength="160" required></label>
+      <label>Quantidade<input name="quantity" type="number" min="1" max="1000000" value="1" required></label>
+      <label>Valor unitário estimado (R$)<input name="unit_price" type="number" min="0" step="0.01" value="0" required></label>
+      <button type="submit">Criar solicitação</button>
+    </form>
+  </section>
+  <section class="panel"><div class="panel-header"><div><p class="eyebrow muted">Acompanhamento</p><h2>Solicitações de compra</h2></div><button id="refresh" type="button" class="secondary-action">Atualizar</button></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Descrição</th><th>Solicitante</th><th>Valor estimado</th><th>Status</th><th>Ação</th></tr></thead><tbody id="requests-body"><tr><td colspan="6">Carregando…</td></tr></tbody></table></div></section>
+  <section class="panel"><div class="panel-header"><div><p class="eyebrow muted">Pedidos</p><h2>Pedidos de compra</h2></div></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Fornecedor</th><th>Total</th><th>Status</th><th>Recebimento</th></tr></thead><tbody id="orders-body"></tbody></table></div></section>
+  <section class="panel"><div class="panel-header"><div><p class="eyebrow muted">Fornecedores</p><h2>Fornecedores cadastrados</h2></div></div><div class="table-wrap"><table><thead><tr><th>Nome</th><th>Documento</th><th>E-mail</th><th>Telefone</th><th>Status</th></tr></thead><tbody id="suppliers-body"><tr><td colspan="5">Carregando…</td></tr></tbody></table></div></section>
+</main>
+</body>
+</html>
