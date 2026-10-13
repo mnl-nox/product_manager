@@ -16,13 +16,29 @@
    const top=document.querySelector('#top-products');top.replaceChildren();data.topProducts.forEach(p=>row(top,[p.name,p.sku,p.units_sold,money(p.revenue_cents)]));if(!data.topProducts.length)row(top,['Sem vendas registradas','','','']);
    const monthly=document.querySelector('#monthly');monthly.replaceChildren();data.monthly.forEach(m=>row(monthly,[m.period,money(m.revenue_cents),money(m.expenses_cents),money(m.revenue_cents-m.expenses_cents)]));if(!data.monthly.length)row(monthly,['Sem lançamentos','','','']);
    const cats=document.querySelector('#categories');cats.replaceChildren();data.byCategory.forEach(c=>row(cats,[c.category,money(c.revenue_cents),money(c.expenses_cents)]));if(!data.byCategory.length)row(cats,['Sem lançamentos','','']);
+   const departments=document.querySelector('#by-department');departments.replaceChildren();data.byDepartment.forEach(d=>row(departments,[d.department,money(d.revenue_cents),money(d.expenses_cents),money(d.revenue_cents-d.expenses_cents)]));if(!data.byDepartment.length)row(departments,['Sem lançamentos','','','']);
+   const units=document.querySelector('#by-unit');units.replaceChildren();data.byUnit.forEach(u=>row(units,[u.unit,money(u.revenue_cents),money(u.expenses_cents),money(u.revenue_cents-u.expenses_cents)]));if(!data.byUnit.length)row(units,['Sem lançamentos','','','']);
    const overdue=document.querySelector('#overdue');overdue.replaceChildren();for(const type of ['income','expense']){const item=data.overdue[type]||{count:0,amount_cents:0};const p=document.createElement('p');p.textContent=(type==='income'?'Receitas vencidas: ':'Despesas vencidas: ')+item.count+' conta(s), '+money(item.amount_cents);overdue.append(p);}
    status.textContent='Relatório atualizado para '+from+' até '+to+'.';
   }catch(error){status.textContent=error.message;}
  }
  document.querySelector('#filter-form').addEventListener('submit',e=>{e.preventDefault();load();});
- document.querySelector('#sale-form').addEventListener('submit',async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.currentTarget));try{await api('/api/reports/sales',{method:'POST',body:JSON.stringify({product_id:Number(d.product_id),quantity:Number(d.quantity),unit_price:Number(d.unit_price),sale_date:d.sale_date,status:d.status})});status.textContent='Venda registrada.';await load();}catch(error){status.textContent=error.message;}});
+ document.querySelector('#sale-form').addEventListener('submit',async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.currentTarget));try{await api('/api/reports/sales',{method:'POST',body:JSON.stringify({product_id:Number(d.product_id),quantity:Number(d.quantity),unit_price:Number(d.unit_price),sale_date:d.sale_date,status:d.status,department_id:d.department_id?Number(d.department_id):null,org_unit_id:d.org_unit_id?Number(d.org_unit_id):null})});status.textContent='Venda registrada.';await load();}catch(error){status.textContent=error.message;}});
  const today=new Date();const iso=d=>{const date=new Date(d.getTime()-d.getTimezoneOffset()*60000);return date.toISOString().slice(0,10);};
  document.querySelector('#to-date').value=iso(today);document.querySelector('#sale-date').value=iso(today);document.querySelector('#from-date').value=iso(new Date(today.getFullYear(),today.getMonth(),1));
- api('/api/auth/me').then(async me=>{csrfToken=me.csrfToken;const products=await api('/api/products');const select=document.querySelector('#product-id');products.forEach(p=>select.add(new Option(p.name+' ('+p.sku+') — estoque '+p.quantity,p.id)));await load();}).catch(error=>{status.textContent=error.message;});
+ api('/api/auth/me').then(async me=>{
+  csrfToken=me.csrfToken;
+  const products=await api('/api/products');const select=document.querySelector('#product-id');
+  products.forEach(p=>select.add(new Option(p.name+' ('+p.sku+') — estoque '+p.quantity,p.id)));
+  const dimensions=await api('/api/reports/dimensions');
+  dimensions.departments.forEach(d=>document.querySelector('#sale-department').add(new Option(d.name,d.id)));
+  dimensions.units.forEach(u=>document.querySelector('#sale-unit').add(new Option(u.name,u.id)));
+  if(me.user.role==='admin')document.querySelector('#unit-admin').hidden=false;
+  await load();
+}).catch(error=>{status.textContent=error.message;});
+document.querySelector('#unit-form').addEventListener('submit',async e=>{
+  e.preventDefault();const data=Object.fromEntries(new FormData(e.currentTarget));
+  try{await api('/api/org-units',{method:'POST',body:JSON.stringify(data)});status.textContent='Unidade cadastrada.';e.currentTarget.reset();const dimensions=await api('/api/reports/dimensions');const select=document.querySelector('#sale-unit');select.replaceChildren(new Option('Sem unidade',''));dimensions.units.forEach(u=>select.add(new Option(u.name,u.id)));await load();}
+  catch(error){status.textContent=error.message;}
+});
 })();
