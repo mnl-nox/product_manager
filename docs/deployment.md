@@ -27,17 +27,13 @@ O blueprint usa um serviço Render pago compatível com disco persistente. Não 
 
 Abra a URL HTTPS do serviço no Chrome, Edge ou navegador compatível. No Android, use o menu do Chrome e selecione **Instalar app** ou **Adicionar à tela inicial**. A instalação PWA não exige APK, mas precisa da API online para operações com dados.
 
-## 3. Gerar um APK Android
+## 3. Baixar APK ou publicar AAB Android
 
-O repositório inclui um wrapper Android nativo que abre a aplicação hospedada por HTTPS. Depois que o serviço estiver publicado:
+Quando a chave de assinatura Android está configurada, o workflow **Cross-platform packages** gera o APK assinado de instalação direta em cada release. O APK abre a aplicação hospedada por HTTPS e depende do servidor; não funciona offline nem contém banco local. Baixe `product-manager-<versão>-android.apk` na [página de Releases](https://github.com/mnl-nox/product_manager/releases/latest). Sem os secrets da chave, use o PWA; o APK de depuração permanece apenas nos artefatos de validação do Actions.
 
-1. Abra a aba **Actions** do GitHub.
-2. Selecione o workflow **Android APK** e clique em **Run workflow**.
-3. Informe a URL HTTPS exata do serviço implantado.
-4. Quando terminar, abra a execução e baixe o artefato `product-manager-android-apk`.
-5. Extraia `app-debug.apk`, transfira-o para o Android e abra o arquivo para instalar. Se necessário, autorize temporariamente a instalação para o aplicativo usado para abrir o arquivo.
+Para publicação no Google Play, configure no GitHub Actions os secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` e `ANDROID_KEY_PASSWORD`. O workflow então gera e anexa `product-manager-<versão>-android.aab` e `product-manager-<versão>-android.apk`, ambos assinados com a chave de upload. O AAB deve ser enviado pelo Play Console e não pode ser instalado diretamente. O `versionCode` deriva de `VERSION`; confirme que supera as versões enviadas anteriormente.
 
-Esse APK é um pacote de instalação para teste/distribuição direta, assinado com a chave de depuração automática do Android Gradle Plugin. Não é adequado para publicação na Play Store; para isso, gere uma versão release com uma chave de assinatura protegida. O APK depende do servidor HTTPS configurado no build e não funciona como sistema independente/offline.
+Sem os secrets, os pacotes Windows/Linux e o PWA continuam disponíveis. O APK de depuração fica apenas como artefato de validação no Actions, sem publicação como download oficial. Não use uma nova chave se já existe uma chave de upload associada ao app no Play Console.
 
 ## Atualização do banco e rastreabilidade de estoque
 

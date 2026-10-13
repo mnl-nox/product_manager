@@ -1,68 +1,66 @@
-# Plataformas e implantação
+# Plataformas, downloads e implantação
+
+Os downloads oficiais por plataforma são anexados às [Releases](https://github.com/mnl-nox/product_manager/releases/latest). O workflow **Cross-platform packages** constrói cada pacote no runner nativo. A execução do workflow também guarda artefatos temporários.
 
 ## Matriz de suporte
 
-| Plataforma | Distribuição | Persistência |
+| Plataforma | Download | Instalação / observação |
 |---|---|---|
-| Windows 10/11 x64 | Instalador Inno Setup gerado em runner Windows | `%LOCALAPPDATA%\ProductManager\product_manager.db` |
-| Debian/Ubuntu x64 | Pacote `.deb` | `${XDG_DATA_HOME:-~/.local/share}/product-manager/product_manager.db` |
-| Fedora/RHEL e derivados | Pacote `.rpm` quando `rpmbuild` está disponível no build local; workflow gera o pacote | Diretório de dados do usuário |
-| Android | PWA instalável pelo Chrome; wrapper APK de depuração opcional | Banco no servidor; o service worker não armazena respostas da API |
-| Docker/Compose | Container Python | Volume `product-manager-data` |
-| Núcleo C | Binário de terminal independente | Definido pelo próprio núcleo C; separado do SQLite web |
-
-## Desktop
-
-O launcher inicia o servidor HTTP no computador e abre o navegador padrão. O modo local escuta em loopback por padrão. Não exponha diretamente essa porta para outras máquinas.
-
-## Linux
-
-```bash
-make package-linux
-```
-
-O script gera `.deb`; gera também `.rpm` quando `rpmbuild` está instalado. Os artefatos locais ficam em `build/packages/`.
+| Windows 10/11 x64 | `.exe` Inno Setup | Aplicação desktop local; banco em `%LOCALAPPDATA%\\ProductManager\\`. |
+| Debian/Ubuntu x64 | `.deb` | Aplicação desktop local; dados no diretório do usuário. |
+| Fedora/RHEL x64 | `.rpm` | Aplicação desktop local; dados no diretório do usuário. |
+| Android, instalação direta | `.apk` assinado, se a chave estiver configurada | Wrapper da aplicação HTTPS; requer internet e servidor. |
+| Android, Google Play | `.aab` assinado | Envie ao Play Console; não pode ser instalado diretamente no aparelho. |
+| Android | PWA | Instale o site HTTPS no Chrome; a API e os dados permanecem online. |
+| macOS / iOS | Sem pacote nativo | Não há build oficial publicado para essas plataformas. |
 
 ## Windows
 
-O build nativo requer Windows, Python 3.12, Inno Setup 6 e Chocolatey conforme `docs/platforms.md`. O script é `packaging/windows/build.ps1`; a saída fica em `build/packages/`.
+Baixe `ProductManager-<versão>-windows-x64-setup.exe` na página de Releases. O build local requer Windows, Python 3.12 e Inno Setup 6:
 
-## PWA Android
-
-O PWA usa `ui/manifest.webmanifest`, service worker e ícones em `assets/icons/`. Publique a aplicação atrás de HTTPS e mantenha UI e API na mesma origem. O service worker mantém o shell da interface em cache; requisições `/api/` permanecem online e não são guardadas no dispositivo.
-
-Para gerar o ZIP de implantação:
-
-```bash
-make package-pwa
+```powershell
+./packaging/windows/build.ps1
 ```
 
-O ZIP é a implantação do PWA, não um APK. O workflow Android APK pode gerar um wrapper de depuração, assinado com chave de debug, que depende da mesma origem HTTPS; não é release para Play Store.
+## Linux
 
-## Docker
+Baixe `.deb` para Debian/Ubuntu ou `.rpm` para Fedora/RHEL na página de Releases. Localmente:
+
+```bash
+make package-linux
+sudo apt install ./build/packages/product-manager_<versão>_amd64.deb
+```
+
+O script sempre gera `.deb` e também gera `.rpm` quando `rpmbuild` está disponível. Os pacotes guardam dados no diretório do usuário.
+
+## Android: APK, AAB e PWA
+
+O APK oficial anexado ao Release é um wrapper assinado com a chave Android de release configurada nos secrets. Ele abre a URL HTTPS publicada e depende do servidor; não inclui API ou banco local.
+
+O `.aab` é um bundle para envio ao Google Play Console. Para gerá-lo e anexá-lo ao Release, configure estes Actions secrets:
+
+- `ANDROID_KEYSTORE_BASE64`: arquivo keystore codificado em Base64.
+- `ANDROID_KEYSTORE_PASSWORD`: senha do keystore.
+- `ANDROID_KEY_ALIAS`: alias da chave de upload.
+- `ANDROID_KEY_PASSWORD`: senha da chave.
+
+Use a chave de upload já associada ao app no Play Console e mantenha uma cópia protegida. Sem os quatro secrets, os builds desktop e o PWA continuam; APK/AAB de release não são publicados. O APK de depuração fica restrito ao artefato de validação do Actions. O workflow não gera nem substitui chaves. O `versionCode` deriva do arquivo `VERSION` e deve superar o maior código enviado anteriormente ao Play Console.
+
+O PWA pode ser instalado pelo Chrome: abra a [aplicação Web](https://product-manager-14fq.onrender.com/login) por HTTPS e escolha **Instalar app** ou **Adicionar à tela inicial**. `make package-pwa` gera o ZIP de implantação. O service worker armazena apenas o shell; chamadas da API continuam online.
+
+## Desktop
+
+O launcher inicia o servidor local e abre o navegador:
+
+```bash
+make run-desktop
+```
+
+## Docker e implantação
 
 ```bash
 export PRODUCT_MANAGER_SETUP_TOKEN="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
 docker compose up --build -d
 ```
 
-O Compose mapeia a porta para o loopback do host e persiste os dados no volume. A configuração fornecida desativa cookies Secure para permitir teste local em HTTP; não a use inalterada atrás de acesso público.
-
-## GitHub Actions
-
-O workflow `.github/workflows/packages.yml` pode rodar manualmente ou em tags `v*`. Publica artefatos para Windows x64, Linux (.deb/.rpm) e PWA. O workflow de release está em `.github/workflows/release.yml`.
-
-## Checklist de produção
-
-- [ ] HTTPS/TLS no proxy ou servidor de borda.
-- [ ] `PRODUCT_MANAGER_COOKIE_SECURE=1`.
-- [ ] Segredos armazenados fora do código e dos logs.
-- [ ] Rede e portas restritas.
-- [ ] Volume/banco persistente e backup automatizado.
-- [ ] Restauração de backup testada.
-- [ ] Procedimento de atualização e rollback.
-- [ ] Monitoramento e política de retenção.
-- [ ] Papéis e permissões revisados.
-- [ ] Aceitação explícita dos limites de workspace compartilhado e ausência de SSO.
-
-O projeto não inclui TLS embutido, isolamento multi-organização nem infraestrutura gerenciada de produção.
+Use HTTPS para qualquer acesso remoto, configure `PRODUCT_MANAGER_COOKIE_SECURE=1`, restrinja a rede, proteja os segredos e mantenha backups persistentes com restauração testada. O projeto não oferece isolamento entre organizações ou login corporativo.

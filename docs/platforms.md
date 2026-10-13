@@ -1,53 +1,66 @@
-# Plataformas e instalação
+# Plataformas, downloads e instalação
 
-Product Manager oferece modos desktop para Windows/Linux e distribuição Android por PWA. Há também um workflow opcional para gerar um wrapper APK de depuração que abre a instância HTTPS publicada; ele depende do servidor remoto e não é um cliente independente. O desktop executa o serviço HTTP no próprio computador e abre o navegador padrão.
+Os binários publicados ficam na página [Releases](https://github.com/mnl-nox/product_manager/releases/latest). O workflow `Cross-platform packages` gera pacotes por runner nativo e anexa os arquivos ao release da tag. Os artefatos temporários também ficam na execução do GitHub Actions.
 
-## Windows 10/11 x64
+## Matriz de distribuição
 
-O workflow **Cross-platform packages** gera `ProductManager-<versão>-windows-x64-setup.exe` em um runner Windows. O instalador cria atalhos do menu Iniciar e, opcionalmente, da área de trabalho. O executável grava o banco em `%LOCALAPPDATA%\ProductManager\product_manager.db`.
+| Plataforma | Pacote | Observação |
+|---|---|---|
+| Windows 10/11 x64 | `.exe` Inno Setup | Aplicação desktop local; banco em `%LOCALAPPDATA%\\ProductManager\\`. |
+| Debian/Ubuntu x64 | `.deb` | Aplicação desktop local; banco no diretório de dados do usuário. |
+| Fedora/RHEL x64 | `.rpm` | Aplicação desktop local; banco no diretório de dados do usuário. |
+| Android | APK assinado, se a chave estiver configurada | Wrapper da aplicação HTTPS; precisa de internet e servidor. |
+| Android / Play Console | `.aab` assinado | Bundle de publicação; o AAB não é instalável diretamente. |
+| Android | PWA | Instale o site HTTPS pelo Chrome; os dados continuam no servidor. |
 
-Build local em Windows com Python 3.12, Inno Setup 6 e Chocolatey:
+Não há instalador nativo publicado para macOS ou iOS.
+
+## Windows
+
+Baixe o instalador `ProductManager-<versão>-windows-x64-setup.exe` na página de Releases. O build local requer Windows, Python 3.12, Inno Setup 6 e Chocolatey:
 
 ```powershell
 ./packaging/windows/build.ps1
 ```
 
-O instalador aparece em `build/packages/`.
-
 ## Linux
 
-O desktop usa Python 3.10+, o navegador padrão e `xdg-utils`. A base instalada grava dados em `$XDG_DATA_HOME/product-manager/` ou `~/.local/share/product-manager/`.
+Baixe o `.deb` para Debian/Ubuntu ou `.rpm` para Fedora/RHEL na página de Releases. Builds locais:
 
 ```bash
 make package-linux
-```
-
-O comando sempre cria um `.deb`. Se `rpmbuild` estiver instalado, também cria um `.rpm`. Saídas ficam em `build/packages/`. O workflow Linux do GitHub instala o builder RPM e exige a criação dos dois pacotes.
-
-Instale o `.deb` com:
-
-```bash
 sudo apt install ./build/packages/product-manager_<versão>_amd64.deb
 ```
 
-Para RPM use `sudo dnf install ./build/packages/product-manager-<versão>-1.x86_64.rpm`.
+O comando cria `.deb`; cria também `.rpm` quando `rpmbuild` está instalado. Os pacotes guardam dados no diretório do usuário e iniciam o servidor local com navegador padrão.
 
-## Android (PWA)
+## Android: APK e AAB
 
-O PWA usa `ui/manifest.webmanifest`, o service worker e os ícones em `assets/icons/`. O usuário abre o endereço HTTPS no Chrome para Android e escolhe **Instalar app** ou **Adicionar à tela inicial**. O botão de instalação aparece quando o navegador considera o site instalável.
+O APK de release é um wrapper de instalação direta, assinado pela chave Android de release. Sem os secrets, o workflow guarda apenas um APK de depuração como artefato de validação, sem publicá-lo como download oficial. Ele abre a URL HTTPS publicada configurada em `APP_URL`; portanto, requer conexão e não contém o servidor nem banco local.
 
-O deployment ZIP gerado pelo workflow inclui API, frontend, esquema SQLite e ícones. Configure o serviço atrás de um proxy HTTPS corporativo e exponha uma única origem para a UI e `/api`. A aplicação fornece autenticação local e autorização por papel, mas o servidor Python não fornece TLS. Defina `PRODUCT_MANAGER_COOKIE_SECURE=1`, restrinja o acesso de rede e proteja banco, backups e segredos. As contas compartilham o mesmo espaço de trabalho; não há isolamento entre organizações ou login corporativo.
+O `.aab` é destinado ao Google Play Console e exige assinatura de release. O APK assinado e o AAB usam a mesma chave de upload. Configure estes GitHub Actions secrets no repositório:
 
-O service worker mantém apenas o shell da interface em cache. Requisições `/api/` permanecem online e não são guardadas no dispositivo.
+- `ANDROID_KEYSTORE_BASE64`: arquivo keystore codificado em Base64.
+- `ANDROID_KEYSTORE_PASSWORD`: senha do keystore.
+- `ANDROID_KEY_ALIAS`: alias da chave de upload.
+- `ANDROID_KEY_PASSWORD`: senha da chave.
 
-## Gerar os artefatos no GitHub Actions
+Mantenha cópia segura da chave de upload. Sem todos esses secrets, o workflow ainda produz os pacotes desktop e PWA, mas não publica APK/AAB Android de release. O workflow não cria nem substitui uma chave existente. Configure uma URL HTTPS de produção em `APP_URL` no workflow antes da distribuição, caso o endereço padrão mude.
 
-O workflow `.github/workflows/packages.yml` roda em tags `v*` ou manualmente e publica artefatos separados:
+O `versionCode` é calculado a partir do `VERSION`; confirme que seja maior que qualquer versão já enviada ao Play Console. Para inspecionar o bundle localmente, use `bundleRelease` com as mesmas propriedades `releaseStore*` e `releaseKey*` passadas pelo workflow.
 
-- Instalador Windows x64.
-- Pacote `.deb` e `.rpm` Linux x64.
-- ZIP do PWA para Android.
+### PWA
 
-No workflow manual, a versão vem de `VERSION`; para uma tag, o nome da tag é usado. Tags históricas anteriores a estes arquivos são ignoradas.
+Abra a [aplicação Web](https://product-manager-14fq.onrender.com/login) no Chrome para Android e selecione **Instalar app** ou **Adicionar à tela inicial**. `make package-pwa` gera o ZIP de implantação. O cache guarda somente o shell da interface: a API e os dados permanecem online.
 
-O build Windows precisa rodar em Windows; este ambiente Linux só consegue gerar o `.deb` diretamente. O `.rpm` local requer `rpmbuild`; os três artefatos são gerados pelos runners nativos do workflow.
+## Execução desktop
+
+O launcher inicia um servidor HTTP local e abre o navegador padrão:
+
+```bash
+make run-desktop
+```
+
+## Requisitos de produção
+
+O servidor Python não fornece TLS. Para acesso remoto, use proxy HTTPS, `PRODUCT_MANAGER_COOKIE_SECURE=1`, rede restrita e armazenamento persistente. Configure e teste backup e restauração. Contas compartilham o mesmo workspace; o sistema não fornece isolamento multi-organização ou login corporativo.

@@ -1,164 +1,98 @@
 # Product Manager
 
-<p align="center"><img src="assets/icons/product-manager-brand.svg" alt="Logo do Product Manager" width="300"></p>
+<p align="center"><img src="assets/icons/product-manager-brand.svg" alt="Product Manager" width="240"></p>
 
+Aplicação de gestão operacional para catálogo, clientes, estoque, compras, vendas, financeiro e exportação. O projeto combina uma interface web, launcher desktop e PWA; o Android também pode ser empacotado como APK e Android App Bundle (`.aab`). Licença MIT.
 
+**[Baixar a versão mais recente](https://github.com/mnl-nox/product_manager/releases/latest)** · [Aplicação Web](https://product-manager-14fq.onrender.com/login) · [Site](https://mnl-nox.github.io/product_manager/) · [Wiki](https://github.com/mnl-nox/product_manager/wiki)
 
-Aplicativo de gestão de produtos para desktop Windows/Linux e PWA Android, com catálogo, estoque, usuários, financeiro operacional e exportação de dados.
+## Downloads oficiais
 
-[Plano de engenharia multiplataforma](docs/platform-engineering.md) · **[Abrir aplicação Web](https://product-manager-14fq.onrender.com/login)** · [Site do projeto](https://mnl-nox.github.io/product_manager/) · [Documentação completa (Wiki)](https://github.com/mnl-nox/product_manager/wiki) · [Arquitetura](doc/architecture.md) · [Relatório de robustez multiplataforma](docs/quality-report.md) · [Plano e relatório completo de QA](docs/qa-plan-and-results.md) · [Relatórios de aceite e qualidade](relatórios/README.md)
+Os instaladores para cada plataforma ficam anexados à página da versão. Os assets aparecem quando o workflow de release termina.
 
-**Mantenedor:** [Manoel E. S. S. (`@mnl-nox`)](https://github.com/mnl-nox).
+| Plataforma | Download | Uso |
+|---|---|---|
+| Windows 10/11, x64 | `ProductManager-<versão>-windows-x64-setup.exe` | Instalador desktop; banco local no perfil do usuário. |
+| Debian/Ubuntu, x64 | Pacote `.deb` | Instalação desktop via APT/dpkg. |
+| Fedora/RHEL, x64 | Pacote `.rpm` | Instalação desktop via DNF/RPM. |
+| Android, instalação direta | APK assinado anexado ao release, se a chave Android estiver configurada | Wrapper que abre a aplicação HTTPS publicada; requer conexão com o servidor. |
+| Android, Google Play | `.aab` assinado, quando a chave de release estiver configurada | Bundle para envio ao Play Console; não pode ser instalado diretamente no aparelho. |
+| Android, PWA | [Aplicação Web](https://product-manager-14fq.onrender.com/login) | No Chrome, use **Instalar app** ou **Adicionar à tela inicial**. Requer HTTPS. |
 
-**Web e Android:** [Aplicação publicada](https://product-manager-14fq.onrender.com/login) · [Guia de implantação pública e APK](docs/deployment.md) · [Instalar como PWA](docs/platforms.md#android-pwa) · [Gerar APK Android](https://github.com/mnl-nox/product_manager/actions/workflows/android-apk.yml). A aplicação requer servidor HTTPS e armazenamento persistente.
+**macOS e iOS não têm pacote nativo publicado.** O APK de instalação direta depende da instância web e não funciona como servidor independente; o download oficial exige a chave de release Android. O AAB só é publicado quando os secrets de assinatura Android estão configurados no GitHub Actions; os passos estão em [Plataformas e instalação](docs/platforms.md#android-apk-e-aab).
 
-## Objetivo do produto
+## O que oferece
 
-O Product Manager foi criado para reunir cadastros de clientes e produtos que podem ficar espalhados em planilhas ou sistemas diferentes. Ele ajuda equipes pequenas a consultar o catálogo, acompanhar quantidades e identificar itens que precisam de atenção em um painel simples.
+- Dashboard, catálogo de produtos e clientes, pesquisa e filtros.
+- Compras com cotações, aprovação, recebimentos parciais/finais e atualização transacional do estoque.
+- Vendas com baixa de estoque e lançamento financeiro.
+- Livro-razão append-only de estoque e histórico de movimentos.
+- Financeiro operacional, relatórios, alertas de estoque e exportação CSV/XLSX.
+- Usuários com papéis de acesso, sessões protegidas e API JSON.
+- Recursos de RH e exportação de dados para folha.
 
-Hoje, o app oferece cadastro de clientes e produtos em um espaço de trabalho compartilhado por usuários autenticados, papéis de acesso, lançamentos financeiros operacionais, alertas de estoque configuráveis e exportação CSV/Excel/Google Sheets. A autenticação usa contas locais e o banco SQLite. Leia [o objetivo e os limites atuais](doc/objective.md), [o guia de instalação e uso](docs/installation-usage.md) e [a configuração técnica](docs/development.md).
+As contas compartilham um único workspace SQLite; não há isolamento multi-organização. Consulte [segurança e limitações](docs/platforms.md#requisitos-de-producao) antes de usar dados reais.
 
-## Funcionalidades
+## Começar localmente
 
-- Dashboard com totais, distribuição por categoria, clientes recentes e estoque crítico.
-- Cadastro de clientes e produtos com validação de campos e unicidade.
-- Edição, desativação e reativação de produtos; a remoção administrativa só é permitida quando não existe histórico de estoque.
-- Busca por nome/SKU/marca/fornecedor, filtro por categoria e resumo de unidades e valor em estoque.
-- Exportação do dashboard em CSV e Excel (`.xlsx`), além de integração opcional com Google Sheets.
-- Compras: fornecedores, solicitações, cotações comparáveis, aprovação financeira por alçada e pedidos com recebimento e atualização transacional do estoque.
-- Recursos humanos: cadastro de colaboradores, cargos, departamentos, férias/ausências com aprovação, metadados de documentos, jornada opcional e exportação CSV para sistemas de folha.
-- Relatórios e indicadores: receita/despesas realizadas, resultado e margem de resultado, contas vencidas, previsão de caixa, produtos mais vendidos, proxy de giro e agrupamento mensal/categoria.
-- Contas com papéis de administrador, operação, financeiro e leitura; sessões seguras e proteção CSRF.
-- Área financeira para registrar receitas/despesas realizadas ou previstas e consultar saldo operacional.
-- Livro-razão de estoque append-only para saldos iniciais, ajustes, baixas de vendas realizadas e recebimentos de compras; histórico consultável por API autenticada.
-- Central de alertas de estoque com prioridade, limite padrão e limite mínimo por produto.
-- Registro interno de bugs e riscos com prioridade e acompanhamento de estado.
-- API JSON, banco SQLite e dados demonstrativos opcionais por configuração.
-
-## Tela de exemplo
-
-Captura do dashboard carregado com os dados de demonstração:
-
-![Dashboard do Product Manager](docs/screenshots/dashboard.png)
-
-Catálogo de produtos:
-
-![Catálogo do Product Manager](docs/screenshots/products.png)
-
-[Ver o tutorial visual de todas as seções](docs/tutorial-visual.md)
-
-## Pré-requisitos
-
-- Python 3.10 ou superior (sem dependências externas para API e testes).
-- GCC ou Clang com suporte a C23 e GNU Make, somente para o núcleo C legado.
-
-## Executar a aplicação web
-
-No aplicativo desktop, o primeiro acesso cria um token temporário local e abre o formulário seguro para provisionar o administrador, sem conta ou senha padrão. Para executar o servidor direto ou implantar o PWA, defina o token temporário de configuração. Siga [Instalação e primeiro acesso](docs/installation-usage.md#primeira-configuracao). Depois do bootstrap, toda a API de negócio exige sessão autenticada.
+Requisitos: Python 3.10 ou superior. Para compilar o núcleo C legado, também é necessário GCC/Clang com suporte a C23 e GNU Make.
 
 ```bash
+git clone https://github.com/mnl-nox/product_manager.git
+cd product_manager
 python3 api/app.py
 ```
 
-Abra <http://127.0.0.1:8000>. O banco padrão é `db/product_manager.db`. Para usar outro caminho, defina `PRODUCT_MANAGER_DB` antes de iniciar o servidor:
+Abra <http://127.0.0.1:8000>. No primeiro acesso, configure o administrador pelo fluxo de bootstrap; não existe usuário ou senha padrão. Veja [instalação e primeiro acesso](docs/installation-usage.md) e [desenvolvimento e configuração](docs/development.md).
 
-```bash
-PRODUCT_MANAGER_DB=/caminho/product_manager.db python3 api/app.py
-```
-
-### Executar com Docker
-
-Para testar em um container local, gere um token temporário e suba o serviço com Docker Compose:
+### Container
 
 ```bash
 export PRODUCT_MANAGER_SETUP_TOKEN="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
 docker compose up --build -d
 ```
 
-Abra `http://localhost:8000/login#setup_token=$PRODUCT_MANAGER_SETUP_TOKEN` para criar o primeiro administrador. O banco fica no volume `product-manager-data`. Para encerrar, execute `docker compose down`; os dados permanecem no volume. O Compose publica a porta somente no loopback e desativa cookies Secure para permitir o teste local por HTTP. Em uma implantação HTTPS, configure `PRODUCT_MANAGER_COOKIE_SECURE=1`.
+O Compose persiste o banco no volume `product-manager-data` e publica a porta em loopback. Para uso remoto, configure HTTPS, cookies Secure, rede restrita, backup e restauração testada.
 
-No Podman rootless, o mesmo container pode ser construído e iniciado assim (gere o token como no exemplo acima):
+## Build por plataforma
 
-```bash
-podman build --network=none --format docker -t product-manager .
-podman run -d --name product-manager --network=slirp4netns \
-  -p 127.0.0.1:8000:8000 \
-  -e PRODUCT_MANAGER_SETUP_TOKEN="$PRODUCT_MANAGER_SETUP_TOKEN" \
-  -e PRODUCT_MANAGER_COOKIE_SECURE=0 \
-  -v product-manager-data:/data:Z,U \
-  product-manager
-```
+- **Windows:** `packaging/windows/build.ps1` (runner Windows, Python 3.12 e Inno Setup).
+- **Linux:** `make package-linux` cria `.deb` e, se `rpmbuild` estiver instalado, `.rpm`.
+- **PWA Android:** `make package-pwa` gera o ZIP de implantação.
+- **APK/AAB Android:** workflow [Cross-platform packages](https://github.com/mnl-nox/product_manager/actions/workflows/packages.yml); APK e AAB de release exigem a chave de assinatura Android; o AAB é enviado ao Play Console.
 
-As rotas principais incluem `GET /api/health`, `GET /api/dashboard`, `GET /api/products`, `GET /api/inventory/movements`, `POST /api/products` e `POST /api/clients`, além das APIs de compras, vendas, RH, financeiro, relatórios e alertas. Veja [API e desenvolvimento](docs/development.md) para detalhes de sessão e permissões.
+Veja os detalhes de nomes, requisitos e assinatura em [docs/platforms.md](docs/platforms.md). A visão geral das telas está no [tutorial visual](docs/tutorial-visual.md).
 
-## Instalar por plataforma
-
-- **Windows 10/11 x64:** o workflow de release gera um instalador `.exe` com Inno Setup.
-- **Linux x64:** `make package-linux` gera `.deb` e também `.rpm` quando `rpmbuild` estiver instalado.
-- **Android:** o frontend é um PWA instalável pelo Chrome. Hospede a aplicação atrás de HTTPS e escolha **Instalar app** ou **Adicionar à tela inicial**. O workflow publica um ZIP de implantação.
-
-Para criar localmente o ZIP de implantação do PWA, use `make package-pwa`.
-
-No Linux, os pacotes guardam o banco no diretório de dados do usuário. Para obter o instalador Windows e pacotes Linux construídos em seus ambientes nativos, execute o workflow **Cross-platform packages** no GitHub Actions. Os artefatos aparecem na execução do workflow.
-
-O desktop inicia um servidor local e abre o navegador padrão:
-
-```bash
-make run-desktop
-```
-
-Detalhes, limitações do PWA e comandos de build estão em [Plataformas e instalação](docs/platforms.md).
-
-O passo a passo de instalação, primeiro uso, backup e relato de erros está em [Guia de instalação e uso](docs/installation-usage.md).
-
-## Testes
+## Testes e validação
 
 ```bash
 make test
 ```
 
-Os testes usam banco temporário e não alteram o banco de desenvolvimento. Consulte o [resultado da validação por ambiente](docs/test-results.md), incluindo os builds de pacotes e as plataformas que não estavam disponíveis para teste nativo.
+Os testes usam banco temporário. Consulte [resultados de validação](docs/test-results.md), [plano e resultados de QA](docs/qa-plan-and-results.md) e os [relatórios](relatórios/README.md).
 
-## Núcleo C
+## Documentação
 
-O repositório mantém um núcleo C23 em desenvolvimento, ainda separado da aplicação web:
+- [Instalação e primeiro acesso](docs/installation-usage.md)
+- [Plataformas, downloads e empacotamento](docs/platforms.md)
+- [API e desenvolvimento](docs/development.md)
+- [Arquitetura](doc/architecture.md) · [Modelo de dados](doc/data-model.md) · [Requisitos](doc/requirements.md)
+- [Wiki completa](https://github.com/mnl-nox/product_manager/wiki)
+- [Tutorial visual das seções](docs/tutorial-visual.md)
 
-```bash
-make
-./build/product_manager
-```
-
-## Exportar planilhas
-
-Com o servidor em execução:
-
-```bash
-python3 scripts/export_dashboard.py
-```
-
-O arquivo CSV é salvo em `exports/`. Pela interface ou API, também é possível baixar um arquivo `.xlsx`. Esses downloads são locais. O envio direto ao Google Sheets é opcional e só ocorre se o administrador configurar as credenciais e a planilha de destino; os dados exportados passam então a ser processados pela conta Google configurada.
-
-## Estrutura
+## Estrutura do repositório
 
 ```text
-api/          servidor HTTP e API
-ui/           interface web
+api/          servidor HTTP e API JSON
+ui/           interface web e PWA
+android/      wrapper Android e configuração de APK/AAB
 db/           esquema SQLite e banco local
-config/       mapeamentos de campos
+docs/, wiki/  guias, tutoriais e documentação
+packaging/    empacotamento Windows, Linux e PWA
 tests/        testes automatizados
-docs/         arquitetura, operação e contribuição
-scripts/      utilitários locais
-src/, include/ núcleo C23 legado/em evolução
+src/, include/ núcleo C23 em evolução
 ```
 
-## Segurança e dados
+## Segurança, privacidade e licença
 
-O modo desktop escuta somente no loopback. O PWA Android exige HTTPS; contas e papéis são aplicados também na API. Configure cookies Secure atrás de TLS e proteja tokens Google e segredos de configuração. As contas compartilham um espaço de trabalho SQLite, sem isolamento entre organizações. O banco pode conter dados pessoais e financeiros; proteja o arquivo e seus backups. Veja os [limites e requisitos de implantação](docs/platforms.md) antes de usar em produção.
-
-Consulte [Política de privacidade](PRIVACY.md), [Política de segurança](SECURITY.md), [Contribuição](CONTRIBUTING.md), [arquitetura](doc/architecture.md), [requisitos](doc/requirements.md), [modelo de dados](doc/data-model.md) e [operação da API](docs/development.md).
-
-O diagnóstico de erros é opcional, desativado por padrão e só transmite eventos técnicos mínimos após consentimento, caso o administrador configure um endpoint HTTPS. O app não envia os registros de clientes/produtos nem stack traces. Detalhes e limites estão na [política de privacidade](PRIVACY.md).
-
-## Licença
-
-O Product Manager é distribuído sob a licença [MIT](LICENSE). A política de contribuição e os termos aplicáveis a contribuições estão em [CONTRIBUTING.md](CONTRIBUTING.md).
+Proteja o banco e os backups, configure segredos fora do código e use HTTPS para acesso remoto. Leia [política de segurança](SECURITY.md), [política de privacidade](PRIVACY.md) e [licença MIT](LICENSE). Contribuições seguem [CONTRIBUTING.md](CONTRIBUTING.md).

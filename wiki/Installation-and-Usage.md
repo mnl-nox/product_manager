@@ -55,27 +55,14 @@ docker compose down
 
 ## Instalação por plataforma
 
-### Windows 10/11 x64
+Os pacotes oficiais estão na [página de Releases](https://github.com/mnl-nox/product_manager/releases/latest). Consulte [Plataformas e implantação](Platforms-and-Deployment.md) para requisitos e limites.
 
-Baixe `ProductManager-<versão>-windows-x64-setup.exe` dos artefatos de release/workflow. O banco fica em `%LOCALAPPDATA%\ProductManager\product_manager.db`.
+- **Windows:** instalador `.exe` para Windows 10/11 x64.
+- **Debian/Ubuntu:** pacote `.deb` x64.
+- **Fedora/RHEL:** pacote `.rpm` x64.
+- **Android:** APK e `.aab` assinados com a chave configurada para download/Play Console, ou PWA pelo Chrome. Sem a chave, use o PWA. O `.aab` não instala diretamente no aparelho.
 
-### Debian/Ubuntu
-
-```bash
-sudo apt install ./product-manager_<versão>_amd64.deb
-```
-
-O banco fica em `${XDG_DATA_HOME:-~/.local/share}/product-manager/product_manager.db`.
-
-### Fedora/RHEL e derivados
-
-```bash
-sudo dnf install ./product-manager-<versão>-1.x86_64.rpm
-```
-
-### Android
-
-A opção recomendada é o PWA: abra a URL HTTPS no Chrome para Android e escolha **Instalar app** ou **Adicionar à tela inicial**. O repositório também oferece um workflow opcional para gerar um wrapper APK de depuração que abre a mesma URL; ele depende do servidor HTTPS e não é um cliente independente nem um pacote release para Play Store.
+macOS e iOS não têm pacote nativo publicado.
 
 ## Fluxo de primeiro acesso
 
