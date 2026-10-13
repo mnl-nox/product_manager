@@ -21,7 +21,7 @@ Durante a verificação do pipeline multiplataforma da versão v1.1.3, os jobs W
 - **PWA:** manifest e service worker; chamadas `/api/` não são armazenadas no cache. Recursos do shell usam cache para suportar carregamento de arquivos estáticos.
 - **Desktop:** launcher local e pacotes Windows/Linux; os clientes usam o mesmo código de interface e API.
 - **Android:** PWA ou wrapper que abre a aplicação HTTPS publicada; o wrapper não é um cliente independente e depende da rede/servidor.
-- **CI/CD:** CI executa compilação Python, testes de API, validação de Conventional Commits e build do núcleo C; workflow de pacotes produz artefatos Windows, Linux e PWA. O status do RPM v1.1.3 permanece falho no run anterior à correção. O status do RPM v1.1.3 permanece falho no run anterior à correção.
+- **CI/CD:** CI executa compilação Python, testes de API, validação de Conventional Commits e build do núcleo C; workflow de pacotes produz artefatos Windows, Linux e PWA. O status do RPM v1.1.3 permaneceu falho no run anterior à correção; esse resultado é histórico e não representa o workflow posterior.
 
 ## 3. Alteração aplicada nesta etapa
 
