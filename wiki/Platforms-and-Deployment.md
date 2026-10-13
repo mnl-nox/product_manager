@@ -7,7 +7,7 @@
 | Windows 10/11 x64 | Instalador Inno Setup gerado em runner Windows | `%LOCALAPPDATA%\ProductManager\product_manager.db` |
 | Debian/Ubuntu x64 | Pacote `.deb` | `${XDG_DATA_HOME:-~/.local/share}/product-manager/product_manager.db` |
 | Fedora/RHEL e derivados | Pacote `.rpm` quando `rpmbuild` está disponível no build local; workflow gera o pacote | Diretório de dados do usuário |
-| Android | PWA instalável pelo Chrome, não APK | Banco no servidor; o service worker não armazena respostas da API |
+| Android | PWA instalável pelo Chrome; wrapper APK de depuração opcional | Banco no servidor; o service worker não armazena respostas da API |
 | Docker/Compose | Container Python | Volume `product-manager-data` |
 | Núcleo C | Binário de terminal independente | Definido pelo próprio núcleo C; separado do SQLite web |
 
@@ -37,7 +37,7 @@ Para gerar o ZIP de implantação:
 make package-pwa
 ```
 
-O ZIP não é APK. A instalação depende de uma origem HTTPS acessível e de infraestrutura mantida pela organização.
+O ZIP é a implantação do PWA, não um APK. O workflow Android APK pode gerar um wrapper de depuração, assinado com chave de debug, que depende da mesma origem HTTPS; não é release para Play Store.
 
 ## Docker
 
