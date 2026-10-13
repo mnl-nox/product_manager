@@ -34,6 +34,15 @@ class ReportsApiTests(unittest.TestCase):
             names = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         self.assertTrue({"sales", "sales_items"}.issubset(names))
 
+    def test_reporting_dimensions_are_migrated(self):
+        with app.get_db() as conn:
+            finance_columns = {row[1] for row in conn.execute("PRAGMA table_info(finance_entries)")}
+            sales_columns = {row[1] for row in conn.execute("PRAGMA table_info(sales)")}
+            names = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        self.assertTrue({"department_id", "org_unit_id"}.issubset(finance_columns))
+        self.assertTrue({"department_id", "org_unit_id"}.issubset(sales_columns))
+        self.assertIn("org_units", names)
+
     def test_summary_returns_period_and_zero_safe_margin(self):
         handler = self.handler("/api/reports/summary?from=2026-01-01&to=2026-01-31")
         handler.do_GET()
@@ -43,6 +52,8 @@ class ReportsApiTests(unittest.TestCase):
         self.assertIn("profit_cents", body["totals"])
         self.assertIsNone(body["totals"]["profit_margin_percent"])
         self.assertIn("topProducts", body)
+        self.assertIn("byDepartment", body)
+        self.assertIn("byUnit", body)
 
     def test_summary_rejects_reversed_period(self):
         handler = self.handler("/api/reports/summary?from=2026-02-01&to=2026-01-01")

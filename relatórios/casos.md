@@ -34,6 +34,8 @@
 | REP-002 | Venda realizada | Estoque e receita atualizados na mesma transação | P0 |
 | REP-003 | Venda prevista | Não reduz estoque nem conta como venda realizada | P0 |
 | REP-004 | Sem receita | Margem indefinida, sem divisão por zero | P1 |
+| REP-005 | Dimensões organizacionais | Receita/despesas agregadas por departamento e unidade, inclusive registros sem classificação | P1 |
+| HR-004 | Exportação de jornada para folha | CSV limitado ao período solicitado, sem cálculo salarial e sem fórmulas executáveis | P1 |
 | OPS-001 | Logs de falha | Sem senha, token, cookie ou dados pessoais desnecessários | P0 |
 | PKG-001 | Build DEB | Pacote criado, instalável e com dados persistentes | P0 |
 | PKG-002 | Build RPM | Pacote criado; arquivos declarados existem | P0 |

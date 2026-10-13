@@ -132,7 +132,7 @@ A área está disponível em `/reports`. O endpoint `GET /api/reports/summary?fr
 Limitações dos indicadores:
 - A margem exibida é resultado líquido dividido pela receita realizada; não é margem bruta, pois não há custo unitário de aquisição confiável no modelo atual.
 - O giro é um proxy de unidades vendidas dividido pelo estoque atual, não o cálculo contábil de giro médio.
-- O agrupamento disponível é mensal e por categoria. Unidades organizacionais e centros de custo não estão modelados, portanto relatórios por unidade/departamento ainda não são suportados.
+- Os agrupamentos disponíveis incluem mês, categoria, departamento e unidade organizacional. Lançamentos financeiros e vendas aceitam dimensões opcionais; registros antigos sem dimensão aparecem em “Sem departamento” ou “Sem unidade”.
 - Contas vencidas são lançamentos `planned` cuja `entry_date` é anterior à data atual; não há cadastro de vencimentos separado.
 - Os indicadores dependem de dados registrados. Não inventam vendas para produtos sem histórico.
 
@@ -140,3 +140,12 @@ Limitações dos indicadores:
 ## Estado de integração dos módulos ERP
 
 Compras/fornecedores, RH e relatórios/indicadores estão integrados nesta branch cumulativa. A aprovação de release exige CI no commit final, revisão funcional em navegador e confirmação das limitações descritas nesta documentação. O aceite do código não substitui validação contábil, fiscal ou trabalhista.
+
+
+### Dimensões organizacionais e exportação de jornada
+
+- `GET /api/reports/dimensions`: consulta departamentos ativos e unidades organizacionais para classificar vendas.
+- `POST /api/org-units`: cadastra unidade organizacional (somente administrador).
+- `POST /api/finance/entries` e `POST /api/reports/sales` aceitam `department_id` e `org_unit_id` opcionais; os IDs são validados antes de gravar.
+- O relatório agrega receita e despesas por departamento e unidade com os campos `byDepartment` e `byUnit`.
+- `GET /api/hr/payroll-export.csv?from=YYYY-MM-DD&to=YYYY-MM-DD` exporta matrícula, colaborador, cargo, departamento, data e minutos registrados para importação em sistema de folha. O arquivo não calcula salário, encargos, horas extras nem banco de horas.
