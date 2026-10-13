@@ -10,7 +10,7 @@ Aplicativo de gestão de produtos para desktop Windows/Linux e PWA Android, com 
 
 **Mantenedor:** [Manoel E. S. S. (`@mnl-nox`)](https://github.com/mnl-nox).
 
-**Android:** [Guia de instalação PWA](docs/platforms.md#android-pwa) · [Artefatos do app no GitHub Actions](https://github.com/mnl-nox/product_manager/actions/workflows/packages.yml). O projeto não possui APK nativo; exige implantação própria via HTTPS.
+**Web e Android:** [Guia de implantação pública e APK](docs/deployment.md) · [Instalar como PWA](docs/platforms.md#android-pwa) · [Gerar APK Android](https://github.com/mnl-nox/product_manager/actions/workflows/android-apk.yml). A aplicação requer servidor HTTPS e armazenamento persistente.
 
 ## Objetivo do produto
 
