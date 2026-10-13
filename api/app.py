@@ -183,6 +183,30 @@ def audit_record(actor_id: int | None, action: str, entity: str, entity_id: int 
             (actor_id, action, entity, entity_id),
         )
 
+def record_stock_movement(
+    conn: sqlite3.Connection,
+    *,
+    product_id: int,
+    movement_type: str,
+    quantity_delta: int,
+    quantity_before: int,
+    reason: str,
+    actor_id: int | None,
+    reference_type: str | None = None,
+    reference_id: int | None = None,
+) -> None:
+    """Append a stock ledger entry in the same transaction as the stock change."""
+    if quantity_delta == 0:
+        return
+    conn.execute(
+        '''INSERT INTO stock_movements
+           (product_id, movement_type, quantity_delta, quantity_before, quantity_after,
+            reason, reference_type, reference_id, actor_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+        (product_id, movement_type, quantity_delta, quantity_before,
+         quantity_before + quantity_delta, reason, reference_type, reference_id, actor_id),
+    )
+
 
 def low_stock_default() -> int:
     try:
@@ -788,6 +812,34 @@ class AppHandler(BaseHTTPRequestHandler):
             self.send_json([dict(row) for row in rows])
             return
 
+        if path == '/api/inventory/movements':
+            params = parse_qs(urlparse(self.path).query)
+            try:
+                product_id = int(params['product_id'][0]) if params.get('product_id') else None
+                limit = int(params.get('limit', ['100'])[0])
+                if limit < 1 or limit > 500:
+                    raise ValueError
+            except (TypeError, ValueError):
+                self.send_json({'error': 'Filtros inválidos; limite deve ficar entre 1 e 500.'}, status=400)
+                return
+            query = '''SELECT m.id, m.product_id, p.name AS product_name, p.sku,
+                              m.movement_type, m.quantity_delta, m.quantity_before, m.quantity_after,
+                              m.reason, m.reference_type, m.reference_id, m.created_at,
+                              u.username AS actor
+                       FROM stock_movements m
+                       JOIN products p ON p.id=m.product_id
+                       LEFT JOIN app_users u ON u.id=m.actor_id'''
+            values = []
+            if product_id is not None:
+                query += ' WHERE m.product_id=?'
+                values.append(product_id)
+            query += ' ORDER BY m.id DESC LIMIT ?'
+            values.append(limit)
+            with get_db() as conn:
+                rows = conn.execute(query, values).fetchall()
+            self.send_json([dict(row) for row in rows])
+            return
+
         if path == '/api/products':
             params = parse_qs(urlparse(self.path).query)
             category_filter = params.get('category', ['all'])[0]
@@ -884,7 +936,14 @@ class AppHandler(BaseHTTPRequestHandler):
                 conn.execute('INSERT INTO sales_items (sale_id, product_id, quantity, unit_price_cents, line_total_cents) VALUES (?, ?, ?, ?, ?)',
                              (sale_id, product_id, quantity, unit_cents, total_cents))
                 if status_value == 'paid':
+                    quantity_before = int(product['quantity'])
                     conn.execute('UPDATE products SET quantity=quantity-? WHERE id=?', (quantity, product_id))
+                    record_stock_movement(
+                        conn, product_id=product_id, movement_type='SALE_OUT',
+                        quantity_delta=-quantity, quantity_before=quantity_before,
+                        reason=f'Baixa pela venda #{sale_id}', actor_id=user['id'],
+                        reference_type='sale', reference_id=sale_id,
+                    )
                 conn.execute('INSERT INTO finance_entries (entry_type, category, description, amount_cents, entry_date, status, department_id, org_unit_id, created_by) VALUES (?,?,?,?,?,?,?,?,?)',
                              ('income', 'Vendas', f'Venda #{sale_id} — {product["name"]}', total_cents, sale_date, status_value, department_id, org_unit_id, user['id']))
             audit_record(user['id'], 'create', 'sale', sale_id)
@@ -1491,7 +1550,17 @@ class AppHandler(BaseHTTPRequestHandler):
                         item = conn.execute('SELECT * FROM purchase_order_items WHERE id=?', (item_id, order_id)).fetchone()
                         conn.execute('UPDATE purchase_order_items SET received_quantity=received_quantity+? WHERE id=?', (quantity, item_id))
                         if item['product_id'] is not None:
+                            product = conn.execute('SELECT quantity FROM products WHERE id=?', (item['product_id'],)).fetchone()
+                            if product is None:
+                                raise ValueError('Produto vinculado não existe mais.')
+                            quantity_before = int(product['quantity'])
                             conn.execute('UPDATE products SET quantity=quantity+? WHERE id=?', (quantity, item['product_id']))
+                            record_stock_movement(
+                                conn, product_id=int(item['product_id']), movement_type='PURCHASE_IN',
+                                quantity_delta=quantity, quantity_before=quantity_before,
+                                reason=f'Recebimento do pedido de compra #{order_id}', actor_id=user['id'],
+                                reference_type='purchase_order', reference_id=order_id,
+                            )
                     remaining = conn.execute('SELECT COUNT(*) FROM purchase_order_items WHERE received_quantity < ordered_quantity AND order_id=?', (order_id,)).fetchone()[0]
                     status_value = 'partially_received' if remaining else 'received'
                     conn.execute('UPDATE purchase_orders SET status=? WHERE id=?', (status_value, order_id))
@@ -1823,6 +1892,10 @@ class AppHandler(BaseHTTPRequestHandler):
                     self.send_json({'error': 'Produto não encontrado.'}, status=404)
                     return
                 if action == 'delete':
+                    has_history = conn.execute('SELECT 1 FROM stock_movements WHERE product_id=? LIMIT 1', (product_id,)).fetchone()
+                    if has_history:
+                        self.send_json({'error': 'Produto possui histórico de estoque; desative-o para preservar a rastreabilidade.'}, status=409)
+                        return
                     conn.execute('DELETE FROM products WHERE id=?', (product_id,))
                     audit_action = 'delete'
                     message = 'Produto removido definitivamente.'
@@ -1847,6 +1920,11 @@ class AppHandler(BaseHTTPRequestHandler):
                 return
             try:
                 with get_db() as conn:
+                    conn.execute('BEGIN IMMEDIATE')
+                    previous = conn.execute('SELECT quantity FROM products WHERE id=?', (product_id,)).fetchone()
+                    if previous is None:
+                        self.send_json({'error': 'Produto não encontrado.'}, status=404)
+                        return
                     cursor = conn.execute(
                         '''UPDATE products SET name=?, category=?, sku=?, reference=?, brand=?, status=?, price=?,
                                   quantity=?, supplier=?, notes=? WHERE id=?''',
@@ -1855,6 +1933,15 @@ class AppHandler(BaseHTTPRequestHandler):
                     if not cursor.rowcount:
                         self.send_json({'error': 'Produto não encontrado.'}, status=404)
                         return
+                    quantity_before = int(previous['quantity'])
+                    quantity_after = int(values[7])
+                    if quantity_after != quantity_before:
+                        record_stock_movement(
+                            conn, product_id=product_id, movement_type='ADJUSTMENT',
+                            quantity_delta=quantity_after - quantity_before, quantity_before=quantity_before,
+                            reason='Ajuste manual de quantidade no cadastro do produto',
+                            actor_id=user['id'], reference_type='product', reference_id=product_id,
+                        )
             except sqlite3.IntegrityError as exc:
                 self.send_json({'error': f'Outro produto já usa esse SKU: {exc}'}, status=409)
                 return
@@ -1936,11 +2023,20 @@ class AppHandler(BaseHTTPRequestHandler):
 
         try:
             with get_db() as conn:
+                conn.execute('BEGIN IMMEDIATE')
                 cursor = conn.execute(
                     '''INSERT INTO products (name, category, sku, reference, brand, status, price, quantity, supplier, notes, created_by)
                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
                     (*values, self.current_user['id']),
                 )
+                initial_quantity = int(values[7])
+                if initial_quantity > 0:
+                    record_stock_movement(
+                        conn, product_id=int(cursor.lastrowid), movement_type='OPENING_BALANCE',
+                        quantity_delta=initial_quantity, quantity_before=0,
+                        reason='Saldo inicial informado no cadastro do produto',
+                        actor_id=self.current_user['id'], reference_type='product', reference_id=int(cursor.lastrowid),
+                    )
                 conn.commit()
         except sqlite3.IntegrityError as exc:
             self.send_json({'error': f'Produto duplicado ou campo único já existente: {exc}'}, status=409)
