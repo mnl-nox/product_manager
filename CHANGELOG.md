@@ -4,7 +4,7 @@
 
 - Revisadas as referências de arquitetura, modelo de dados, requisitos, API, instalação, segurança/privacidade, Wiki e roadmap contra o código atual.
 - Corrigidas descrições de movimentações de estoque, regras de exclusão de produtos, migração de saldos legados e limites dos módulos ERP.
-- Registrada a inconsistência entre `VERSION` e as releases publicadas; o fluxo de release está sendo ajustado para sincronizar a versão exibida.
+- Corrigida nesta branch a divergência de `VERSION`; o workflow sincroniza a versão antes de criar tags futuras e exclui o commit técnico de sincronização das notas de release.
 
 ## [v1.7.5] - 2026-10-13
 
