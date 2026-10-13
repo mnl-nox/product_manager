@@ -817,6 +817,26 @@ class AppHandler(BaseHTTPRequestHandler):
             })
             return
 
+        if path == '/api/org-units':
+            if user['role'] != 'admin':
+                self.send_json({'error': 'Apenas administradores podem gerenciar unidades.'}, status=403)
+                return
+            try:
+                name = sanitize_text(payload.get('name'), 'nome da unidade', 100)
+                description = sanitize_optional_text(payload.get('description'), 'descrição', 300)
+            except ValueError as exc:
+                self.send_json({'error': str(exc)}, status=400)
+                return
+            try:
+                with get_db() as conn:
+                    cursor = conn.execute('INSERT INTO org_units (name, description) VALUES (?, ?)', (name, description))
+            except sqlite3.IntegrityError:
+                self.send_json({'error': 'Unidade já cadastrada.'}, status=409)
+                return
+            audit_record(user['id'], 'create', 'org_unit', cursor.lastrowid)
+            self.send_json({'id': cursor.lastrowid, 'message': 'Unidade cadastrada.'}, status=201)
+            return
+
         if path == '/api/reports/sales':
             if user['role'] not in {'admin', 'operator', 'finance'}:
                 self.send_json({'error': 'Permissão para registrar vendas necessária.'}, status=403)
@@ -824,6 +844,8 @@ class AppHandler(BaseHTTPRequestHandler):
             try:
                 product_id = int(payload.get('product_id'))
                 quantity = int(payload.get('quantity'))
+                department_id = int(payload['department_id']) if payload.get('department_id') not in (None, '') else None
+                org_unit_id = int(payload['org_unit_id']) if payload.get('org_unit_id') not in (None, '') else None
                 unit_price = Decimal(str(payload.get('unit_price')))
                 cents = unit_price * 100
                 sale_date = date.fromisoformat(payload.get('sale_date', date.today().isoformat())).isoformat()
@@ -850,17 +872,55 @@ class AppHandler(BaseHTTPRequestHandler):
                 if status_value == 'paid' and product['quantity'] < quantity:
                     self.send_json({'error': 'Estoque insuficiente para registrar a venda.'}, status=409)
                     return
-                cursor = conn.execute('INSERT INTO sales (sale_date, status, total_cents, recorded_by) VALUES (?, ?, ?, ?)',
-                                      (sale_date, status_value, total_cents, user['id']))
+                if department_id is not None and not conn.execute('SELECT 1 FROM hr_departments WHERE id=? AND active=1', (department_id,)).fetchone():
+                    self.send_json({'error': 'Departamento ativo não encontrado.'}, status=400)
+                    return
+                if org_unit_id is not None and not conn.execute('SELECT 1 FROM org_units WHERE id=? AND active=1', (org_unit_id,)).fetchone():
+                    self.send_json({'error': 'Unidade ativa não encontrada.'}, status=400)
+                    return
+                cursor = conn.execute('INSERT INTO sales (sale_date, status, total_cents, department_id, org_unit_id, recorded_by) VALUES (?, ?, ?, ?, ?, ?)',
+                                      (sale_date, status_value, total_cents, department_id, org_unit_id, user['id']))
                 sale_id = cursor.lastrowid
                 conn.execute('INSERT INTO sales_items (sale_id, product_id, quantity, unit_price_cents, line_total_cents) VALUES (?, ?, ?, ?, ?)',
                              (sale_id, product_id, quantity, unit_cents, total_cents))
                 if status_value == 'paid':
                     conn.execute('UPDATE products SET quantity=quantity-? WHERE id=?', (quantity, product_id))
-                conn.execute('INSERT INTO finance_entries (entry_type, category, description, amount_cents, entry_date, status, created_by) VALUES (?,?,?,?,?,?,?)',
-                             ('income', 'Vendas', f'Venda #{sale_id} — {product["name"]}', total_cents, sale_date, status_value, user['id']))
+                conn.execute('INSERT INTO finance_entries (entry_type, category, description, amount_cents, entry_date, status, department_id, org_unit_id, created_by) VALUES (?,?,?,?,?,?,?,?,?)',
+                             ('income', 'Vendas', f'Venda #{sale_id} — {product["name"]}', total_cents, sale_date, status_value, department_id, org_unit_id, user['id']))
             audit_record(user['id'], 'create', 'sale', sale_id)
             self.send_json({'id': sale_id, 'total_cents': total_cents, 'message': 'Venda registrada e estoque atualizado.'}, status=201)
+            return
+
+        if path == '/api/hr/payroll-export.csv':
+            params = parse_qs(parsed.query)
+            try:
+                start_date = date.fromisoformat(params.get('from', [date.today().replace(day=1).isoformat()])[0]).isoformat()
+                end_date = date.fromisoformat(params.get('to', [date.today().isoformat()])[0]).isoformat()
+                if end_date < start_date:
+                    raise ValueError('O período final deve ser igual ou posterior ao inicial.')
+            except ValueError as exc:
+                self.send_json({'error': str(exc)}, status=400)
+                return
+            with get_db() as conn:
+                rows = conn.execute("""SELECT e.employee_code, e.full_name, e.job_title,
+                    COALESCE(d.name, '') AS department, w.work_date, w.minutes_worked, w.notes
+                    FROM hr_work_time w JOIN hr_employees e ON e.id=w.employee_id
+                    LEFT JOIN hr_departments d ON d.id=e.department_id
+                    WHERE w.work_date BETWEEN ? AND ? ORDER BY e.employee_code, w.work_date""",
+                    (start_date, end_date)).fetchall()
+            output = io.StringIO(newline='')
+            writer = csv.writer(output)
+            writer.writerow(['employee_code', 'full_name', 'job_title', 'department', 'work_date', 'minutes_worked', 'notes'])
+            for row in rows:
+                writer.writerow([spreadsheet_safe(str(value)) if isinstance(value, str) else value for value in row])
+            body = ('\\ufeff' + output.getvalue()).encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/csv; charset=utf-8')
+            self.send_header('Content-Disposition', 'attachment; filename="payroll-hours-export.csv"')
+            self.send_header('Content-Length', str(len(body)))
+            self.send_security_headers()
+            self.end_headers()
+            self.wfile.write(body)
             return
 
         if path.startswith('/api/hr/'):
@@ -1079,6 +1139,13 @@ class AppHandler(BaseHTTPRequestHandler):
             self.send_json({'error': 'Rota de RH não encontrada.'}, status=404)
             return
 
+        if path == '/api/reports/dimensions':
+            with get_db() as conn:
+                departments = conn.execute("SELECT id, name FROM hr_departments WHERE active=1 ORDER BY name").fetchall()
+                units = conn.execute("SELECT id, name FROM org_units WHERE active=1 ORDER BY name").fetchall()
+            self.send_json({'departments': [dict(row) for row in departments], 'units': [dict(row) for row in units]})
+            return
+
         if path == '/api/reports/summary':
             params = parse_qs(parsed.query)
             try:
@@ -1113,6 +1180,16 @@ class AppHandler(BaseHTTPRequestHandler):
                     COALESCE(SUM(CASE WHEN entry_type='expense' AND status='paid' THEN amount_cents ELSE 0 END),0) AS expenses_cents
                     FROM finance_entries WHERE entry_date BETWEEN ? AND ? GROUP BY category ORDER BY category""",
                     (start_date, end_date)).fetchall()
+                by_department = conn.execute("""SELECT COALESCE(d.name, 'Sem departamento') AS department,
+                    COALESCE(SUM(CASE WHEN f.entry_type='income' AND f.status='paid' THEN f.amount_cents ELSE 0 END),0) AS revenue_cents,
+                    COALESCE(SUM(CASE WHEN f.entry_type='expense' AND f.status='paid' THEN f.amount_cents ELSE 0 END),0) AS expenses_cents
+                    FROM finance_entries f LEFT JOIN hr_departments d ON d.id=f.department_id
+                    WHERE f.entry_date BETWEEN ? AND ? GROUP BY d.name ORDER BY department""", (start_date, end_date)).fetchall()
+                by_unit = conn.execute("""SELECT COALESCE(u.name, 'Sem unidade') AS unit,
+                    COALESCE(SUM(CASE WHEN f.entry_type='income' AND f.status='paid' THEN f.amount_cents ELSE 0 END),0) AS revenue_cents,
+                    COALESCE(SUM(CASE WHEN f.entry_type='expense' AND f.status='paid' THEN f.amount_cents ELSE 0 END),0) AS expenses_cents
+                    FROM finance_entries f LEFT JOIN org_units u ON u.id=f.org_unit_id
+                    WHERE f.entry_date BETWEEN ? AND ? GROUP BY u.name ORDER BY unit""", (start_date, end_date)).fetchall()
                 stock = conn.execute('SELECT COALESCE(SUM(quantity),0) FROM products WHERE active=1').fetchone()[0]
                 sold = conn.execute("""SELECT COALESCE(SUM(si.quantity),0) FROM sales_items si JOIN sales s ON s.id=si.sale_id
                     WHERE s.status='paid' AND s.sale_date BETWEEN ? AND ?""", (start_date, end_date)).fetchone()[0]
@@ -1125,7 +1202,8 @@ class AppHandler(BaseHTTPRequestHandler):
             overdue_summary = {row['entry_type']: {'count': row['count'], 'amount_cents': row['amount_cents']} for row in overdue}
             self.send_json({'period': {'from': start_date, 'to': end_date}, 'totals': totals,
                 'overdue': overdue_summary, 'topProducts': [dict(row) for row in top_products],
-                'monthly': [dict(row) for row in monthly], 'byCategory': [dict(row) for row in category]})
+                'monthly': [dict(row) for row in monthly], 'byCategory': [dict(row) for row in category],
+                'byDepartment': [dict(row) for row in by_department], 'byUnit': [dict(row) for row in by_unit]})
             return
 
         if path == '/api/reports/sales':
