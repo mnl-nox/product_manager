@@ -121,3 +121,17 @@ A área administrativa está disponível em `/hr` e é restrita ao perfil `admin
 | GET/POST | `/api/hr/work-time` | Consultar/registrar minutos trabalhados por dia |
 
 O registro de jornada permite no máximo 1.440 minutos por dia e um registro por colaborador/data. Não calcula horas extras, adicional noturno, banco de horas ou conformidade trabalhista. A folha de pagamento não é calculada nem integrada nesta entrega. Dados de RH são sensíveis: mantenha acesso administrativo restrito, proteja backups e não armazene conteúdo documental neste banco sem uma política de retenção e criptografia adequada.
+
+
+## Relatórios e indicadores
+
+A área está disponível em `/reports`. O endpoint `GET /api/reports/summary?from=YYYY-MM-DD&to=YYYY-MM-DD` retorna receitas e despesas realizadas, resultado líquido, margem de resultado (não margem bruta), valores planejados, proxy de caixa, contas vencidas, produtos mais vendidos, série mensal e agregação por categoria. `GET /api/reports/sales` lista os últimos registros de vendas.
+
+`POST /api/reports/sales` registra uma venda com produto, quantidade, preço unitário, data e situação. Valores monetários são convertidos para centavos inteiros; vendas realizadas verificam e baixam o estoque dentro de uma transação e criam lançamento de receita. Vendas planejadas não baixam estoque nem contam como venda realizada. A baixa do estoque representa a conclusão da venda nesta versão; devoluções, cancelamentos, custo de mercadoria e estornos ainda não fazem parte do fluxo.
+
+Limitações dos indicadores:
+- A margem exibida é resultado líquido dividido pela receita realizada; não é margem bruta, pois não há custo unitário de aquisição confiável no modelo atual.
+- O giro é um proxy de unidades vendidas dividido pelo estoque atual, não o cálculo contábil de giro médio.
+- O agrupamento disponível é mensal e por categoria. Unidades organizacionais e centros de custo não estão modelados, portanto relatórios por unidade/departamento ainda não são suportados.
+- Contas vencidas são lançamentos `planned` cuja `entry_date` é anterior à data atual; não há cadastro de vencimentos separado.
+- Os indicadores dependem de dados registrados. Não inventam vendas para produtos sem histórico.
