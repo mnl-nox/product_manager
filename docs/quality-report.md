@@ -133,6 +133,6 @@ Este relatório diferencia implementação existente, correções aplicadas e tr
 
 A correção funcional integrada pela PR [#20](https://github.com/mnl-nox/product_manager/pull/20) reparou padrões de rota para IDs numéricos e a consulta SQL do recebimento de compras. A CI da PR #20 aprovou 40 testes Python. A rodada de QA seguinte, PR [#22](https://github.com/mnl-nox/product_manager/pull/22), aprovou **49 testes Python**, além dos jobs C23 e Conventional Commits ([CI run](https://github.com/mnl-nox/product_manager/actions/runs/38475015757)).
 
-Foi criado o relatório [Plano e relatório completo de QA](qa-plan-and-results.md), que separa evidências aprovadas, cobertura parcial, verificações pendentes e capacidades não suportadas. A rodada acrescentou oito testes unitários dedicados à matriz de permissões e validação CSRF e removeu duplicação no setup dos testes de RH.
+Foi criado o relatório [Plano e relatório completo de QA](qa-plan-and-results.md), que separa evidências aprovadas, cobertura parcial, verificações pendentes e capacidades não suportadas. A rodada acrescentou nove testes unitários dedicados à matriz de permissões e validação CSRF e removeu duplicação no setup dos testes de RH.
 
 Limites que permanecem: não foi demonstrado teste E2E em navegador, ensaio de restauração de backup de produção, teste de carga/concorrência, pentest independente nem homologação de instalação em cada plataforma. A aplicação continua sem isolamento multiempresa. Não interpretar este relatório como certificação de segurança ou autorização para uso crítico.
