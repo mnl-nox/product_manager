@@ -86,3 +86,22 @@ make
 ```
 
 O dashboard fica em `/` e o catálogo em `/products`.
+
+
+## Compras e fornecedores
+
+A área de compras está disponível em `/purchasing`. Os endpoints requerem sessão autenticada e token CSRF nas operações de escrita.
+
+| Método | Endpoint | Finalidade |
+|---|---|---|
+| GET | `/api/purchasing/suppliers` | Consultar fornecedores |
+| POST | `/api/purchasing/suppliers` | Cadastrar fornecedor |
+| GET/POST | `/api/purchasing/requests` | Listar ou abrir solicitação com itens |
+| GET | `/api/purchasing/requests/{id}` | Detalhar solicitação, itens e cotações |
+| POST | `/api/purchasing/quotes` | Registrar cotação de fornecedor |
+| POST | `/api/purchasing/requests/{id}/approve` | Aprovar ou rejeitar solicitação |
+| POST | `/api/purchasing/requests/{id}/order` | Emitir pedido com cotação escolhida |
+| GET | `/api/purchasing/orders` | Consultar pedidos |
+| POST | `/api/purchasing/orders/{id}/receive` | Registrar recebimento parcial ou total |
+
+Valores são enviados em centavos inteiros. O perfil financeiro pode aprovar até `PRODUCT_MANAGER_FINANCE_APPROVAL_LIMIT_CENTS` (padrão: R$ 100.000,00); valores maiores exigem administrador. A recepção atualiza a quantidade de produtos vinculados dentro de transação. O módulo não substitui validação fiscal, integração com ERP de fornecedor ou conferência física formal.
