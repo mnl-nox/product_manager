@@ -127,3 +127,12 @@ Essa implementação melhora a rastreabilidade, mas não constitui inventário c
 A base multiplataforma existe, a correção do caminho dos documentos RPM foi aplicada e foram adicionados probes de liveness/readiness. O próximo marco verificável é confirmar CI, build Linux e healthcheck após deploy. Para tornar o produto profissional de forma sustentável, a prioridade deve ser: pipeline reproduzível, testes de segurança/autorização, saúde operacional e backup restaurável; em seguida, E2E/acessibilidade/desempenho Web; depois, migrações, contrato de API e isolamento multi-organização caso o produto passe a atender organizações distintas.
 
 Este relatório diferencia implementação existente, correções aplicadas e trabalho pendente. Não afirma que o aplicativo foi submetido a pentest, certificado, validado em dispositivos físicos ou aprovado para uso crítico.
+
+
+## Aditivo de QA — 13/10/2026
+
+A correção funcional integrada pela PR [#20](https://github.com/mnl-nox/product_manager/pull/20) reparou padrões de rota para IDs numéricos e a consulta SQL do recebimento de compras. A execução final da CI da PR confirmou **40 testes Python**, build C23 e validação de Conventional Commits aprovados.
+
+Foi criado o relatório [Plano e relatório completo de QA](qa-plan-and-results.md), que separa evidências aprovadas, cobertura parcial, verificações pendentes e capacidades não suportadas. Esta rodada também acrescenta testes unitários dedicados à matriz de permissões e validação CSRF, e remove duplicação no setup dos testes de RH. Esses novos testes precisam passar na CI do commit de QA antes de serem contabilizados como aprovados.
+
+Limites que permanecem: não foi demonstrado teste E2E em navegador, ensaio de restauração de backup de produção, teste de carga/concorrência, pentest independente nem homologação de instalação em cada plataforma. A aplicação continua sem isolamento multiempresa. Não interpretar este relatório como certificação de segurança ou autorização para uso crítico.
