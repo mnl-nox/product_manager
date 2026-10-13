@@ -133,6 +133,22 @@ def ensure_database() -> None:
                 CREATE INDEX IF NOT EXISTS idx_finance_entries_date ON finance_entries(entry_date, id);
                 COMMIT;
             ''')
+        finance_columns = {row[1] for row in conn.execute('PRAGMA table_info(finance_entries)')}
+        for column, declaration in (
+            ('department_id', 'INTEGER REFERENCES hr_departments(id)'),
+            ('org_unit_id', 'INTEGER REFERENCES org_units(id)'),
+        ):
+            if column not in finance_columns:
+                conn.execute(f'ALTER TABLE finance_entries ADD COLUMN {column} {declaration}')
+        sales_columns = {row[1] for row in conn.execute('PRAGMA table_info(sales)')}
+        for column, declaration in (
+            ('department_id', 'INTEGER REFERENCES hr_departments(id)'),
+            ('org_unit_id', 'INTEGER REFERENCES org_units(id)'),
+        ):
+            if column not in sales_columns:
+                conn.execute(f'ALTER TABLE sales ADD COLUMN {column} {declaration}')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_finance_entries_dimensions ON finance_entries(department_id, org_unit_id, entry_date)')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_sales_dimensions ON sales(department_id, org_unit_id, sale_date)')
         conn.commit()
 
 
