@@ -24,6 +24,16 @@
 | WEB-002 | Teclado e leitor de tela | Foco e erros acessíveis nos fluxos críticos | P1 |
 | WEB-003 | Seção de avaliações sem depoimentos cadastrados | Nenhuma nota ou testemunho fictício apresentado; CTA abre canal de feedback | P1 |
 | WEB-004 | Links de contato | E-mail abre `mailto:`; Instagram aponta ao perfil correto e abre em nova aba com `rel` seguro | P1 |
+| PUR-001 | Solicitação com itens válidos/inválidos | Sem escrita parcial; quantidade e produto validados | P0 |
+| PUR-002 | Aprovação e alçada financeira | Valor acima do limite exige administrador | P0 |
+| PUR-003 | Recebimento duplicado/parcial | Quantidade recebida não ultrapassa pedido; estoque só atualizado após validação integral | P0 |
+| HR-001 | Acesso a dados de colaboradores | Perfil não administrador recebe 403 | P0 |
+| HR-002 | Período de ausência inválido | API rejeita data final anterior à inicial | P0 |
+| HR-003 | Jornada duplicada | Um registro por colaborador/data | P1 |
+| REP-001 | Período de relatório inválido | HTTP 400 para intervalo invertido | P0 |
+| REP-002 | Venda realizada | Estoque e receita atualizados na mesma transação | P0 |
+| REP-003 | Venda prevista | Não reduz estoque nem conta como venda realizada | P0 |
+| REP-004 | Sem receita | Margem indefinida, sem divisão por zero | P1 |
 | OPS-001 | Logs de falha | Sem senha, token, cookie ou dados pessoais desnecessários | P0 |
 | PKG-001 | Build DEB | Pacote criado, instalável e com dados persistentes | P0 |
 | PKG-002 | Build RPM | Pacote criado; arquivos declarados existem | P0 |
@@ -39,6 +49,7 @@
 | DATA/EXP | PENDENTE | PENDENTE | NÃO EXECUTADO | — |
 | PWA/WEB | PENDENTE | PENDENTE | NÃO EXECUTADO | — |
 | WEB-003/WEB-004 | 6a5cc528 | Revisão de conteúdo/HTML; teste manual de navegador pendente | IMPLEMENTAÇÃO REGISTRADA; NÃO VALIDADO EM NAVEGADOR | — |
+| PUR/HR/REP | branches de funcionalidade | Testes adicionados; CI e execução local pendentes | NÃO EXECUTADO | — |
 | PKG-001 a PKG-004 | PENDENTE | PENDENTE | NÃO EXECUTADO | — |
 
 Qualquer caso P0/P1 pendente ou com falha bloqueia o aceite final.
