@@ -25,6 +25,6 @@ EXPOSE 8000
 VOLUME ["/data"]
 
 HEALTHCHECK --interval=5s --timeout=3s --start-period=15s --retries=3 \
-    CMD python -c "from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/login', timeout=2)" || exit 1
+    CMD python -c "from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/readyz', timeout=2)" || exit 1
 
 CMD ["python", "api/app.py"]
