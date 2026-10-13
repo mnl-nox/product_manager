@@ -931,13 +931,14 @@ class AppHandler(BaseHTTPRequestHandler):
                     return
                 with get_db() as conn:
                     conn.execute('BEGIN IMMEDIATE')
+                    for product_id, item_description, quantity, unit_cents in normalized:
+                        if product_id is not None and not conn.execute('SELECT 1 FROM products WHERE id=? AND active=1', (product_id,)).fetchone():
+                            self.send_json({'error': 'Produto vinculado ativo não encontrado.'}, status=400)
+                            return
                     cursor = conn.execute('INSERT INTO purchase_requests (description, requested_by, estimated_total_cents) VALUES (?, ?, ?)',
                                           (description, user['id'], total))
                     request_id = cursor.lastrowid
                     for product_id, item_description, quantity, unit_cents in normalized:
-                        if product_id is not None and not conn.execute('SELECT 1 FROM products WHERE id=?', (product_id,)).fetchone():
-                            self.send_json({'error': 'Produto vinculado não encontrado.'}, status=400)
-                            return
                         conn.execute('INSERT INTO purchase_request_items (request_id, product_id, description, quantity, estimated_unit_cents) VALUES (?, ?, ?, ?, ?)',
                                      (request_id, product_id, item_description, quantity, unit_cents))
                 audit_record(user['id'], 'create', 'purchase_request', request_id)
@@ -1030,15 +1031,28 @@ class AppHandler(BaseHTTPRequestHandler):
                     if request_row is None or quote is None:
                         self.send_json({'error': 'Solicitação aprovada ou cotação não encontrada.'}, status=409)
                         return
+                    approver = conn.execute("""SELECT u.role FROM purchase_approvals a JOIN app_users u ON u.id=a.approver_id
+                        WHERE a.request_id=? AND a.decision='approved' ORDER BY a.id DESC LIMIT 1""", (request_id,)).fetchone()
+                    limit = int(os.environ.get('PRODUCT_MANAGER_FINANCE_APPROVAL_LIMIT_CENTS', '10000000'))
+                    if approver and approver['role'] == 'finance' and quote['total_cents'] > limit:
+                        self.send_json({'error': 'A cotação selecionada excede a alçada financeira; solicite aprovação administrativa.'}, status=403)
+                        return
                     cursor = conn.execute("INSERT INTO purchase_orders (request_id, supplier_id, quote_id, total_cents, approved_by, approved_at, created_by) VALUES (?, ?, ?, ?, (SELECT approver_id FROM purchase_approvals WHERE request_id=? AND decision='approved' ORDER BY id DESC LIMIT 1), CURRENT_TIMESTAMP, ?)",
                                           (request_id, quote['supplier_id'], quote_id, quote['total_cents'], request_id, user['id']))
                     order_id = cursor.lastrowid
-                    items = conn.execute('SELECT * FROM purchase_request_items WHERE request_id=?', (request_id,)).fetchall()
-                    for item in items:
-                        # Quote total is stored at supplier level; allocate proportionally by estimated line value.
-                        estimate_total = max(1, request_row['estimated_total_cents'])
-                        line_total = item['quantity'] * item['estimated_unit_cents']
-                        unit_cents = quote['total_cents'] // max(1, sum(x['quantity'] for x in items))
+                    items = conn.execute('SELECT * FROM purchase_request_items WHERE request_id=? ORDER BY id', (request_id,)).fetchall()
+                    total_weight = sum(item['quantity'] * item['estimated_unit_cents'] for item in items)
+                    allocated = 0
+                    for index, item in enumerate(items):
+                        if index == len(items) - 1:
+                            line_total = quote['total_cents'] - allocated
+                        elif total_weight > 0:
+                            line_total = quote['total_cents'] * item['quantity'] * item['estimated_unit_cents'] // total_weight
+                        else:
+                            total_quantity = max(1, sum(x['quantity'] for x in items))
+                            line_total = quote['total_cents'] * item['quantity'] // total_quantity
+                        allocated += line_total
+                        unit_cents = line_total // item['quantity']
                         conn.execute('INSERT INTO purchase_order_items (order_id, product_id, description, ordered_quantity, unit_cents) VALUES (?, ?, ?, ?, ?)',
                                      (order_id, item['product_id'], item['description'], item['quantity'], unit_cents))
                     conn.execute("UPDATE purchase_requests SET status='ordered', updated_at=CURRENT_TIMESTAMP WHERE id=?", (request_id,))
@@ -1071,11 +1085,15 @@ class AppHandler(BaseHTTPRequestHandler):
                     if order is None:
                         self.send_json({'error': 'Pedido não encontrado ou já recebido/cancelado.'}, status=409)
                         return
+                    aggregate_received = {}
                     for item_id, quantity in received:
+                        aggregate_received[item_id] = aggregate_received.get(item_id, 0) + quantity
+                    for item_id, quantity in aggregate_received.items():
                         item = conn.execute('SELECT * FROM purchase_order_items WHERE id=? AND order_id=?', (item_id, order_id)).fetchone()
                         if item is None or item['received_quantity'] + quantity > item['ordered_quantity']:
                             self.send_json({'error': 'Item inválido ou quantidade recebida excede o pedido.'}, status=400)
                             return
+                    received = list(aggregate_received.items())
                     for item_id, quantity in received:
                         item = conn.execute('SELECT * FROM purchase_order_items WHERE id=?', (item_id, order_id)).fetchone()
                         conn.execute('UPDATE purchase_order_items SET received_quantity=received_quantity+? WHERE id=?', (quantity, item_id))
