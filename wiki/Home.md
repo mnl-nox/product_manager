@@ -1,5 +1,7 @@
 # Product Manager — Wiki
 
+**Aplicação Web publicada:** [Abrir Product Manager](https://product-manager-14fq.onrender.com/login)  
+
 **Mantenedor:** [Manoel E. S. S. (`@mnl-nox`)](https://github.com/mnl-nox) · [Site do projeto](https://mnl-nox.github.io/product_manager/) · [Código-fonte](https://github.com/mnl-nox/product_manager)
 
 > Aplicativo de gestão de produtos para Windows e Linux desktop e Android via PWA. Reúne catálogo, clientes, estoque, usuários, financeiro operacional, alertas e exportação de dados.
@@ -19,6 +21,10 @@
 ## Objetivo
 
 O Product Manager centraliza cadastros de clientes e produtos, acompanha quantidades e itens com estoque crítico, oferece um dashboard operacional e registra receitas/despesas previstas ou realizadas. O workspace é compartilhado pelas contas locais da instalação.
+
+## Acesso Web
+
+A instância publicada é acessível em [https://product-manager-14fq.onrender.com/login](https://product-manager-14fq.onrender.com/login). A API e o banco são executados pelo serviço hospedado; a disponibilidade depende do provedor. Não use dados reais sem avaliar as limitações de isolamento multi-organização, backups e recuperação.
 
 ## Funcionalidades atuais
 
