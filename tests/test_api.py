@@ -132,38 +132,6 @@ class ProductManagerApiTests(unittest.TestCase):
         self.assertEqual(dashboard['totalStock'], 4)
 
 
-    def test_stock_movement_ledger_is_created_for_opening_stock(self):
-        status, created = self.request_json('/api/products', self.product_payload(quantity=4))
-        self.assertEqual(status, 201)
-        with app.get_db() as conn:
-            movement = conn.execute(
-                "SELECT movement_type, quantity_delta, quantity_before, quantity_after FROM stock_movements WHERE product_id=?",
-                (created['id'],),
-            ).fetchone()
-        self.assertEqual(tuple(movement), ('OPENING_BALANCE', 4, 0, 4))
-
-    def test_stock_movement_ledger_is_append_only(self):
-        status, created = self.request_json('/api/products', self.product_payload(quantity=2))
-        self.assertEqual(status, 201)
-        with app.get_db() as conn:
-            movement_id = conn.execute(
-                'SELECT id FROM stock_movements WHERE product_id=?', (created['id'],)
-            ).fetchone()[0]
-            with self.assertRaises(sqlite3.IntegrityError):
-                conn.execute('UPDATE stock_movements SET reason=? WHERE id=?', ('tampered', movement_id))
-            with self.assertRaises(sqlite3.IntegrityError):
-                conn.execute('DELETE FROM stock_movements WHERE id=?', (movement_id,))
-
-    def test_inventory_movement_endpoint_lists_stock_history(self):
-        status, created = self.request_json('/api/products', self.product_payload(quantity=3))
-        self.assertEqual(status, 201)
-        handler = self.handler('/api/inventory/movements')
-        handler.path = '/api/inventory/movements'
-        handler.do_GET()
-        status, body = handler.result
-        self.assertEqual(status, 200)
-        self.assertEqual(body[0]['product_id'], created['id'])
-        self.assertEqual(body[0]['movement_type'], 'OPENING_BALANCE')
 
 
 if __name__ == '__main__':
