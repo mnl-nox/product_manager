@@ -21,7 +21,9 @@ As respostas são JSON, exceto os downloads CSV/XLSX.
 | POST | `/api/auth/logout` | Revoga a sessão atual |
 | GET/POST | `/api/auth/users` | Lista/cria contas (admin) |
 | POST | `/api/auth/users/{id}/deactivate` | Desativa conta e revoga as sessões (admin) |
-| GET | `/api/health` | Estado básico do serviço |
+| GET | `/healthz` | Liveness público, resposta mínima sem dados internos |
+| GET | `/readyz` | Readiness público; valida acesso ao SQLite e retorna 503 se indisponível |
+| GET | `/api/health` | Estado básico do serviço, exige sessão autenticada |
 | GET | `/api/dashboard` | Indicadores, categorias, clientes recentes e estoque crítico |
 | GET | `/api/categories` | Categorias e contagem de produtos |
 | GET | `/api/clients` | Clientes cadastrados |
@@ -45,7 +47,7 @@ As respostas são JSON, exceto os downloads CSV/XLSX.
 | GET | `/api/integrations/google-sheets/status` | Informa se a integração está configurada, sem expor credenciais |
 | POST | `/api/integrations/google-sheets/export` | Envia os indicadores e o catálogo exportável à planilha configurada |
 
-Todas as rotas, exceto `/api/auth/setup-status`, `/api/auth/setup`, `/api/auth/login` e arquivos estáticos, exigem uma sessão autenticada. As rotas de escrita exigem `X-CSRF-Token`, obtido em `/api/auth/me`. Os papéis são verificados no servidor.
+Todas as rotas de negócio, exceto `/api/auth/setup-status`, `/api/auth/setup`, `/api/auth/login` e arquivos estáticos, exigem uma sessão autenticada. `/healthz` e `/readyz` são exceções operacionais públicas e retornam somente estados mínimos, sem detalhes de conexão. As rotas de escrita exigem `X-CSRF-Token`, obtido em `/api/auth/me`. Os papéis são verificados no servidor.
 
 ### Configuração do acesso inicial
 
