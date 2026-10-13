@@ -4,7 +4,9 @@
 
 A instância disponibilizada para acesso pelo navegador está em **[https://product-manager-14fq.onrender.com/login](https://product-manager-14fq.onrender.com/login)**. Use HTTPS e conclua o login ou o provisionamento inicial se a instalação ainda não tiver administrador. Não compartilhe credenciais nem tokens de configuração. A disponibilidade depende do serviço de hospedagem.
 
-![Tela de login da aplicação](screenshots/login.png)
+![Dashboard do Product Manager](screenshots/dashboard.png)
+
+![Catálogo de produtos](screenshots/products.png)
 
 As capturas de tela do repositório são referências visuais; atualize-as quando a interface mudar. Não inclua dados pessoais, tokens ou informações reais de clientes nas capturas.
 
