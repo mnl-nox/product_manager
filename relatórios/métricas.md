@@ -14,7 +14,7 @@ Metas propostas para aceite. O merge do PR #16 tem checks CI registrados, mas m�
 | Latência API p95 | Definir após baseline real | Benchmark repetível | NÃO MEDIDO |
 | Restauração de backup | Exercício concluído | Restore em ambiente isolado | NÃO EXECUTADO |
 | Acessibilidade | Sem bloqueios críticos; avaliar WCAG 2.2 AA | Scanner e revisão manual | NÃO MEDIDO |
-| Versão/tag/changelog | Alinhados | Check no CI | Divergência identificada: `VERSION` estava em 1.1.0 frente à release v1.7.5; branch propõe sincronização, ainda sem ciclo real validado |
+| Versão/tag/changelog | Alinhados | Check no CI | `VERSION=1.7.6` após release v1.7.6; sincronização executada. Monitorar releases futuras e manter changelog versionado |
 
 ## Registro de medição
 | Commit | Passaram | Falharam | Ignorados | Duração | p95 | 5xx | Artefatos |

@@ -12,6 +12,11 @@ class ReleaseNotesTests(unittest.TestCase):
         self.assertIn('Primeira aplicação web local', notes)
         self.assertNotIn('Catálogo web de produtos', notes)
 
+    def test_latest_published_version_uses_changelog_section(self):
+        notes = notes_for('v1.7.6')
+        self.assertIn('Documentação, modelo de dados e processo de release', notes)
+        self.assertNotIn('docs(changelog): record stock ledger', notes)
+
     def test_version_sync_commit_is_excluded_from_release_notes(self):
         entries = release_entries(
             "docs(readme): update guide\n"

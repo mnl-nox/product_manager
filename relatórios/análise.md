@@ -22,7 +22,7 @@ A aplicação contém API Python, interface Web, SQLite, sessões, permissões p
 - Estoque: livro-razão append-only para saldo inicial, ajustes manuais, vendas realizadas e recebimentos de compras; devoluções, estornos, transferências e reconciliação física ainda não compõem fluxos completos.
 
 ## Bloqueios de aceite
-1. CI: o merge do PR #16 teve os checks de Python, C23, build, deploy e jobs Windows/Linux/PWA aprovados; a branch de auditoria documental ainda precisa de seus próprios checks.
+1. CI: o merge do PR #16 teve checks de Python/C23 e jobs de build aprovados. O PR #17 de documentação também passou nos checks Python/C23, validação de commits e builds Windows/Linux/PWA; a publicação do site deve ser acompanhada separadamente.
 2. Pacotes: a falha RPM v1.1.3 é histórica; a execução posterior do PR #16 teve os jobs de pacote Windows/Linux/PWA aprovados. Artefatos e instalação real devem ser inspecionados por release.
 3. Web E2E: não há evidência completa de fluxos críticos automatizados em navegador.
 4. Segurança: cobertura de papéis/CSRF/sessões/exportações precisa ser ampliada; não houve pentest.
