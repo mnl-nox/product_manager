@@ -36,4 +36,4 @@ Atualizações de esquema são aplicadas por `ensure_database()` e incluem compa
 
 ## Limites
 
-As contas compartilham um workspace. Não há isolamento entre organizações, identidade federada, TLS embutido, recuperação de senha, movimentações imutáveis de estoque, notificações externas ou contabilidade fiscal. O PWA exige serviço HTTPS/proxy e operação de infraestrutura pela organização. O selo Open Source · MIT usa arte própria e identifica a licença do repositório; não representa certificação de terceiros.
+As contas compartilham um workspace. Não há isolamento entre organizações, identidade federada, TLS embutido, recuperação de senha, notificações externas ou contabilidade fiscal. O livro-razão de estoque existe, mas ainda não cobre integralmente devoluções, estornos, transferências entre depósitos, reservas formais e reconciliação física. O PWA exige serviço HTTPS/proxy e operação de infraestrutura pela organização. O selo Open Source · MIT usa arte própria e identifica a licença do repositório; não representa certificação de terceiros.
