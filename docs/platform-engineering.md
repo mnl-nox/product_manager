@@ -8,12 +8,13 @@ Evoluir o Product Manager existente para uma aplicação sustentável em web, PW
 
 - API HTTP e interface web implementadas em Python/JavaScript, com banco SQLite.
 - Login por sessão, senhas com scrypt, papéis de usuário, proteção CSRF e limite de tentativas documentados no código.
-- Funcionalidades de catálogo, clientes, dashboard, alertas, financeiro operacional e exportação.
+- Funcionalidades de catálogo, clientes, dashboard, alertas, compras, vendas, RH, financeiro operacional, relatórios e exportação.
+- Livro-razão append-only `stock_movements` para saldo inicial, ajustes, vendas realizadas e recebimentos de compras; produtos com histórico não podem ser excluídos definitivamente.
 - Dockerfile executa como usuário não privilegiado; Render Blueprint usa disco persistente.
 - PWA possui manifest e service worker; as rotas `/api/` são excluídas do cache.
 - Wrapper Android abre uma instância HTTPS hospedada; não é um cliente offline independente.
 - A API ainda não separa dados por organização. O SQLite e o servidor HTTP da biblioteca padrão são escolhas simples para uma implantação pequena, não uma arquitetura automaticamente escalável.
-- As releases v1.1.0 a v1.1.3 foram publicadas; no workflow de pacotes v1.1.3, Windows e PWA passaram, mas RPM falhou por caminhos de documentação no spec. A correção foi aplicada e aguarda uma nova execução verde. Ver [relatório de robustez](quality-report.md).
+- A release mais recente observada nesta revisão é `v1.7.4`, mas o arquivo `VERSION` ainda declara `1.1.0`; isso indica que o fluxo de release não sincroniza o arquivo exibido pela aplicação. O estado de cada artefato deve ser confirmado no workflow correspondente. Ver [relatório de robustez](quality-report.md).
 
 ## Arquitetura-alvo
 
@@ -58,8 +59,9 @@ A interface deve continuar sendo um cliente da API. Regras de negócio, permiss�
 
 ### P0 — reduzir risco antes de dados reais
 
-- [x] Confirmar CI principal e release v1.1.3; o build Windows e PWA passou. [ ] Validar RPM após correção e confirmar artefatos do workflow seguinte.
-- [ ] Executar testes de autenticação, CSRF, papéis, sessão expirada, validação, concorrência e exportações.
+- [ ] Corrigir a sincronização de `VERSION` com o release publicado sem criar loop de releases automáticas.
+- [ ] Verificar status atual de CI e artefatos por tag; não reutilizar resultados históricos como evidência do commit atual.
+- [ ] Executar testes de autenticação, CSRF, papéis, sessão expirada, validação, concorrência, exportações e integridade do livro-razão.
 - [ ] Validar que health/readiness é apropriado ao provedor e não expõe segredos.
 - [ ] Criar backup automático e demonstrar restauração em ambiente separado.
 - [ ] Definir responsável, política de incidentes, retenção e recuperação de desastre.
