@@ -149,6 +149,21 @@ def ensure_database() -> None:
                 conn.execute(f'ALTER TABLE sales ADD COLUMN {column} {declaration}')
         conn.execute('CREATE INDEX IF NOT EXISTS idx_finance_entries_dimensions ON finance_entries(department_id, org_unit_id, entry_date)')
         conn.execute('CREATE INDEX IF NOT EXISTS idx_sales_dimensions ON sales(department_id, org_unit_id, sale_date)')
+        # Establish a truthful baseline for products that existed before the
+        # ledger was introduced. This records current stock, not fabricated history.
+        conn.execute(
+            '''INSERT INTO stock_movements
+               (product_id, movement_type, quantity_delta, quantity_before, quantity_after,
+                reason, reference_type, reference_id)
+               SELECT p.id, 'OPENING_BALANCE', p.quantity, 0, p.quantity,
+                      'Saldo inicial migrado na primeira inicialização do livro-razão',
+                      'migration', p.id
+               FROM products p
+               WHERE p.quantity > 0
+                 AND NOT EXISTS (
+                     SELECT 1 FROM stock_movements m WHERE m.product_id=p.id
+                 )'''
+        )
         conn.commit()
 
 
