@@ -1,7 +1,7 @@
 # Plano e relatório de QA — Product Manager
 
 **Data de referência:** 13/10/2026  
-**Versão observada antes desta rodada:** 1.7.9  
+**Versão observada antes desta rodada:** 1.7.10  
 **Repositório:** https://github.com/mnl-nox/product_manager  
 **Escopo:** API Python, autenticação, autorização, compras, vendas, estoque, financeiro, RH, SQLite, PWA, documentação e CI.
 
@@ -36,8 +36,8 @@ A última rodada funcional encontrou e corrigiu defeitos concretos nas rotas de 
 | Livro-razão de estoque | Imutabilidade, saldo inicial, movimentos e histórico | PARCIAL | tests/test_inventory_ledger.py; falta teste de concorrência e reconciliação completa |
 | Recebimento de compras | Recebimento parcial/final, limite de quantidade, autorização e transação | APROVADO para os cenários automatizados | tests/test_purchasing.py; cobertura não representa todos os cenários reais |
 | Vendas | Venda paga gera baixa, movimento e receita coerentes; planejada não baixa estoque | APROVADO para os cenários automatizados | tests/test_reports.py |
-| Permissões | Admin, operação, financeiro, leitura e papel desconhecido | TESTE ADICIONADO; CI PENDENTE | tests/test_security.py; ainda requer auditoria de cada endpoint |
-| CSRF | Token ausente/inválido e origem estrangeira são rejeitados | TESTE ADICIONADO; CI PENDENTE | tests/test_security.py; falta E2E HTTP com cookies reais |
+| Permissões | Admin, operação, financeiro, leitura e papel desconhecido | APROVADO nos testes unitários | tests/test_security.py; ainda requer auditoria de cada endpoint |
+| CSRF | Token ausente/inválido e origem estrangeira são rejeitados | APROVADO nos testes unitários | tests/test_security.py; falta E2E HTTP com cookies reais |
 | RH | Constraints de esquema, matrícula, datas e jornada | PARCIAL | tests/test_hr.py; falta cobertura dos endpoints e segregação por papel |
 | Login e sessões | Senha, expiração, revogação, bloqueio e recuperação de sessão | PARCIAL | Revisão de código e testes existentes limitados; ampliar testes de integração |
 | Migrações | Banco novo e banco legado são atualizados sem perda | PARCIAL | Migrações em ensure_database() e testes específicos; falta matriz representativa de versões antigas e backup pré-migração |
@@ -100,8 +100,8 @@ Foi removida uma duplicação de setUpClass/tearDownClass em tests/test_hr.py. A
 |---|---|---|---|---|
 | QA-001 | Regex de rotas de compra/RH com barras invertidas duplicadas em string raw | IDs numéricos não correspondiam; recebimento retornava 404 | Padrões corrigidos para aceitar dígitos | Corrigido; testes da PR passaram |
 | QA-002 | Consulta de item de recebimento com um placeholder e dois parâmetros | Exceção SQL durante o recebimento | Consulta passou a filtrar por id e order_id com dois placeholders | Corrigido; testes da PR passaram |
-| QA-003 | Cobertura insuficiente de permissões/CSRF em testes dedicados | Risco de regressões silenciosas nos controles | Criada tests/test_security.py | Testes adicionados; execução da CI pendente |
-| QA-004 | setUpClass duplicado em teste de RH | Setup anterior sobrescrito e fixture confusa | Duplicação removida | Alteração aplicada; execução da CI pendente |
+| QA-003 | Cobertura insuficiente de permissões/CSRF em testes dedicados | Risco de regressões silenciosas nos controles | Criada tests/test_security.py | Testes aprovados na CI da PR #22 |
+| QA-004 | setUpClass duplicado em teste de RH | Setup anterior sobrescrito e fixture confusa | Duplicação removida | Alteração aprovada na CI da PR #22 |
 
 Não há, neste relatório, declaração de que todas as vulnerabilidades ou defeitos possíveis foram encontrados. A tabela lista apenas problemas identificados nesta rodada.
 
@@ -166,4 +166,4 @@ Não. Build prova que o artefato foi produzido; homologação exige instalação
 
 ## 10. Atualização deste relatório
 
-**Estado desta rodada documental:** a correção funcional anterior foi aprovada com 40 testes Python, C23 e Conventional Commits na CI da PR #20. A nova cobertura de segurança contém oito testes adicionais e a limpeza da fixture de RH; estes ainda não foram executados em CI. Atualize esta página após cada rodada com data, SHA testado, link da CI, quantidade de testes, artefatos testados, defeitos abertos/fechados e ressalvas. Não altere estados para APROVADO sem evidência verificável.
+**Estado desta rodada:** a CI da PR #22 foi aprovada no commit 8c99c8d73ac5b3845d7e6f6592f596feddd15b79. O job Python executou 49 testes e terminou em OK; C23 e Conventional Commits também passaram. Evidências: [CI run 38475015757](https://github.com/mnl-nox/product_manager/actions/runs/38475015757) e [Conventional Commits run 38475015689](https://github.com/mnl-nox/product_manager/actions/runs/38475015689). Isso valida a suíte automatizada e as alterações desta PR, não os itens E2E/produção marcados como não verificados. Atualize esta página após cada rodada com data, SHA testado, link da CI, quantidade de testes, artefatos testados, defeitos abertos/fechados e ressalvas. Não altere estados para APROVADO sem evidência verificável.
