@@ -937,7 +937,7 @@ class AppHandler(BaseHTTPRequestHandler):
                         ORDER BY o.created_at DESC, o.id DESC""").fetchall()
                     self.send_json([dict(row) for row in rows])
                     return
-                order_match = re.fullmatch(r'/api/purchasing/orders/(\\d+)', path)
+                order_match = re.fullmatch(r'/api/purchasing/orders/(\d+)', path)
                 if order_match:
                     order_id = int(order_match.group(1))
                     order = conn.execute("""SELECT o.*, s.name AS supplier_name FROM purchase_orders o
@@ -948,7 +948,7 @@ class AppHandler(BaseHTTPRequestHandler):
                     items = conn.execute('SELECT * FROM purchase_order_items WHERE order_id=? ORDER BY id', (order_id,)).fetchall()
                     self.send_json({'order': dict(order), 'items': [dict(item) for item in items]})
                     return
-                request_match = re.fullmatch(r'/api/purchasing/requests/(\\d+)', path)
+                request_match = re.fullmatch(r'/api/purchasing/requests/(\d+)', path)
                 if request_match:
                     request_id = int(request_match.group(1))
                     request_row = conn.execute('SELECT * FROM purchase_requests WHERE id=?', (request_id,)).fetchone()
@@ -1430,7 +1430,7 @@ class AppHandler(BaseHTTPRequestHandler):
                 audit_record(user['id'], 'create', 'hr_absence', cursor.lastrowid)
                 self.send_json({'id': cursor.lastrowid, 'message': 'Ausência registrada para aprovação.'}, status=201)
                 return
-            absence_decision = re.fullmatch(r'/api/hr/absences/(\\d+)/decision', path)
+            absence_decision = re.fullmatch(r'/api/hr/absences/(\d+)/decision', path)
             if absence_decision:
                 absence_id = int(absence_decision.group(1))
                 decision = payload.get('decision')
@@ -1597,7 +1597,7 @@ class AppHandler(BaseHTTPRequestHandler):
                 audit_record(user['id'], 'quote', 'purchase_request', request_id)
                 self.send_json({'id': cursor.lastrowid, 'message': 'Cotação registrada.'}, status=201)
                 return
-            approve_match = re.fullmatch(r'/api/purchasing/requests/(\\d+)/approve', path)
+            approve_match = re.fullmatch(r'/api/purchasing/requests/(\d+)/approve', path)
             if approve_match:
                 if user['role'] not in {'admin', 'finance'}:
                     self.send_json({'error': 'Aprovação exige perfil financeiro ou administrador.'}, status=403)
@@ -1632,7 +1632,7 @@ class AppHandler(BaseHTTPRequestHandler):
                 audit_record(user['id'], decision, 'purchase_request', request_id)
                 self.send_json({'message': 'Decisão registrada.', 'status': status_value})
                 return
-            order_match = re.fullmatch(r'/api/purchasing/requests/(\\d+)/order', path)
+            order_match = re.fullmatch(r'/api/purchasing/requests/(\d+)/order', path)
             if order_match:
                 if user['role'] not in {'admin', 'operator'}:
                     self.send_json({'error': 'Apenas administração ou operação pode emitir pedidos.'}, status=403)
@@ -1678,7 +1678,7 @@ class AppHandler(BaseHTTPRequestHandler):
                 audit_record(user['id'], 'create', 'purchase_order', order_id)
                 self.send_json({'id': order_id, 'message': 'Pedido de compra emitido.'}, status=201)
                 return
-            receive_match = re.fullmatch(r'/api/purchasing/orders/(\\d+)/receive', path)
+            receive_match = re.fullmatch(r'/api/purchasing/orders/(\d+)/receive', path)
             if receive_match:
                 if user['role'] not in {'admin', 'operator'}:
                     self.send_json({'error': 'Apenas administração ou operação pode receber mercadorias.'}, status=403)
