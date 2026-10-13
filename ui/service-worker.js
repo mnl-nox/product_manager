@@ -1,4 +1,4 @@
-const CACHE_NAME = 'product-manager-shell-v1.0.0';
+const CACHE_NAME = 'product-manager-shell-v1.1.0';
 const APP_SHELL = [
   '/styles.css',
   '/manifest.webmanifest',
@@ -8,6 +8,7 @@ const APP_SHELL = [
   '/js/pwa.js',
   '/js/brand.js',
   '/assets/icons/open-source-mark.svg',
+  '/assets/icons/product-manager-brand.svg',
   '/assets/icons/product-manager-192.png',
   '/assets/icons/product-manager-512.png',
 ];
