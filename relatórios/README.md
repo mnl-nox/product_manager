@@ -17,7 +17,7 @@ Esta pasta organiza casos e evidências de aceite para catálogo, estoque, compr
 - O commit de merge do PR #16 (`ed2c2cb564958e6a6f06cf395a07b3a0f0113175`) teve checks Python, C23, validação de commits, build, deploy e jobs Windows/Linux/PWA concluídos com sucesso.
 - A evidência anterior de falha RPM v1.1.3 é histórica; não deve ser usada para descrever o resultado do workflow posterior.
 - A suíte de estoque inclui testes de saldo inicial, migração legada, imutabilidade e endpoint de consulta. Esses testes não substituem testes E2E manuais, inventário físico ou ensaio de restauração.
-- A auditoria documental atual está em branch separada; seus próprios checks precisam ser concluídos antes do merge.
+- A auditoria documental foi integrada pelo PR #17 e publicada na release `v1.7.6`; CI Python/C23 e builds Windows/Linux/PWA passaram. A publicação do site e a operação real continuam sujeitas aos checks de deploy e às limitações listadas abaixo.
 - Backup/restauração de produção, pentest independente, acessibilidade WCAG e homologação em dispositivos reais continuam sem evidência nesta revisão.
 
 ## Evidência obrigatória
