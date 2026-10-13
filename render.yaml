@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: product-manager
+    runtime: docker
+    plan: starter
+    region: ohio
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /login
+    disk:
+      name: product-manager-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: PRODUCT_MANAGER_HOST
+        value: 0.0.0.0
+      - key: PRODUCT_MANAGER_PORT
+        value: 10000
+      - key: PRODUCT_MANAGER_DB
+        value: /data/product_manager.db
+      - key: PRODUCT_MANAGER_COOKIE_SECURE
+        value: "1"
+      - key: PRODUCT_MANAGER_SETUP_TOKEN
+        generateValue: true
