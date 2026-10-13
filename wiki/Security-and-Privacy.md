@@ -12,6 +12,7 @@ Esta página resume os controles documentados no código e nas políticas do rep
 - Token CSRF obrigatório para requisições de escrita.
 - Limitação temporária de tentativas de login.
 - Validação no servidor e SQL parametrizado.
+- Livro-razão de estoque append-only com triggers que bloqueiam alteração/exclusão dos movimentos e restrição de exclusão de produtos com histórico.
 - Revogação de sessões ao desativar usuário.
 - Bootstrap inicial protegido por token temporário; não há credenciais padrão.
 - Telemetria opcional, desativada por padrão e condicionada a consentimento e endpoint HTTPS.
@@ -57,7 +58,7 @@ A opção de diagnóstico é desativada inicialmente. O envio requer consentimen
 - Não há recuperação automatizada de senha.
 - O servidor Python não fornece TLS por conta própria.
 - Não há fluxo avançado de resposta a incidentes ou recuperação de desastre embutido.
-- A trilha de auditoria é básica, sem histórico completo antes/depois para todas as alterações.
+- A trilha de auditoria geral é básica, sem histórico completo antes/depois para todas as entidades. O livro-razão de estoque é separado e imutável, mas cobre apenas os tipos de movimentação atualmente implementados.
 
 Não use a instalação como serviço corporativo exposto à internet sem avaliar esses limites e completar os controles operacionais necessários.
 
