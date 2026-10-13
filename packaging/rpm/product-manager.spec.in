@@ -22,12 +22,14 @@ mkdir -p %{buildroot}/usr/lib/product-manager/api
 mkdir -p %{buildroot}/usr/lib/product-manager/ui
 mkdir -p %{buildroot}/usr/lib/product-manager/db
 mkdir -p %{buildroot}/usr/lib/product-manager/assets/icons
+mkdir -p %{buildroot}/usr/share/doc/product-manager
 mkdir -p %{buildroot}/usr/share/applications
 mkdir -p %{buildroot}/usr/share/icons/hicolor/scalable/apps
 install -m 0755 usr/bin/product-manager %{buildroot}/usr/bin/product-manager
 install -m 0644 usr/lib/product-manager/desktop.py %{buildroot}/usr/lib/product-manager/desktop.py
 install -m 0644 usr/lib/product-manager/VERSION %{buildroot}/usr/lib/product-manager/VERSION
 install -m 0644 usr/lib/product-manager/PRIVACY.md %{buildroot}/usr/lib/product-manager/PRIVACY.md
+install -m 0644 LICENSE PRIVACY.md %{buildroot}/usr/share/doc/product-manager/
 install -m 0644 usr/lib/product-manager/api/*.py %{buildroot}/usr/lib/product-manager/api/
 cp -a usr/lib/product-manager/ui/. %{buildroot}/usr/lib/product-manager/ui/
 install -m 0644 usr/lib/product-manager/db/schema.sql %{buildroot}/usr/lib/product-manager/db/schema.sql
