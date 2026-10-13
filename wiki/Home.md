@@ -1,5 +1,7 @@
 # Product Manager — Wiki
 
+**Mantenedor:** [Manoel E. S. S. (`@mnl-nox`)](https://github.com/mnl-nox) · [Site do projeto](https://mnl-nox.github.io/product_manager/) · [Código-fonte](https://github.com/mnl-nox/product_manager)
+
 > Aplicativo de gestão de produtos para Windows e Linux desktop e Android via PWA. Reúne catálogo, clientes, estoque, usuários, financeiro operacional, alertas e exportação de dados.
 
 ## Navegação
