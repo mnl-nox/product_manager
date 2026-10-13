@@ -22,7 +22,7 @@ Hoje, o app oferece cadastro de clientes e produtos em um espaço de trabalho co
 
 - Dashboard com totais, distribuição por categoria, clientes recentes e estoque crítico.
 - Cadastro de clientes e produtos com validação de campos e unicidade.
-- Edição, desativação, reativação e remoção administrativa de produtos.
+- Edição, desativação e reativação de produtos; a remoção administrativa só é permitida quando não existe histórico de estoque.
 - Busca por nome/SKU/marca/fornecedor, filtro por categoria e resumo de unidades e valor em estoque.
 - Exportação do dashboard em CSV e Excel (`.xlsx`), além de integração opcional com Google Sheets.
 - Compras: fornecedores, solicitações, cotações comparáveis, aprovação financeira por alçada e pedidos com recebimento e atualização transacional do estoque.
@@ -30,7 +30,7 @@ Hoje, o app oferece cadastro de clientes e produtos em um espaço de trabalho co
 - Relatórios e indicadores: receita/despesas realizadas, resultado e margem de resultado, contas vencidas, previsão de caixa, produtos mais vendidos, proxy de giro e agrupamento mensal/categoria.
 - Contas com papéis de administrador, operação, financeiro e leitura; sessões seguras e proteção CSRF.
 - Área financeira para registrar receitas/despesas realizadas ou previstas e consultar saldo operacional.
-- Central de alertas de estoque com prioridade, limite padrão e limite mínimo por produto.
+- Livro-razão de estoque append-only para saldos iniciais, ajustes, baixas de vendas realizadas e recebimentos de compras; histórico consultável por API autenticada.\n- Central de alertas de estoque com prioridade, limite padrão e limite mínimo por produto.
 - Registro interno de bugs e riscos com prioridade e acompanhamento de estado.
 - API JSON, banco SQLite e dados demonstrativos opcionais por configuração.
 
@@ -86,7 +86,7 @@ podman run -d --name product-manager --network=slirp4netns \
   product-manager
 ```
 
-As rotas principais incluem `GET /api/health`, `GET /api/dashboard`, `GET /api/products`, `POST /api/products`, `POST /api/clients`, além das APIs financeira e de alertas. Veja [API e desenvolvimento](docs/development.md) para detalhes de sessão e permissões.
+As rotas principais incluem `GET /api/health`, `GET /api/dashboard`, `GET /api/products`, `GET /api/inventory/movements`, `POST /api/products` e `POST /api/clients`, além das APIs de compras, vendas, RH, financeiro, relatórios e alertas. Veja [API e desenvolvimento](docs/development.md) para detalhes de sessão e permissões.
 
 ## Instalar por plataforma
 
