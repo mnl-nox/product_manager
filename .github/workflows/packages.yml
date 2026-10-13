@@ -125,6 +125,7 @@ jobs:
         run: |
           version="${GITHUB_REF_NAME#v}"
           if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then version="$(cat VERSION)"; fi
+          mkdir -p build/packages
           cp android/app/build/outputs/apk/release/*.apk "build/packages/product-manager-${version}-android.apk"
           cp android/app/build/outputs/bundle/release/*.aab "build/packages/product-manager-${version}-android.aab"
       - uses: actions/upload-artifact@v4
