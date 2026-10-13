@@ -30,7 +30,8 @@ Hoje, o app oferece cadastro de clientes e produtos em um espaço de trabalho co
 - Relatórios e indicadores: receita/despesas realizadas, resultado e margem de resultado, contas vencidas, previsão de caixa, produtos mais vendidos, proxy de giro e agrupamento mensal/categoria.
 - Contas com papéis de administrador, operação, financeiro e leitura; sessões seguras e proteção CSRF.
 - Área financeira para registrar receitas/despesas realizadas ou previstas e consultar saldo operacional.
-- Livro-razão de estoque append-only para saldos iniciais, ajustes, baixas de vendas realizadas e recebimentos de compras; histórico consultável por API autenticada.\n- Central de alertas de estoque com prioridade, limite padrão e limite mínimo por produto.
+- Livro-razão de estoque append-only para saldos iniciais, ajustes, baixas de vendas realizadas e recebimentos de compras; histórico consultável por API autenticada.
+- Central de alertas de estoque com prioridade, limite padrão e limite mínimo por produto.
 - Registro interno de bugs e riscos com prioridade e acompanhamento de estado.
 - API JSON, banco SQLite e dados demonstrativos opcionais por configuração.
 
