@@ -22,6 +22,8 @@
 | PWA-002 | Atualização do service worker | Shell novo carregado sem loop de cache | P1 |
 | WEB-001 | Viewports 320, 768 e desktop | Sem overflow em fluxos críticos | P1 |
 | WEB-002 | Teclado e leitor de tela | Foco e erros acessíveis nos fluxos críticos | P1 |
+| WEB-003 | Seção de avaliações sem depoimentos cadastrados | Nenhuma nota ou testemunho fictício apresentado; CTA abre canal de feedback | P1 |
+| WEB-004 | Links de contato | E-mail abre `mailto:`; Instagram aponta ao perfil correto e abre em nova aba com `rel` seguro | P1 |
 | OPS-001 | Logs de falha | Sem senha, token, cookie ou dados pessoais desnecessários | P0 |
 | PKG-001 | Build DEB | Pacote criado, instalável e com dados persistentes | P0 |
 | PKG-002 | Build RPM | Pacote criado; arquivos declarados existem | P0 |
@@ -36,6 +38,7 @@
 | AUTH/AUTHZ | PENDENTE | PENDENTE | NÃO EXECUTADO | — |
 | DATA/EXP | PENDENTE | PENDENTE | NÃO EXECUTADO | — |
 | PWA/WEB | PENDENTE | PENDENTE | NÃO EXECUTADO | — |
+| WEB-003/WEB-004 | 6a5cc528 | Revisão de conteúdo/HTML; teste manual de navegador pendente | IMPLEMENTAÇÃO REGISTRADA; NÃO VALIDADO EM NAVEGADOR | — |
 | PKG-001 a PKG-004 | PENDENTE | PENDENTE | NÃO EXECUTADO | — |
 
 Qualquer caso P0/P1 pendente ou com falha bloqueia o aceite final.
