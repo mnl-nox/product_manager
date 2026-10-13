@@ -77,6 +77,20 @@ sudo dnf install ./product-manager-<versão>-1.x86_64.rpm
 
 Abra a URL HTTPS no Chrome para Android e escolha **Instalar app** ou **Adicionar à tela inicial**. A aplicação é um PWA e precisa de hospedagem HTTPS operada pela organização.
 
+## Fluxo de primeiro acesso
+
+```mermaid
+flowchart TD
+    A[Iniciar API ou launcher desktop] --> B{Existe conta ativa?}
+    B -- Não --> C[Gerar/fornecer token temporário]
+    C --> D[Abrir /login e informar token]
+    D --> E[Criar administrador com senha forte]
+    E --> F[Token de bootstrap invalidado]
+    B -- Sim --> G[Entrar com conta existente]
+    F --> H[Usar dashboard e módulos autorizados]
+    G --> H
+```
+
 ## Papéis de usuário
 
 | Papel | Capacidades gerais |
