@@ -22,3 +22,5 @@ Esta pasta organiza os casos e evidências de aceite, incluindo os módulos de c
 
 ## Evidência obrigatória
 Registrar commit SHA, URL do workflow, resultado por job, data, plataforma, artefato e defeitos. Estados permitidos: APROVADO, FALHOU, BLOQUEADO e NÃO EXECUTADO. Nunca marcar como aprovado algo não executado.
+
+Os módulos de compras, RH e relatórios estão organizados em branches e pull requests encadeados para reduzir conflitos. O aceite final depende da execução dos checks no estado mais recente de cada branch.
