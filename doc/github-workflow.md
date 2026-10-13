@@ -48,7 +48,7 @@ The issue workflow applies a type label from a Conventional Commit style issue t
 
 ## Semantic versioning
 
-The release workflow derives Git tags from Conventional Commit history and creates a GitHub Release using the matching `CHANGELOG.md` section. Existing non-SemVer tags such as `ui-v1` are ignored:
+The release workflow derives Git tags from Conventional Commit history, synchronizes `VERSION` before tagging and creates a GitHub Release using the matching `CHANGELOG.md` section. Version-sync commits are excluded from generated release notes, and workflow runs are serialized to avoid duplicate tags. Existing non-SemVer tags such as `ui-v1` are ignored:
 
 ```text
 BREAKING CHANGE or type!:  -> MAJOR
