@@ -1,10 +1,13 @@
 ## [Unreleased]
 
-### Documentação e manutenção
+## [v1.7.6] - 2026-10-13
 
-- Revisadas as referências de arquitetura, modelo de dados, requisitos, API, instalação, segurança/privacidade, Wiki e roadmap contra o código atual.
-- Corrigidas descrições de movimentações de estoque, regras de exclusão de produtos, migração de saldos legados e limites dos módulos ERP.
-- Corrigida nesta branch a divergência de `VERSION`; o workflow sincroniza a versão antes de criar tags futuras e exclui o commit técnico de sincronização das notas de release.
+### Documentação, modelo de dados e processo de release
+
+- Auditada a documentação de arquitetura, requisitos, modelo de dados, API, instalação, implantação, segurança, privacidade, Wiki e relatórios.
+- Corrigidas referências de estoque: livro-razão append-only, saldo de abertura para produtos legados, tipos de movimento suportados e bloqueio de exclusão de produtos com histórico.
+- Reconciliado o changelog com as releases publicadas e corrigidos links relativos.
+- Alinhado `VERSION` e atualizado o workflow para sincronizar versões antes da criação de tags e excluir commits técnicos das notas de release.
 
 ## [v1.7.5] - 2026-10-13
 
