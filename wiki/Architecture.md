@@ -4,20 +4,17 @@
 
 O produto possui uma aplicação web Python/SQLite e um núcleo C23 separado. O desktop executa o servidor HTTP local e abre o navegador. No Android, a distribuição é um Progressive Web App (PWA), acessado por uma origem HTTPS administrada pela implantação.
 
-```text
-Navegador desktop / PWA
-        │ HTML, CSS, JavaScript e chamadas JSON
-        ▼
-API Python (api/app.py)
-  ├─ autenticação e sessões
-  ├─ autorização por papel e CSRF
-  ├─ validação de dados
-  ├─ operações de negócio
-  ├─ exportações e integração Google Sheets
-  └─ auditoria básica
-        │ SQL parametrizado
-        ▼
-SQLite (db/schema.sql)
+```mermaid
+flowchart TD
+    UI[Interface web: HTML, CSS e JavaScript] -->|HTTP same-origin / JSON| API[API Python: api/app.py]
+    API --> AUTH[Autenticação, sessão, papéis e CSRF]
+    API --> VALID[Validação e regras de negócio]
+    API --> EXPORT[CSV, XLSX e Google Sheets opcional]
+    API --> AUDIT[Auditoria básica]
+    API -->|SQL parametrizado| DB[(SQLite: db/schema.sql)]
+    DESK[Launcher desktop.py] -->|inicia localmente| API
+    PWA[PWA Android] -->|HTTPS via proxy externo| API
+    C[Núcleo C23 independente] -. não integra o backend web .- UI
 ```
 
 ## Componentes
@@ -65,3 +62,24 @@ O esquema é inicializado a partir de `db/schema.sql`; a API também contém ló
 ## Limites arquiteturais
 
 A aplicação não implementa isolamento de dados por organização, identidade corporativa OIDC/SAML, TLS embutido, recuperação automatizada de senha, movimentações imutáveis de estoque ou contabilidade fiscal. Uma implantação compartilhada exige que a organização opere TLS, rede, backups, segredos e atualizações.
+
+## Fluxo de autenticação e escrita
+
+```mermaid
+flowchart TD
+    A[Usuário abre /login] --> B{Já existe administrador?}
+    B -- Não --> C[Bootstrap com token temporário]
+    C --> D[Criar conta admin e senha]
+    B -- Sim --> E[Login com credenciais]
+    D --> E
+    E --> F[Servidor valida credenciais e limite de tentativas]
+    F -->|Válido| G[Cookie de sessão HttpOnly]
+    F -->|Inválido| H[Erro e limitação temporária]
+    G --> I[GET /api/auth/me: obter token CSRF]
+    I --> J[Requisição de escrita com cookie + X-CSRF-Token]
+    J --> K{Sessão, papel e CSRF válidos?}
+    K -- Sim --> L[Validar payload e persistir no SQLite]
+    K -- Não --> M[Rejeitar requisição]
+```
+
+A figura descreve o fluxo geral documentado; as condições exatas de cada rota permanecem definidas em `api/app.py`.
