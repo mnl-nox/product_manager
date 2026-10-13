@@ -6,7 +6,7 @@
 
 Aplicativo de gestão de produtos para desktop Windows/Linux e PWA Android, com catálogo, estoque, usuários, financeiro operacional e exportação de dados.
 
-[Plano de engenharia multiplataforma](docs/platform-engineering.md) · **[Abrir aplicação Web](https://product-manager-14fq.onrender.com/login)** · [Site do projeto](https://mnl-nox.github.io/product_manager/) · [Documentação completa (Wiki)](https://github.com/mnl-nox/product_manager/wiki) · [Arquitetura](docs/architecture.md)
+[Plano de engenharia multiplataforma](docs/platform-engineering.md) · **[Abrir aplicação Web](https://product-manager-14fq.onrender.com/login)** · [Site do projeto](https://mnl-nox.github.io/product_manager/) · [Documentação completa (Wiki)](https://github.com/mnl-nox/product_manager/wiki) · [Arquitetura](docs/architecture.md) · [Relatório de robustez multiplataforma](docs/quality-report.md)
 
 **Mantenedor:** [Manoel E. S. S. (`@mnl-nox`)](https://github.com/mnl-nox).
 
