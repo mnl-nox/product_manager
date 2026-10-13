@@ -33,7 +33,8 @@ A instância publicada é acessível em [https://product-manager-14fq.onrender.c
 - Edição, desativação e reativação de produtos; remoção permanente restrita a administradores e bloqueada quando existe histórico de estoque.
 - Contas locais com papéis de administrador, operação, financeiro e leitura.
 - Sessões com expiração, hash de senha scrypt, proteção CSRF e limitação de tentativas de login.
-- Livro-razão append-only de estoque para saldos iniciais, ajustes, baixas de vendas realizadas e recebimentos de compras, com consulta autenticada do histórico.\n- Alertas de estoque com limite padrão e limite individual por produto.
+- Livro-razão append-only de estoque para saldos iniciais, ajustes, baixas de vendas realizadas e recebimentos de compras, com consulta autenticada do histórico.
+- Alertas de estoque com limite padrão e limite individual por produto.
 - Financeiro operacional para receitas e despesas, com saldo agregado.
 - Registro interno de bugs e riscos.
 - Exportação CSV e XLSX; integração opcional de exportação para Google Sheets.
@@ -75,7 +76,8 @@ make test
 ## Limites importantes
 
 - As contas compartilham um único workspace; não existe isolamento multi-organização.
-- O financeiro é operacional e não substitui contabilidade ou escrituração fiscal.\n- O livro-razão de estoque cobre operações específicas; não é ainda um sistema completo de inventário, devoluções, estornos ou múltiplos depósitos.
+- O financeiro é operacional e não substitui contabilidade ou escrituração fiscal.
+- O livro-razão de estoque cobre operações específicas; não é ainda um sistema completo de inventário, devoluções, estornos ou múltiplos depósitos.
 - O PWA exige implantação externa atrás de HTTPS; o servidor Python não fornece TLS.
 - O núcleo C é independente e não substitui a aplicação web Python.
 - O envio ao Google Sheets é opcional e exige credenciais configuradas pelo administrador.
