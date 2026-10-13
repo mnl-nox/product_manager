@@ -60,7 +60,7 @@ Essa implementação melhora a rastreabilidade, mas não constitui inventário c
 
 ## 5. Riscos prioritários
 
-0. **Fonte de versão inconsistente:** `VERSION` continua indicando `1.1.0`, enquanto a release mais recente observada na revisão inicial é `v1.7.5`. O app lê `VERSION` para exibir a versão; o workflow cria tags/releases sem sincronizar automaticamente esse arquivo. Corrigir o fluxo de versionamento de forma atômica e confirmar a versão exibida pela aplicação antes de uma próxima release.
+0. **Fonte de versão inconsistente:** no início desta auditoria, `VERSION` indicava `1.1.0`, enquanto a release mais recente observada era `v1.7.5`. Esta branch alinha `VERSION` com `1.7.5` e ajusta o workflow para sincronizar a versão antes de criar tags futuras, com serialização de execuções e exclusão do commit de sincronização das notas de release. A correção ainda depende de CI verde e validação do próximo ciclo real de release.
 
 ### P0 — antes de uso com dados reais ou críticos
 
