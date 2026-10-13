@@ -1670,14 +1670,22 @@ class AppHandler(BaseHTTPRequestHandler):
                     raise ValueError('O valor deve ser maior que zero.')
                 amount_cents = int(cents)
                 entry_date = date.fromisoformat(payload.get('entry_date', date.today().isoformat())).isoformat()
+                department_id = int(payload['department_id']) if payload.get('department_id') not in (None, '') else None
+                org_unit_id = int(payload['org_unit_id']) if payload.get('org_unit_id') not in (None, '') else None
             except (TypeError, ValueError, InvalidOperation) as exc:
                 self.send_json({'error': str(exc)}, status=400)
                 return
             with get_db() as conn:
+                if department_id is not None and not conn.execute('SELECT 1 FROM hr_departments WHERE id=? AND active=1', (department_id,)).fetchone():
+                    self.send_json({'error': 'Departamento ativo não encontrado.'}, status=400)
+                    return
+                if org_unit_id is not None and not conn.execute('SELECT 1 FROM org_units WHERE id=? AND active=1', (org_unit_id,)).fetchone():
+                    self.send_json({'error': 'Unidade ativa não encontrada.'}, status=400)
+                    return
                 cursor = conn.execute(
-                    '''INSERT INTO finance_entries (entry_type, category, description, amount_cents, entry_date, status, created_by)
-                       VALUES (?, ?, ?, ?, ?, ?, ?)''',
-                    (entry_type, category, description, amount_cents, entry_date, status, user['id']),
+                    '''INSERT INTO finance_entries (entry_type, category, description, amount_cents, entry_date, status, department_id, org_unit_id, created_by)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                    (entry_type, category, description, amount_cents, entry_date, status, department_id, org_unit_id, user['id']),
                 )
                 entry_id = cursor.lastrowid
             audit_record(user['id'], 'create', 'finance_entry', entry_id)
