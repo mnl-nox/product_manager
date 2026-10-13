@@ -54,7 +54,7 @@ Tipos atualmente usados pelos fluxos implementados:
 
 O movimento e a atualização do saldo devem ser gravados na mesma transação. O endpoint autenticado `GET /api/inventory/movements` aceita filtro opcional `product_id` e `limit` de 1 a 500, ordenando os movimentos mais recentes primeiro.
 
-Na primeira inicialização após a introdução do livro-razão, produtos legados com quantidade positiva e sem movimentos recebem um `OPENING_BALANCE) igual ao saldo atual. Isso cria um ponto de partida verificável, não reconstitui as vendas/entradas anteriores. Produtos com histórico não podem ser excluídos definitivamente; devem ser desativados. Devoluções, transferências entre depósitos, reservas formais e estornos não constituem fluxos completos nesta versão.
+Na primeira inicialização após a introdução do livro-razão, produtos legados com quantidade positiva e sem movimentos recebem um `OPENING_BALANCE` igual ao saldo atual. Isso cria um ponto de partida verificável, não reconstitui as vendas/entradas anteriores. Produtos com histórico não podem ser excluídos definitivamente; devem ser desativados. Devoluções, transferências entre depósitos, reservas formais e estornos não constituem fluxos completos nesta versão.
 
 ## Compras e vendas
 

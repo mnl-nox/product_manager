@@ -9,7 +9,7 @@ O roadmap interno em `.product-manager-roadmap.md` descreve intenções futuras,
 | Organizações | Um workspace compartilhado entre contas | Não adequado a isolamento multi-tenant |
 | Identidade | Contas locais | Sem OIDC/SAML corporativo |
 | Recuperação de conta | Não há recuperação automatizada de senha | Processo operacional precisa ser definido |
-| Estoque | Quantidade atual e alertas | Não há livro imutável completo de entradas/saídas |
+| Estoque | Livro-razão append-only para saldo inicial, ajustes, vendas realizadas e recebimentos de compras | Não cobre integralmente devoluções, estornos, transferências entre depósitos, reservas formais ou reconciliação física |
 | Financeiro | Receitas/despesas operacionais | Não substitui contabilidade, fiscal ou ERP |
 | Notificações | Alertas dentro do aplicativo | Sem e-mail/push externo |
 | TLS | Não fornecido pelo servidor Python | PWA/serviço compartilhado precisa de HTTPS externo |
@@ -24,7 +24,7 @@ O roadmap interno em `.product-manager-roadmap.md` descreve intenções futuras,
 - Migrações versionadas, backup/restauração testados e operação segura por ambiente.
 - Melhorias de acessibilidade com objetivo WCAG 2.2 AA.
 - Busca avançada, paginação, variantes, fornecedores como entidade e operações em lote.
-- Movimentações imutáveis, múltiplos depósitos, inventário e alertas configuráveis.
+- Completar o ciclo de inventário com devoluções, estornos, múltiplos depósitos, transferências, reservas e reconciliação física; ampliar alertas e trilha de auditoria conforme requisitos.
 - Relatórios com filtros, métricas de giro e exportação auditável.
 - Importação CSV/XLSX com pré-visualização e validação.
 - Expansão financeira operacional, aprovações, conciliação e integração com provedores, condicionadas a requisitos de negócio e validação jurídica.

@@ -6,7 +6,7 @@
 
 Aplicativo de gestão de produtos para desktop Windows/Linux e PWA Android, com catálogo, estoque, usuários, financeiro operacional e exportação de dados.
 
-[Plano de engenharia multiplataforma](docs/platform-engineering.md) · **[Abrir aplicação Web](https://product-manager-14fq.onrender.com/login)** · [Site do projeto](https://mnl-nox.github.io/product_manager/) · [Documentação completa (Wiki)](https://github.com/mnl-nox/product_manager/wiki) · [Arquitetura](docs/architecture.md) · [Relatório de robustez multiplataforma](docs/quality-report.md) · [Relatórios de aceite e qualidade](relatórios/README.md)
+[Plano de engenharia multiplataforma](docs/platform-engineering.md) · **[Abrir aplicação Web](https://product-manager-14fq.onrender.com/login)** · [Site do projeto](https://mnl-nox.github.io/product_manager/) · [Documentação completa (Wiki)](https://github.com/mnl-nox/product_manager/wiki) · [Arquitetura](doc/architecture.md) · [Relatório de robustez multiplataforma](docs/quality-report.md) · [Relatórios de aceite e qualidade](relatórios/README.md)
 
 **Mantenedor:** [Manoel E. S. S. (`@mnl-nox`)](https://github.com/mnl-nox).
 
@@ -30,7 +30,8 @@ Hoje, o app oferece cadastro de clientes e produtos em um espaço de trabalho co
 - Relatórios e indicadores: receita/despesas realizadas, resultado e margem de resultado, contas vencidas, previsão de caixa, produtos mais vendidos, proxy de giro e agrupamento mensal/categoria.
 - Contas com papéis de administrador, operação, financeiro e leitura; sessões seguras e proteção CSRF.
 - Área financeira para registrar receitas/despesas realizadas ou previstas e consultar saldo operacional.
-- Livro-razão de estoque append-only para saldos iniciais, ajustes, baixas de vendas realizadas e recebimentos de compras; histórico consultável por API autenticada.\n- Central de alertas de estoque com prioridade, limite padrão e limite mínimo por produto.
+- Livro-razão de estoque append-only para saldos iniciais, ajustes, baixas de vendas realizadas e recebimentos de compras; histórico consultável por API autenticada.
+- Central de alertas de estoque com prioridade, limite padrão e limite mínimo por produto.
 - Registro interno de bugs e riscos com prioridade e acompanhamento de estado.
 - API JSON, banco SQLite e dados demonstrativos opcionais por configuração.
 

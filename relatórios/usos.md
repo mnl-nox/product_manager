@@ -6,9 +6,11 @@
 1. Entrar pela URL HTTPS e autenticar.
 2. Consultar dashboard e catálogo.
 3. Criar, editar, desativar e reativar produto.
-4. Gerenciar usuários e permissões.
-5. Exportar relatório.
-6. Encerrar sessão e confirmar que a sessão revogada não acessa endpoints protegidos.
+4. Cadastrar produto com saldo inicial e consultar o histórico de estoque.
+5. Registrar venda realizada ou recebimento de compra e confirmar a movimentação correspondente.
+6. Tentar excluir produto com histórico e confirmar que a API bloqueia a operação; desativar o produto para preservar rastreabilidade.
+7. Gerenciar usuários e permissões.
+8. Exportar relatório e encerrar sessão; confirmar que a sessão revogada não acessa endpoints protegidos.
 
 Aceite: dados persistem, erros são claros, autorização é verificada no servidor e os fluxos funcionam em telas móveis e desktop.
 

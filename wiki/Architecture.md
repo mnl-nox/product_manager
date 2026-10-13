@@ -22,7 +22,7 @@ flowchart TD
 | Caminho | Responsabilidade |
 |---|---|
 | `api/app.py` | Servidor HTTP, rotas JSON, autenticação, regras de acesso, validação, banco e exportações |
-| `ui/` | Telas de login, dashboard, catálogo, usuários, financeiro, alertas, riscos/bugs e arquivos PWA |
+| `ui/` | Telas de login, dashboard, catálogo, usuários, compras, RH, financeiro, alertas, relatórios, riscos/bugs e arquivos PWA |
 | `db/schema.sql` | Esquema inicial SQLite |
 | `desktop.py` | Inicia servidor local, cria token temporário no primeiro uso e abre navegador |
 | `config/` | Mapeamentos de campos usados pelo projeto |

@@ -19,7 +19,9 @@ A API é implementada em `api/app.py`. As respostas de negócio são JSON, excet
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/api/health` | Estado básico do serviço |
+| GET | `/healthz` | Probe público de liveness, resposta mínima |
+| GET | `/readyz` | Probe público de readiness; verifica conexão SQLite |
+| GET | `/api/health` | Estado básico do serviço; exige sessão autenticada |
 | GET | `/api/dashboard` | Indicadores, categorias, clientes recentes e estoque crítico |
 | GET | `/api/categories` | Categorias e contagem de produtos |
 | GET | `/api/clients` | Consulta clientes |
@@ -30,11 +32,13 @@ A API é implementada em `api/app.py`. As respostas de negócio são JSON, excet
 | POST | `/api/products/{id}` | Atualiza produto; admin/operação |
 | POST | `/api/products/{id}/deactivate` | Desativa produto sem apagar seu cadastro |
 | POST | `/api/products/{id}/activate` | Reativa produto desativado |
-| POST | `/api/products/{id}/delete` | Remove produto e alertas associados; admin |
+| POST | `/api/products/{id}/delete` | Remove produto e alertas associados; admin; rejeita com conflito se houver histórico de estoque |
 | GET | `/api/dashboard/export.csv` | Exporta dashboard em CSV |
 | GET | `/api/dashboard/export.xlsx` | Exporta dashboard em XLSX |
 
 Exemplo de filtro: `GET /api/products?category=Hardware`. Use `category=all` para todas as categorias.
+
+O endpoint `GET /api/inventory/movements?product_id=ID&limit=100` retorna o histórico mais recente primeiro. `product_id` é opcional; `limit` deve ficar entre 1 e 500. Os movimentos incluem saldo inicial, ajustes, baixas de vendas realizadas e recebimentos de compras. Movimentos registrados não podem ser editados ou excluídos; produtos com histórico não podem ser removidos definitivamente.
 
 ## Financeiro, alertas e itens de trabalho
 
@@ -48,6 +52,46 @@ Exemplo de filtro: `GET /api/products?category=Hardware`. Use `category=all` par
 | POST | `/api/alerts/stock/{id}/acknowledge` | Reconhece um alerta |
 | GET/POST | `/api/work-items` | Lista/registra bugs e riscos |
 | POST | `/api/work-items/{id}` | Atualiza estado/responsável; admin/operação |
+
+## Compras e fornecedores
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/api/purchasing/suppliers` | Lista fornecedores |
+| POST | `/api/purchasing/suppliers` | Cadastra fornecedor |
+| GET/POST | `/api/purchasing/requests` | Lista ou cria solicitações de compra |
+| GET | `/api/purchasing/requests/{id}` | Consulta solicitação, itens e cotações |
+| POST | `/api/purchasing/quotes` | Registra cotação |
+| POST | `/api/purchasing/requests/{id}/approve` | Aprova/rejeita solicitação conforme papel e alçada |
+| POST | `/api/purchasing/requests/{id}/order` | Emite pedido com cotação escolhida |
+| GET | `/api/purchasing/orders` | Lista pedidos |
+| POST | `/api/purchasing/orders/{id}/receive` | Registra recebimento parcial ou total e entrada de estoque |
+
+## Vendas e relatórios
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/api/reports/summary?from=YYYY-MM-DD&to=YYYY-MM-DD` | Indicadores operacionais por período |
+| GET | `/api/reports/sales` | Lista registros recentes de vendas |
+| POST | `/api/reports/sales` | Registra venda planejada ou realizada |
+| GET | `/api/reports/dimensions` | Lista departamentos/unidades disponíveis para classificação |
+| POST | `/api/org-units` | Cadastra unidade organizacional; somente administrador |
+
+Vendas realizadas baixam estoque e geram receita dentro do fluxo implementado; vendas planejadas não baixam estoque. O sistema ainda não oferece fluxo completo de cancelamento, devolução, estorno ou custo de mercadoria vendida. As dimensões organizacionais são classificadores de relatório, não isolamento multi-organização.
+
+## Recursos humanos
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET/POST | `/api/hr/departments` | Consulta/cadastra departamentos |
+| GET/POST | `/api/hr/employees` | Consulta/cadastra colaboradores |
+| GET/POST | `/api/hr/absences` | Consulta/registra ausências |
+| POST | `/api/hr/absences/{id}/decision` | Aprova/rejeita solicitação |
+| GET/POST | `/api/hr/documents` | Consulta/cadastra metadados documentais |
+| GET/POST | `/api/hr/work-time` | Consulta/registra minutos de jornada |
+| GET | `/api/hr/payroll-export.csv?from=YYYY-MM-DD&to=YYYY-MM-DD` | Exporta registros de jornada para sistema de folha |
+
+A área `/hr` e as rotas `/api/hr/` são restritas ao administrador. O módulo guarda metadados documentais, não arquivos, e não calcula folha de pagamento ou encargos.
 
 ## Google Sheets
 

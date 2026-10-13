@@ -2,7 +2,7 @@
 
 Data-base: 13/10/2026. Repositório: https://github.com/mnl-nox/product_manager
 
-Esta pasta organiza os casos e evidências de aceite, incluindo os módulos de compras/fornecedores, RH e relatórios/indicadores introduzidos nas branches semânticas. O aceite final exige todos os checks obrigatórios aprovados no mesmo commit, nenhum defeito P0/P1 aberto e artefatos por plataforma gerados e verificados. Isso reduz o risco, mas não prova ausência absoluta de bugs.
+Esta pasta organiza casos e evidências de aceite para catálogo, estoque, compras/fornecedores, vendas, RH, financeiro e relatórios/indicadores. Os módulos de compras, RH, relatórios e livro-razão de estoque já foram integrados à `main`; isso não equivale a homologação completa em navegador ou ambiente produtivo. O aceite final exige todos os checks obrigatórios aprovados no mesmo commit, nenhum defeito P0/P1 aberto e artefatos por plataforma gerados e verificados. Isso reduz o risco, mas não prova ausência absoluta de bugs.
 
 ## Índice
 - [Casos](casos.md): cenários funcionais, negativos e de segurança.
@@ -13,14 +13,14 @@ Esta pasta organiza os casos e evidências de aceite, incluindo os módulos de c
 - [Desempenho](desempenho.md): plano de carga e latência.
 - [Análise](análise.md): riscos e decisão de liberação.
 
-## Estado inicial
-- CI principal e release anteriores: aprovados em execuções anteriores.
-- Windows e PWA v1.1.3: aprovados no workflow 38348165447.
-- Linux/RPM v1.1.3: falhou antes da correção do spec; requer nova execução.
-- /healthz e /readyz, configuração Docker/Render e testes associados foram adicionados; CI e deploy ainda precisam confirmar a alteração.
-- Podman: análise de ambiente reservada para uma etapa posterior; não iniciada.
+## Estado das evidências — snapshot 13/10/2026
+- O commit de merge do PR #16 (`ed2c2cb564958e6a6f06cf395a07b3a0f0113175`) teve checks Python, C23, validação de commits, build, deploy e jobs Windows/Linux/PWA concluídos com sucesso.
+- A evidência anterior de falha RPM v1.1.3 é histórica; não deve ser usada para descrever o resultado do workflow posterior.
+- A suíte de estoque inclui testes de saldo inicial, migração legada, imutabilidade e endpoint de consulta. Esses testes não substituem testes E2E manuais, inventário físico ou ensaio de restauração.
+- A auditoria documental atual está em branch separada; seus próprios checks precisam ser concluídos antes do merge.
+- Backup/restauração de produção, pentest independente, acessibilidade WCAG e homologação em dispositivos reais continuam sem evidência nesta revisão.
 
 ## Evidência obrigatória
 Registrar commit SHA, URL do workflow, resultado por job, data, plataforma, artefato e defeitos. Estados permitidos: APROVADO, FALHOU, BLOQUEADO e NÃO EXECUTADO. Nunca marcar como aprovado algo não executado.
 
-Os módulos de compras, RH e relatórios estão organizados em branches e pull requests encadeados para reduzir conflitos. O aceite final depende da execução dos checks no estado mais recente de cada branch.
+O aceite final depende dos checks no commit candidato e de evidências explícitas para as verificações que CI não cobre. Não marcar um teste manual, restauração ou validação de produção como aprovado sem executar e registrar o resultado.

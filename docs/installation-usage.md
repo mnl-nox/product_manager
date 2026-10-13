@@ -26,7 +26,7 @@ sudo dnf install ./product-manager-<versão>-1.x86_64.rpm
 
 ### Android
 
-O pacote Android é um PWA, não um APK. Abra a URL HTTPS publicada pela organização no Chrome para Android e escolha **Instalar app** ou **Adicionar à tela inicial**. A implantação precisa de um servidor HTTPS e controles de autenticação e autorização antes de receber dados corporativos.
+A opção recomendada é o PWA: abra a URL HTTPS publicada pela organização no Chrome para Android e escolha **Instalar app** ou **Adicionar à tela inicial**. Há também um workflow opcional para gerar um wrapper APK de depuração que abre essa mesma URL; ele depende do servidor HTTPS e não deve ser tratado como release assinada para Play Store. A implantação precisa de um servidor HTTPS e controles de autenticação e autorização antes de receber dados corporativos.
 
 ## Primeiro uso
 
@@ -38,7 +38,8 @@ Ao executar o servidor diretamente ou preparar uma instalação PWA, gere um tok
 
 ```bash
 export PRODUCT_MANAGER_SETUP_TOKEN="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
-printf 'Token de configuração: %s\n' "$PRODUCT_MANAGER_SETUP_TOKEN"
+printf 'Token de configuração: %s
+' "$PRODUCT_MANAGER_SETUP_TOKEN"
 python3 api/app.py
 ```
 
@@ -67,7 +68,9 @@ No Windows ou Linux, depois da configuração, inicie o aplicativo pelo menu ou 
 
 As contas compartilham o mesmo espaço de trabalho e banco. Não há isolamento entre organizações nem recuperação automatizada de senha. A administração de usuários permite criar contas e desativá-las, revogando suas sessões.
 
-O dashboard resume clientes, produtos e estoque. Em **Produtos**, cadastre, edite, desative e reative itens; administradores também podem removê-los definitivamente. Produtos desativados ficam ocultos das consultas e relatórios comuns. Em **Alertas**, configure o limite por item e reconheça alertas; o padrão é `PRODUCT_MANAGER_LOW_STOCK_DEFAULT` (5 unidades se não configurado). Em **Financeiro**, usuários autorizados registram receitas/despesas previstas ou realizadas, consultam saldo e removem lançamentos incorretos. Isso não substitui contabilidade ou sistema fiscal.
+O dashboard resume clientes, produtos e estoque. Em **Produtos**, cadastre, edite, desative e reative itens; administradores podem remover definitivamente apenas produtos sem histórico de movimentações. Produtos com histórico devem ser desativados para preservar rastreabilidade. Produtos desativados ficam ocultos das consultas e relatórios comuns. O histórico de estoque é registrado para saldo inicial, ajustes manuais, vendas realizadas e recebimentos de compras; movimentos são imutáveis e a consulta está disponível pela API autenticada `GET /api/inventory/movements`. Na primeira inicialização após a migração, produtos antigos com saldo positivo recebem uma referência de saldo inicial, sem reconstrução de eventos passados.
+
+Em **Alertas**, configure o limite por item e reconheça alertas; o padrão é `PRODUCT_MANAGER_LOW_STOCK_DEFAULT` (5 unidades se não configurado). Em **Financeiro**, usuários autorizados registram receitas/despesas previstas ou realizadas, consultam saldo e removem lançamentos incorretos. Isso não substitui contabilidade ou sistema fiscal.
 
 Em **Riscos e bugs**, qualquer conta pode registrar um problema ou risco. Administração/operação pode atualizar o estado e o responsável. O formulário não envia anexos nem transmite os registros para fora da instalação.
 
@@ -79,6 +82,6 @@ O workspace começa vazio. Se `PRODUCT_MANAGER_DEMO_DATA=1` estiver definido, a 
 
 O compartilhamento de diagnósticos fica desativado inicialmente. Para participar, marque **Compartilhar diagnóstico técnico de erros (opcional)**. É possível revogar a escolha desmarcando a opção ou limpando os dados do site no navegador.
 
-O administrador precisa configurar `PRODUCT_MANAGER_TELEMETRY_URL` com um endpoint HTTPS controlado pela organização. Sem essa configuração, nenhum evento é transmitido. A integração envia somente o identificador técnico do evento permitido, nome e versão do aplicativo; não envia conteúdo de campos, dados do banco, stack trace, URL, endereço de e-mail ou identificador persistente. O serviço de destino pode receber o endereço IP da conexão nos logs de infraestrutura. Consulte [Política de privacidade](PRIVACY.md).
+O administrador precisa configurar `PRODUCT_MANAGER_TELEMETRY_URL` com um endpoint HTTPS controlado pela organização. Sem essa configuração, nenhum evento é transmitido. A integração envia somente o identificador técnico do evento permitido, nome e versão do aplicativo; não envia conteúdo de campos, dados do banco, stack trace, URL, endereço de e-mail ou identificador persistente. O serviço de destino pode receber o endereço IP da conexão nos logs de infraestrutura. Consulte [Política de privacidade](../PRIVACY.md).
 
 Para relatar um erro manualmente, abra uma issue usando o modelo **Bug report**, descreva os passos e resultado esperado e remova dados pessoais e confidenciais. Veja [Contribuição](../CONTRIBUTING.md) e [Segurança](../SECURITY.md).

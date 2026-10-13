@@ -1,6 +1,6 @@
 # Resultado dos testes
 
-Registro da validação local da versão **1.0.0**, executada em **12/10/2026**.
+**Registro histórico:** validação local da versão **1.0.0**, executada em **12/10/2026**. Estes resultados descrevem apenas aquele ambiente e não substituem os checks de CI do commit ou release atual.
 
 ## Ambiente disponível
 

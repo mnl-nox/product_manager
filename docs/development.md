@@ -34,7 +34,7 @@ As respostas são JSON, exceto os downloads CSV/XLSX.
 | POST | `/api/products/{id}` | Atualiza produto (admin/operação) |
 | POST | `/api/products/{id}/deactivate` | Desativa produto sem apagar o histórico |
 | POST | `/api/products/{id}/activate` | Reativa produto desativado |
-| POST | `/api/products/{id}/delete` | Remove produto e alertas associados (admin) |
+| POST | `/api/products/{id}/delete` | Remove produto e alertas associados (admin), somente se não houver movimentações de estoque |
 | GET | `/api/dashboard/export.csv` | Exporta indicadores e dados em CSV |
 | GET | `/api/dashboard/export.xlsx` | Baixa uma planilha Excel `.xlsx` |
 | GET | `/api/finance/summary` | Totais realizados e saldo projetado |
@@ -65,7 +65,7 @@ O financeiro mantém lançamentos de receita/despesa previstos ou realizados e c
 
 ### Livro-razão de estoque
 
-A partir desta versão, saldo inicial, ajuste manual, baixa de venda paga e recebimento de compra geram registros em `stock_movements` na mesma transação que atualiza `products.quantity`. O livro-razão é append-only: triggers SQLite bloqueiam alteração ou exclusão de movimentos. Produtos com histórico não podem ser removidos definitivamente; devem ser desativados para preservar rastreabilidade. O endpoint de consulta exige sessão autenticada. Registros históricos anteriores à ativação não são reconstruídos automaticamente, pois o saldo atual não permite inferir com segurança o histórico passado.
+A partir desta versão, saldo inicial, ajuste manual, baixa de venda paga e recebimento de compra geram registros em `stock_movements` na mesma transação que atualiza `products.quantity`. O livro-razão é append-only: triggers SQLite bloqueiam alteração ou exclusão de movimentos. Produtos com histórico não podem ser removidos definitivamente; devem ser desativados para preservar rastreabilidade. O endpoint de consulta exige sessão autenticada. Na primeira inicialização, produtos legados com quantidade positiva e sem movimentos recebem um único `OPENING_BALANCE` igual ao saldo atual. Isso cria uma referência inicial; registros de vendas/entradas anteriores não são reconstruídos porque não podem ser inferidos com segurança.
 
 ## Exportações para planilhas
 
@@ -110,7 +110,7 @@ A área de compras está disponível em `/purchasing`. Os endpoints requerem ses
 | GET | `/api/purchasing/orders` | Consultar pedidos |
 | POST | `/api/purchasing/orders/{id}/receive` | Registrar recebimento parcial ou total |
 
-Valores são enviados em centavos inteiros. O perfil financeiro pode aprovar até `PRODUCT_MANAGER_FINANCE_APPROVAL_LIMIT_CENTS` (padrão: R$ 100.000,00); valores maiores exigem administrador. A recepção atualiza a quantidade de produtos vinculados dentro de transação. O módulo não substitui validação fiscal, integração com ERP de fornecedor ou conferência física formal.
+Valores são enviados em centavos inteiros. O perfil financeiro pode aprovar até `PRODUCT_MANAGER_FINANCE_APPROVAL_LIMIT_CENTS` (padrão: R$ 100.000,00); valores maiores exigem administrador. A recepção atualiza a quantidade de produtos vinculados e registra `PURCHASE_IN` no livro-razão dentro da mesma transação. O módulo não substitui validação fiscal, integração com ERP de fornecedor ou conferência física formal.
 
 
 ## Recursos humanos
@@ -133,7 +133,7 @@ O registro de jornada permite no máximo 1.440 minutos por dia e um registro por
 
 A área está disponível em `/reports`. O endpoint `GET /api/reports/summary?from=YYYY-MM-DD&to=YYYY-MM-DD` retorna receitas e despesas realizadas, resultado líquido, margem de resultado (não margem bruta), valores planejados, proxy de caixa, contas vencidas, produtos mais vendidos, série mensal e agregação por categoria. `GET /api/reports/sales` lista os últimos registros de vendas.
 
-`POST /api/reports/sales` registra uma venda com produto, quantidade, preço unitário, data e situação. Valores monetários são convertidos para centavos inteiros; vendas realizadas verificam e baixam o estoque dentro de uma transação e criam lançamento de receita. Vendas planejadas não baixam estoque nem contam como venda realizada. A baixa do estoque representa a conclusão da venda nesta versão; devoluções, cancelamentos, custo de mercadoria e estornos ainda não fazem parte do fluxo.
+`POST /api/reports/sales` registra uma venda com produto, quantidade, preço unitário, data e situação. Valores monetários são convertidos para centavos inteiros; vendas realizadas verificam e baixam o estoque dentro de uma transação, registram `SALE_OUT` e criam lançamento de receita. Vendas planejadas não baixam estoque nem contam como venda realizada. A baixa do estoque representa a conclusão da venda nesta versão; devoluções, cancelamentos, custo de mercadoria e estornos ainda não fazem parte do fluxo.
 
 Limitações dos indicadores:
 - A margem exibida é resultado líquido dividido pela receita realizada; não é margem bruta, pois não há custo unitário de aquisição confiável no modelo atual.

@@ -18,6 +18,15 @@ def git_output(*args: str) -> str:
     return result.stdout.strip() if result.returncode == 0 else ""
 
 
+def release_entries(commits: str) -> list[str]:
+    """Return commit subjects for release notes, excluding version-sync commits."""
+    return [
+        line.strip()
+        for line in commits.splitlines()
+        if line.strip() and not line.strip().startswith("chore(release): sync VERSION to ")
+    ]
+
+
 def notes_for(version: str, changelog: Path = Path("CHANGELOG.md")) -> str:
     normalized = version.removeprefix("v")
     heading = f"## [v{normalized}]"
@@ -39,8 +48,8 @@ def notes_for(version: str, changelog: Path = Path("CHANGELOG.md")) -> str:
     previous_tag = git_output("describe", "--tags", "--abbrev=0", f"{version}^")
     revision_range = f"{previous_tag}..{version}" if previous_tag else version
     commits = git_output("log", revision_range, "--pretty=format:%s")
-    if commits:
-        entries = [line.strip() for line in commits.splitlines() if line.strip()]
+    entries = release_entries(commits)
+    if entries:
         return "### Changes\n\n" + "\n".join(f"- {entry}" for entry in entries)
 
     raise ValueError(

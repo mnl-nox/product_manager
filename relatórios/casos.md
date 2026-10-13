@@ -16,6 +16,12 @@
 | DATA-002 | Quantidade negativa/preço inválido | HTTP 400, sem escrita parcial | P0 |
 | DATA-003 | Escritas concorrentes de estoque | Integridade preservada, conflito tratado | P1 |
 | DATA-004 | Reinício do processo | Dados persistem no caminho configurado | P0 |
+| INV-001 | Cadastro com saldo inicial positivo | Cria `OPENING_BALANCE` com saldo anterior zero e saldo posterior igual ao inicial | P0 |
+| INV-002 | Migração de produto legado com saldo positivo | Cria um único saldo inicial e não duplica em reinicializações | P0 |
+| INV-003 | UPDATE/DELETE em movimento existente | Trigger rejeita alteração e exclusão | P0 |
+| INV-004 | Venda realizada e recebimento de compra | Saldo e livro-razão atualizados na mesma transação | P0 |
+| INV-005 | Exclusão de produto com histórico | API rejeita remoção definitiva e preserva o histórico | P0 |
+| INV-006 | Consulta do histórico sem sessão/limite inválido | Acesso protegido; filtros e limite de 1 a 500 validados | P1 |
 | EXP-001 | CSV/XLSX | Arquivo legível, colunas corretas, proteção contra fórmula injetável | P0 |
 | EXP-002 | Exportação sem permissão | Acesso negado, sem vazamento | P0 |
 | PWA-001 | Cache autenticado | Respostas de API/dados privados não são cacheados | P0 |
@@ -49,9 +55,10 @@
 | API-001 a API-003 | PENDENTE | PENDENTE | NÃO EXECUTADO | — |
 | AUTH/AUTHZ | PENDENTE | PENDENTE | NÃO EXECUTADO | — |
 | DATA/EXP | PENDENTE | PENDENTE | NÃO EXECUTADO | — |
+| INV-001 a INV-006 | PR #16 / merge `ed2c2cb` | [Checks do merge](https://github.com/mnl-nox/product_manager/actions/runs/38471260951) e [builds multiplataforma](https://github.com/mnl-nox/product_manager/actions/runs/38471284753) | CI APROVADO; E2E/inventário físico NÃO EXECUTADOS | — |
 | PWA/WEB | PENDENTE | PENDENTE | NÃO EXECUTADO | — |
 | WEB-003/WEB-004 | 6a5cc528 | Revisão de conteúdo/HTML; teste manual de navegador pendente | IMPLEMENTAÇÃO REGISTRADA; NÃO VALIDADO EM NAVEGADOR | — |
-| PUR/HR/REP | branches de funcionalidade | Testes adicionados; CI e execução local pendentes | NÃO EXECUTADO | — |
+| PUR/HR/REP | merge main / PRs de módulos | CI do merge aprovado; E2E manual de navegador e homologação funcional pendentes | PARCIAL — CI APROVADO, E2E NÃO EXECUTADO | — |
 | PKG-001 a PKG-004 | PENDENTE | PENDENTE | NÃO EXECUTADO | — |
 
 Qualquer caso P0/P1 pendente ou com falha bloqueia o aceite final.

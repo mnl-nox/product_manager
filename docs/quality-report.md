@@ -1,6 +1,6 @@
 # Relatório de robustez e engenharia multiplataforma
 
-**Data da auditoria:** 2026-10-13  
+**Data da auditoria-base:** 2026-10-13  
 **Repositório:** [mnl-nox/product_manager](https://github.com/mnl-nox/product_manager)  
 **Aplicação Web:** https://product-manager-14fq.onrender.com/login  
 **Escopo:** Web como plataforma principal, PWA/Android e desktop Windows/Linux.
@@ -21,7 +21,7 @@ Durante a verificação do pipeline multiplataforma da versão v1.1.3, os jobs W
 - **PWA:** manifest e service worker; chamadas `/api/` não são armazenadas no cache. Recursos do shell usam cache para suportar carregamento de arquivos estáticos.
 - **Desktop:** launcher local e pacotes Windows/Linux; os clientes usam o mesmo código de interface e API.
 - **Android:** PWA ou wrapper que abre a aplicação HTTPS publicada; o wrapper não é um cliente independente e depende da rede/servidor.
-- **CI/CD:** CI executa compilação Python, testes de API, validação de Conventional Commits e build do núcleo C; workflow de pacotes produz artefatos Windows, Linux e PWA. O status do RPM v1.1.3 permanece falho no run anterior à correção. O status do RPM v1.1.3 permanece falho no run anterior à correção.
+- **CI/CD:** CI executa compilação Python, testes de API, validação de Conventional Commits e build do núcleo C; workflow de pacotes produz artefatos Windows, Linux e PWA. O status do RPM v1.1.3 permaneceu falho no run anterior à correção; esse resultado é histórico e não representa o workflow posterior.
 
 ## 3. Alteração aplicada nesta etapa
 
@@ -52,9 +52,15 @@ para o diretório de documentação do buildroot. Isso alinha o spec ao contrato
 
 Os estados acima são um retrato do momento da auditoria. Um commit de correção não substitui uma execução bem-sucedida do workflow.
 
+## Aditivo de revisão — 13/10/2026
+
+Após a auditoria-base, o Pull Request [#16](https://github.com/mnl-nox/product_manager/pull/16) foi integrado à `main`. A implementação adicionou o livro-razão `stock_movements`, com proteção contra UPDATE/DELETE, saldo inicial para produtos legados com quantidade positiva, ajustes manuais, baixas de vendas realizadas, recebimentos de compras e consulta autenticada pela API. A exclusão definitiva de produtos com histórico passou a ser bloqueada.
+
+Essa implementação melhora a rastreabilidade, mas não constitui inventário completo: devoluções, estornos, transferências entre depósitos, reservas formais e reconciliação física ainda não estão cobertos como fluxos completos. A documentação foi revisada em uma branch separada; este relatório não certifica segurança independente, recuperação de backup ou operação produtiva.
+
 ## 5. Riscos prioritários
 
-0. **Fonte de versão inconsistente:** na auditoria inicial, `VERSION` e `CHANGELOG.md` indicavam v1.1.0 enquanto as tags/release chegavam a v1.1.3. O app lê `VERSION` para exibir a versão; o workflow de tags não mantém automaticamente esse arquivo e o changelog sincronizados. Corrigir o fluxo de versionamento de forma atômica e confirmar qual tag está ativa antes de uma próxima release. Essa inconsistência não foi corrigida nesta etapa.
+0. **Fonte de versão inconsistente:** no início desta auditoria, `VERSION` indicava `1.1.0`, enquanto a release mais recente observada era `v1.7.5`. Esta branch alinha `VERSION` com `1.7.5` e ajusta o workflow para sincronizar a versão antes de criar tags futuras, com serialização de execuções e exclusão do commit de sincronização das notas de release. A correção ainda depende de CI verde e validação do próximo ciclo real de release.
 
 ### P0 — antes de uso com dados reais ou críticos
 

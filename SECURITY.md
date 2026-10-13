@@ -17,6 +17,7 @@ Não publique detalhes exploráveis em issues públicas. Até existir um canal p
 - Não comite arquivos `.env` (exceto `.env.example`), bancos SQLite, chaves privadas, certificados, dumps, backups ou exportações. Confirme também `git status` antes de cada commit.
 - Remova credenciais expostas e rotacione-as. Apagar um arquivo em um commit novo não apaga cópias em commits anteriores, forks ou clones.
 - Use consultas parametrizadas para SQL e escape conteúdo renderizado no HTML.
+- Preserve a integridade do livro-razão de estoque: movimentos são append-only, e produtos com histórico não devem ser removidos definitivamente. Proteja o arquivo SQLite e seus backups.
 - Mantenha dependências mínimas e aplique atualizações de segurança antes de qualquer implantação.
 
 ## Telemetria

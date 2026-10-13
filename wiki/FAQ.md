@@ -2,7 +2,7 @@
 
 ## O Product Manager é uma aplicação web ou desktop?
 
-A interface é web. No Windows/Linux, `desktop.py` inicia um servidor local e abre o navegador. No Android, a distribuição é um PWA instalável; não é um APK nativo.
+A interface é web. No Windows/Linux, `desktop.py` inicia um servidor local e abre o navegador. No Android, a distribuição inclui PWA instalável; o wrapper APK opcional depende do serviço HTTPS e não é um cliente independente.
 
 ## Preciso instalar dependências Python?
 
@@ -35,6 +35,10 @@ Não. O módulo registra receitas/despesas previstas ou realizadas e calcula sal
 ## Os alertas enviam e-mail ou notificações push?
 
 Não na versão documentada. Os alertas são apresentados dentro do aplicativo.
+
+## Como o histórico de estoque funciona?
+
+O endpoint autenticado `GET /api/inventory/movements` consulta o histórico de saldo inicial, ajustes manuais, baixas de vendas realizadas e recebimentos de compras. O histórico é append-only. Produtos que já possuem movimentações devem ser desativados, não excluídos definitivamente. Devoluções, estornos e transferências entre depósitos ainda não formam um fluxo completo.
 
 ## O aplicativo funciona offline no Android?
 

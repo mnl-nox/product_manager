@@ -30,6 +30,17 @@ Esses comandos verificam configuração/sintaxe, não substituem o build complet
 ## Evidência de release
 Registrar SHA, URL do workflow, conclusão de cada job, artefatos e tamanhos, versão/tag/changelog, plataforma e data. Nunca publicar cookies, tokens, senhas ou dados pessoais nos logs.
 
+## Histórico de estoque (API autenticada)
+
+Depois de autenticar e conservar o cookie de sessão, consulte o histórico:
+
+```bash
+curl -i -b cookies.txt \
+  "http://127.0.0.1:8000/api/inventory/movements?product_id=1&limit=100"
+```
+
+A resposta deve conter os movimentos mais recentes primeiro. O endpoint exige sessão autenticada; o ID do produto deve existir. O exemplo é ilustrativo e não afirma que o produto de ID 1 exista no banco de teste.
+
 ## Compras (API autenticada)
 `POST /api/purchasing/suppliers`, `POST /api/purchasing/requests`, `POST /api/purchasing/quotes`, `POST /api/purchasing/requests/{id}/approve`, `POST /api/purchasing/requests/{id}/order` e `POST /api/purchasing/orders/{id}/receive`. Enviar token CSRF em `X-CSRF-Token`; valores em centavos.
 
