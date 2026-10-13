@@ -1,5 +1,22 @@
 # Changelog
 
+## [v1.1.0] - 2026-10-13
+
+### Publicação e documentação
+
+- Adicionado endereço público da aplicação Web hospedada no Render.
+- Documentada implantação Web/Android, acesso HTTPS e limitações operacionais.
+- Atualizada a Wiki e o roadmap interno para refletir o estado inicial de publicação.
+- Preparada a documentação de capturas de tela sem dados sensíveis.
+- Adicionado projeto Android wrapper e workflow para gerar APK vinculado à URL HTTPS publicada.
+
+### Limites desta versão
+
+- A publicação Web não equivale a auditoria de segurança ou SLA de disponibilidade.
+- O banco permanece compartilhado entre as contas desta instalação; não há isolamento multi-organização.
+- O APK precisa ser compilado e validado em dispositivo; não declarar assinatura de produção nem publicação na Play Store.
+
+
 Mudanças notáveis do projeto são registradas neste arquivo.
 
 ## [v1.0.0] - 2026-10-12
