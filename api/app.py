@@ -1714,7 +1714,7 @@ class AppHandler(BaseHTTPRequestHandler):
                             return
                     received = list(aggregate_received.items())
                     for item_id, quantity in received:
-                        item = conn.execute('SELECT * FROM purchase_order_items WHERE id=?', (item_id, order_id)).fetchone()
+                        item = conn.execute('SELECT * FROM purchase_order_items WHERE id=? AND order_id=?', (item_id, order_id)).fetchone()
                         conn.execute('UPDATE purchase_order_items SET received_quantity=received_quantity+? WHERE id=?', (quantity, item_id))
                         if item['product_id'] is not None:
                             product = conn.execute('SELECT quantity FROM products WHERE id=?', (item['product_id'],)).fetchone()
