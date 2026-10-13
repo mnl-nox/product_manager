@@ -26,7 +26,7 @@ Hoje, o app oferece cadastro de clientes e produtos em um espaço de trabalho co
 - Busca por nome/SKU/marca/fornecedor, filtro por categoria e resumo de unidades e valor em estoque.
 - Exportação do dashboard em CSV e Excel (`.xlsx`), além de integração opcional com Google Sheets.
 - Compras: fornecedores, solicitações, cotações comparáveis, aprovação financeira por alçada e pedidos com recebimento e atualização transacional do estoque.
-- Recursos humanos: cadastro de colaboradores, cargos, departamentos, férias/ausências com aprovação e metadados de documentos; registros opcionais de jornada via API.
+- Recursos humanos: cadastro de colaboradores, cargos, departamentos, férias/ausências com aprovação, metadados de documentos, jornada opcional e exportação CSV para sistemas de folha.
 - Relatórios e indicadores: receita/despesas realizadas, resultado e margem de resultado, contas vencidas, previsão de caixa, produtos mais vendidos, proxy de giro e agrupamento mensal/categoria.
 - Contas com papéis de administrador, operação, financeiro e leitura; sessões seguras e proteção CSRF.
 - Área financeira para registrar receitas/despesas realizadas ou previstas e consultar saldo operacional.
