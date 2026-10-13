@@ -1,6 +1,6 @@
 # Plataformas e instalação
 
-Product Manager oferece dois modos desktop (Windows e Linux) e um PWA para Android. O desktop executa o serviço HTTP no próprio computador e abre o navegador padrão. O PWA é uma aplicação web instalável, não um APK.
+Product Manager oferece modos desktop para Windows/Linux e distribuição Android por PWA. Há também um workflow opcional para gerar um wrapper APK de depuração que abre a instância HTTPS publicada; ele depende do servidor remoto e não é um cliente independente. O desktop executa o serviço HTTP no próprio computador e abre o navegador padrão.
 
 ## Windows 10/11 x64
 
