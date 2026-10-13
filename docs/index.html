@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="description" content="Product Manager: aplicação open source para catálogo de produtos, estoque, clientes, financeiro operacional e exportação de dados.">
+  <title>Product Manager — Visão geral do projeto</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b1020;--panel:#111a2e;--text:#edf2ff;--muted:#aab6cf;--line:#283650;--accent:#8bb7ff;--accent2:#b8d4ff}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at top right,#172b4d 0,transparent 42%),var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    a{color:var(--accent2);text-underline-offset:4px}a:hover{color:#fff}.wrap{width:min(1080px,calc(100% - 36px));margin:auto}
+    header{padding:22px 0;border-bottom:1px solid var(--line)}.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}.brand{font-weight:750;letter-spacing:.02em;color:var(--text);text-decoration:none}.navlinks{display:flex;gap:18px;flex-wrap:wrap;font-size:.92rem}
+    .hero{padding:84px 0 64px}.eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:.76rem;font-weight:700;color:var(--accent)}h1{font-size:clamp(2.4rem,7vw,4.8rem);line-height:1.04;letter-spacing:-.055em;margin:14px 0 22px;max-width:850px}h2{font-size:clamp(1.55rem,4vw,2.15rem);line-height:1.2;letter-spacing:-.025em;margin:0 0 16px}h3{font-size:1.08rem;margin:0 0 8px}.lead{max-width:760px;color:var(--muted);font-size:1.18rem}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}.btn{display:inline-block;padding:11px 17px;border:1px solid #45618a;border-radius:9px;text-decoration:none;font-weight:650}.btn.primary{background:var(--accent);color:#081226;border-color:var(--accent)}.btn:hover{transform:translateY(-1px)}
+    .facts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:10px 0 60px}.fact,.card,.notice{border:1px solid var(--line);background:rgba(17,26,46,.82);border-radius:14px;padding:20px}.fact strong{display:block;font-size:1.08rem}.fact span{color:var(--muted);font-size:.88rem}
+    section{padding:28px 0 48px}.section-intro{color:var(--muted);max-width:760px;margin-top:-5px;margin-bottom:22px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.card p{color:var(--muted);margin:0}.card a{display:inline-block;margin-top:12px;font-weight:650}.steps{counter-reset:step;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.step{padding:18px;border-left:2px solid #45618a;background:rgba(17,26,46,.58)}.step:before{counter-increment:step;content:"0" counter(step);display:block;color:var(--accent);font-weight:750;margin-bottom:8px}.step p{margin:0;color:var(--muted)}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#080d19;border:1px solid var(--line);border-radius:6px;padding:3px 6px}.command{padding:15px 17px;overflow:auto;background:#080d19;border:1px solid var(--line);border-radius:10px;color:#d9e6ff}
+    .notice{color:var(--muted)}footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--muted);font-size:.9rem}.footerline{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    @media(max-width:760px){.facts{grid-template-columns:repeat(2,1fr)}.grid,.steps{grid-template-columns:1fr}.hero{padding-top:55px}.navlinks{gap:12px}}
+  </style>
+</head>
+<body>
+  <header><div class="wrap nav">
+    <a class="brand" href="#inicio">PRODUCT MANAGER</a>
+    <nav class="navlinks" aria-label="Navegação principal">
+      <a href="#sobre">Sobre</a><a href="#recursos">Recursos</a><a href="#tecnologia">Tecnologia</a><a href="#comecar">Começar</a>
+    </nav>
+  </div></header>
+  <main>
+    <section class="hero wrap" id="inicio">
+      <div class="eyebrow">Projeto open source · Licença MIT</div>
+      <h1>Gestão de produtos com foco em clareza e controle.</h1>
+      <p class="lead">O Product Manager reúne catálogo, estoque, clientes, financeiro operacional e exportação de dados em uma aplicação que pode ser executada localmente, em desktop ou como PWA.</p>
+      <div class="actions">
+        <a class="btn primary" href="https://github.com/mnl-nox/product_manager">Ver repositório</a>
+        <a class="btn" href="https://github.com/mnl-nox/product_manager/wiki">Abrir Wiki</a>
+        <a class="btn" href="https://github.com/mnl-nox/product_manager/blob/main/README.md">Ler README</a>
+      </div>
+    </section>
+    <div class="wrap facts" aria-label="Resumo técnico">
+      <div class="fact"><strong>Python</strong><span>Servidor HTTP e API JSON</span></div>
+      <div class="fact"><strong>SQLite</strong><span>Persistência local</span></div>
+      <div class="fact"><strong>Web + Desktop</strong><span>Interface HTML, CSS e JavaScript</span></div>
+      <div class="fact"><strong>MIT</strong><span>Licença de código aberto</span></div>
+    </div>
+    <section class="wrap" id="sobre">
+      <h2>O que é o Product Manager?</h2>
+      <p class="section-intro">É uma aplicação para centralizar informações que frequentemente ficam distribuídas entre planilhas e ferramentas diferentes. O objetivo é oferecer uma visão operacional simples do catálogo e dos itens que precisam de atenção.</p>
+      <div class="notice">O projeto está em evolução. Consulte a documentação e os limites de implantação antes de utilizá-lo com dados reais ou em ambientes de produção.</div>
+    </section>
+    <section class="wrap" id="recursos">
+      <h2>Principais recursos</h2>
+      <p class="section-intro">Funcionalidades documentadas no repositório.</p>
+      <div class="grid">
+        <article class="card"><h3>Catálogo e clientes</h3><p>Cadastro, pesquisa, filtros, validação e gerenciamento de produtos e clientes.</p><a href="https://github.com/mnl-nox/product_manager/blob/main/docs/installation-usage.md">Guia de uso →</a></article>
+        <article class="card"><h3>Estoque e alertas</h3><p>Resumo de quantidades, limites configuráveis e alertas para produtos críticos.</p><a href="https://github.com/mnl-nox/product_manager/blob/main/docs/development.md">Detalhes técnicos →</a></article>
+        <article class="card"><h3>Financeiro operacional</h3><p>Registro de receitas e despesas realizadas ou previstas e consulta do saldo operacional.</p><a href="https://github.com/mnl-nox/product_manager/wiki/Data-Model">Modelo de dados →</a></article>
+        <article class="card"><h3>Exportação</h3><p>Exportação de dados para CSV e Excel, com integração opcional ao Google Sheets.</p><a href="https://github.com/mnl-nox/product_manager/blob/main/README.md">Ver README →</a></article>
+        <article class="card"><h3>Acesso e segurança</h3><p>Contas locais, papéis de acesso, sessões e proteção contra CSRF.</p><a href="https://github.com/mnl-nox/product_manager/blob/main/SECURITY.md">Política de segurança →</a></article>
+        <article class="card"><h3>Várias plataformas</h3><p>Execução web, launcher desktop e PWA instalável em dispositivos compatíveis.</p><a href="https://github.com/mnl-nox/product_manager/blob/main/docs/platforms.md">Plataformas →</a></article>
+      </div>
+    </section>
+    <section class="wrap" id="tecnologia">
+      <h2>Como é organizado</h2>
+      <p class="section-intro">A aplicação web usa um servidor Python e um banco SQLite. A interface é servida como HTML, CSS e JavaScript. O repositório também mantém um núcleo C23 separado, em evolução, que não faz parte do caminho principal da aplicação web.</p>
+      <div class="grid">
+        <article class="card"><h3>API</h3><p>Rotas HTTP, autenticação, autorização, validação e exportação.</p></article>
+        <article class="card"><h3>Persistência</h3><p>Esquema SQLite para usuários, sessões, produtos, clientes, alertas e lançamentos financeiros.</p></article>
+        <article class="card"><h3>Distribuição</h3><p>Docker/Compose, pacotes desktop e PWA, conforme os fluxos disponíveis no projeto.</p></article>
+      </div>
+      <p style="margin-top:20px"><a href="https://github.com/mnl-nox/product_manager/wiki/Architecture">Leia a arquitetura completa na Wiki →</a></p>
+    </section>
+    <section class="wrap" id="comecar">
+      <h2>Como começar</h2>
+      <p class="section-intro">Para desenvolvimento local, use Python 3.10 ou superior. Consulte o guia antes de configurar o primeiro administrador.</p>
+      <div class="steps">
+        <div class="step"><h3>Obtenha o código</h3><p>Clone o repositório e entre no diretório do projeto.</p></div>
+        <div class="step"><h3>Leia a instalação</h3><p>Configure o primeiro acesso e os parâmetros necessários.</p></div>
+        <div class="step"><h3>Execute e teste</h3><p>Inicie a aplicação e rode a suíte automatizada antes de alterar o código.</p></div>
+      </div>
+      <pre class="command"><code>git clone https://github.com/mnl-nox/product_manager.git
+cd product_manager
+python3 api/app.py</code></pre>
+      <p>Abra <code>http://127.0.0.1:8000</code> e siga o procedimento de primeiro acesso descrito na documentação.</p>
+      <div class="actions">
+        <a class="btn primary" href="https://github.com/mnl-nox/product_manager/blob/main/docs/installation-usage.md">Instalação completa</a>
+        <a class="btn" href="https://github.com/mnl-nox/product_manager/wiki">Wiki do projeto</a>
+        <a class="btn" href="https://github.com/mnl-nox/product_manager/blob/main/CONTRIBUTING.md">Como contribuir</a>
+      </div>
+    </section>
+    <section class="wrap">
+      <h2>Limites importantes</h2>
+      <p class="section-intro">As contas compartilham um espaço de trabalho SQLite; não há isolamento multi-tenant entre organizações. O servidor Python não fornece TLS por conta própria. Para acesso remoto, configure uma implantação HTTPS adequada, proteja backups e credenciais e revise a documentação de segurança e privacidade.</p>
+      <p><a href="https://github.com/mnl-nox/product_manager/blob/main/PRIVACY.md">Privacidade</a> · <a href="https://github.com/mnl-nox/product_manager/blob/main/SECURITY.md">Segurança</a> · <a href="https://github.com/mnl-nox/product_manager/blob/main/LICENSE">Licença MIT</a></p>
+    </section>
+  </main>
+  <footer><div class="wrap footerline"><span>Product Manager · Open source · MIT</span><span><a href="https://github.com/mnl-nox/product_manager">Código-fonte</a> · <a href="https://github.com/mnl-nox/product_manager/wiki">Documentação</a></span></div></footer>
+</body>
+</html>
