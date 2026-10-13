@@ -6,7 +6,7 @@ services:
     region: ohio
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    healthCheckPath: /login
+    healthCheckPath: /readyz
     disk:
       name: product-manager-data
       mountPath: /data
