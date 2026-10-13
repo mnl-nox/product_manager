@@ -45,69 +45,78 @@ jobs:
 
           last_tag="$(git tag -l 'v[0-9]*' --sort=-v:refname | head -n 1 || true)"
 
+          first_release=false
           if [[ -z "$last_tag" ]]; then
-            current="0.0.0"
+            current="$(tr -d '[:space:]' < VERSION)"
             range="HEAD"
+            first_release=true
           else
             current="${last_tag#v}"
             range="${last_tag}..HEAD"
           fi
 
           if [[ ! "$current" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Latest tag is not SemVer: $current"
+            echo "Latest version is not SemVer: $current"
             exit 1
           fi
 
           IFS='.' read -r major minor patch <<< "$current"
 
-          mapfile -t commits < <(git log $range --pretty=format:%s)
+          if [[ "$first_release" == "true" ]]; then
+            # The repository already maintains VERSION and CHANGELOG.md.
+            # Use that version for the first automated tag instead of
+            # incorrectly calculating from 0.0.0 across the entire history.
+            next="v$major.$minor.$patch"
+          else
+            mapfile -t commits < <(git log "$range" --pretty=format:%s)
+            has_commit=0
+            bump=0
+            breaking_re='^[a-z]+(\([^)]*\))?!:'
+            feature_re='^feat(\([^)]*\))?:'
+            patch_re='^(fix|perf|refactor|revert|build|ci|test|docs|style|chore)(\([^)]*\))?:'
 
-          has_commit=0
-          bump=0
+            for subject in "${commits[@]}"; do
+              [[ -z "$subject" ]] && continue
 
-          for subject in "${commits[@]}"; do
-            [[ -z "$subject" ]] && continue
+              if [[ "$subject" =~ $breaking_re ]] || [[ "$subject" == *"BREAKING CHANGE"* ]]; then
+                bump=2
+                has_commit=1
+                continue
+              fi
 
-            if [[ "$subject" =~ ^[a-z]+(\([^)]*\))?!: ]] ||
-               [[ "$subject" =~ BREAKING[[:space:]]CHANGE ]]; then
-              bump=2
-              has_commit=1
-              continue
+              if [[ "$subject" =~ $feature_re ]]; then
+                if (( bump < 1 )); then bump=1; fi
+                has_commit=1
+                continue
+              fi
+
+              if [[ "$subject" =~ $patch_re ]]; then
+                has_commit=1
+              fi
+            done
+
+            if (( has_commit == 0 )); then
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+              exit 0
             fi
 
-            if [[ "$subject" =~ ^feat(\([^)]*\))?: ]]; then
-              (( bump < 1 )) && bump=1
-              has_commit=1
-              continue
-            fi
+            case "$bump" in
+              2)
+                major=$((major + 1))
+                minor=0
+                patch=0
+                ;;
+              1)
+                minor=$((minor + 1))
+                patch=0
+                ;;
+              0)
+                patch=$((patch + 1))
+                ;;
+            esac
 
-            if [[ "$subject" =~ ^(fix|perf|refactor|revert|build|ci|test|docs|style|chore)(\([^)]*\))?: ]]; then
-              (( bump < 1 )) && bump=0
-              has_commit=1
-            fi
-          done
-
-          if (( has_commit == 0 )); then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            exit 0
+            next="v$major.$minor.$patch"
           fi
-
-          case "$bump" in
-            2)
-              major=$((major + 1))
-              minor=0
-              patch=0
-              ;;
-            1)
-              minor=$((minor + 1))
-              patch=0
-              ;;
-            0)
-              patch=$((patch + 1))
-              ;;
-          esac
-
-          next="v$major.$minor.$patch"
 
           if git rev-parse "$next" >/dev/null 2>&1; then
             echo "Tag already exists: $next"
