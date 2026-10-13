@@ -25,6 +25,7 @@ A API é implementada em `api/app.py`. As respostas de negócio são JSON, excet
 | GET | `/api/clients` | Consulta clientes |
 | POST | `/api/clients` | Cadastra cliente; admin/operação |
 | GET | `/api/products` | Lista produtos; aceita filtro `category` |
+| GET | `/api/inventory/movements?product_id=ID&limit=100` | Lista histórico de estoque; limite máximo de 500 registros |
 | POST | `/api/products` | Cadastra produto; admin/operação |
 | POST | `/api/products/{id}` | Atualiza produto; admin/operação |
 | POST | `/api/products/{id}/deactivate` | Desativa produto sem apagar seu cadastro |
