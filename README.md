@@ -1,8 +1,8 @@
 # Product Manager
 
-<p align="center"><img src="assets/icons/product-manager-brand.svg" alt="Logo do Product Manager" width="180"></p>
+<p align="center"><img src="assets/icons/product-manager-brand.svg" alt="Logo do Product Manager" width="300"></p>
 
-[![Open Source](assets/icons/open-source-mark.svg)](LICENSE) **Open Source · Licença MIT**
+
 
 Aplicativo de gestão de produtos para desktop Windows/Linux e PWA Android, com catálogo, estoque, usuários, financeiro operacional e exportação de dados.
 
