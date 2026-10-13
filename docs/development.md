@@ -28,6 +28,7 @@ As respostas são JSON, exceto os downloads CSV/XLSX.
 | GET | `/api/categories` | Categorias e contagem de produtos |
 | GET | `/api/clients` | Clientes cadastrados |
 | GET | `/api/products?category=Hardware` | Catálogo; `category=all` lista todos |
+| GET | `/api/inventory/movements?product_id=ID&limit=100` | Histórico de movimentações de estoque (até 500 registros) |
 | POST | `/api/clients` | Cadastra cliente (admin/operação) |
 | POST | `/api/products` | Cadastra produto (admin/operação) |
 | POST | `/api/products/{id}` | Atualiza produto (admin/operação) |
@@ -61,8 +62,6 @@ Papéis disponíveis: `admin` (configuração completa), `operator` (catálogo, 
 
 O financeiro mantém lançamentos de receita/despesa previstos ou realizados e calcula saldos operacionais em BRL. Não é módulo contábil/fiscal. Alertas de estoque são exibidos no app; use `PRODUCT_MANAGER_LOW_STOCK_DEFAULT` para alterar o limite padrão ou configure um mínimo por produto. O reconhecimento oculta o alerta até que a quantidade mude ou o limite seja atualizado. Não há envio de e-mail ou push nesta versão.
 
-
-| GET | `/api/inventory/movements?product_id=ID&limit=100` | Histórico de movimentações de estoque (até 500 registros) |
 
 ### Livro-razão de estoque
 
