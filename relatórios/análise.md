@@ -18,7 +18,7 @@ A aplicação contém API Python, interface Web, SQLite, sessões, permissões p
 ## Novos módulos em desenvolvimento
 - Compras: cadastro de fornecedores, solicitações, cotações, aprovação por perfil/limite, pedidos e recebimento parcial com atualização de estoque. Necessita testes ponta a ponta de fluxo completo.
 - RH: departamentos, colaboradores, ausências com decisão, metadados de documentos e registro opcional de jornada. Acesso restrito ao administrador; integração com folha não implementada.
-- Relatórios: indicadores financeiros, contas vencidas, ranking de vendas e registro de vendas com baixa de estoque para vendas realizadas. Margem bruta, giro contábil e relatórios por unidade/departamento ainda não existem.
+- Relatórios: indicadores financeiros, contas vencidas, ranking de vendas, registro de vendas, agrupamento por unidade/departamento e exportação de jornada para folha via CSV. Margem bruta e giro contábil exato continuam fora do escopo.
 
 ## Bloqueios de aceite
 1. CI posterior às alterações: ainda precisa confirmar os novos testes.
