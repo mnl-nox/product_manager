@@ -1,5 +1,15 @@
 ## [Unreleased]
 
+## [v1.8.0] - 2026-10-13
+
+### Segurança, recuperação e validação operacional
+
+- Incluído utilitário SQLite para backup online e restauração verificada, com substituição explícita do banco existente.
+- Garantido fechamento de conexões em migrações e mantidas as gravações de venda/compra e auditoria na transação de negócio.
+- Ampliada a cobertura de autorização, CSRF, sessões, cookies, migração legada e recuperação de banco.
+- Atualizadas as capturas de todas as seções e criados tutoriais visuais para o site do projeto e a Wiki.
+- Executados 66 testes automatizados, fluxos HTTP reais no Podman e cadastro pela interface real.
+
 ## [v1.7.6] - 2026-10-13
 
 ### Documentação, modelo de dados e processo de release

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import csv
+from contextlib import closing, contextmanager
 from datetime import date
 from decimal import Decimal, InvalidOperation
 import hashlib
@@ -91,17 +92,22 @@ def send_telemetry_event(event_name: str) -> bool:
         return False
 
 
-def get_db() -> sqlite3.Connection:
+@contextmanager
+def get_db():
     conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute('PRAGMA foreign_keys = ON')
-    return conn
+    try:
+        conn.row_factory = sqlite3.Row
+        conn.execute('PRAGMA foreign_keys = ON')
+        with conn:
+            yield conn
+    finally:
+        conn.close()
 
 
 def ensure_database() -> None:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     schema_sql = SCHEMA_PATH.read_text(encoding='utf-8')
-    with sqlite3.connect(DB_PATH) as conn:
+    with closing(sqlite3.connect(DB_PATH)) as conn, conn:
         conn.execute('PRAGMA foreign_keys = ON')
         conn.executescript(schema_sql)
         for table in ('clients', 'products'):
@@ -191,9 +197,22 @@ def token_digest(token: str) -> str:
     return hashlib.sha256(token.encode('utf-8')).hexdigest()
 
 
-def audit_record(actor_id: int | None, action: str, entity: str, entity_id: int | None = None) -> None:
-    with get_db() as conn:
+def audit_record(
+    actor_id: int | None,
+    action: str,
+    entity: str,
+    entity_id: int | None = None,
+    *,
+    conn: sqlite3.Connection | None = None,
+) -> None:
+    if conn is not None:
         conn.execute(
+            'INSERT INTO audit_log (actor_id, action, entity, entity_id) VALUES (?, ?, ?, ?)',
+            (actor_id, action, entity, entity_id),
+        )
+        return
+    with get_db() as audit_conn:
+        audit_conn.execute(
             'INSERT INTO audit_log (actor_id, action, entity, entity_id) VALUES (?, ?, ?, ?)',
             (actor_id, action, entity, entity_id),
         )
@@ -1354,7 +1373,7 @@ class AppHandler(BaseHTTPRequestHandler):
                     )
                 conn.execute('INSERT INTO finance_entries (entry_type, category, description, amount_cents, entry_date, status, department_id, org_unit_id, created_by) VALUES (?,?,?,?,?,?,?,?,?)',
                              ('income', 'Vendas', f'Venda #{sale_id} — {product["name"]}', total_cents, sale_date, status_value, department_id, org_unit_id, user['id']))
-            audit_record(user['id'], 'create', 'sale', sale_id)
+                audit_record(user['id'], 'create', 'sale', sale_id, conn=conn)
             self.send_json({'id': sale_id, 'total_cents': total_cents, 'message': 'Venda registrada e estoque atualizado.'}, status=201)
             return
 
@@ -1675,7 +1694,7 @@ class AppHandler(BaseHTTPRequestHandler):
                         conn.execute('INSERT INTO purchase_order_items (order_id, product_id, description, ordered_quantity, unit_cents) VALUES (?, ?, ?, ?, ?)',
                                      (order_id, item['product_id'], item['description'], item['quantity'], unit_cents))
                     conn.execute("UPDATE purchase_requests SET status='ordered', updated_at=CURRENT_TIMESTAMP WHERE id=?", (request_id,))
-                audit_record(user['id'], 'create', 'purchase_order', order_id)
+                    audit_record(user['id'], 'create', 'purchase_order', order_id, conn=conn)
                 self.send_json({'id': order_id, 'message': 'Pedido de compra emitido.'}, status=201)
                 return
             receive_match = re.fullmatch(r'/api/purchasing/orders/(\d+)/receive', path)
@@ -1733,7 +1752,7 @@ class AppHandler(BaseHTTPRequestHandler):
                     conn.execute('UPDATE purchase_orders SET status=? WHERE id=?', (status_value, order_id))
                     if not remaining:
                         conn.execute("UPDATE purchase_requests SET status='received', updated_at=CURRENT_TIMESTAMP WHERE id=?", (order['request_id'],))
-                audit_record(user['id'], 'receive', 'purchase_order', order_id)
+                    audit_record(user['id'], 'receive', 'purchase_order', order_id, conn=conn)
                 self.send_json({'message': 'Recebimento registrado e estoque atualizado.', 'status': status_value})
                 return
             self.send_json({'error': 'Rota de compras não encontrada.'}, status=404)

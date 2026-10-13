@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
@@ -37,6 +38,7 @@ class ReportsApiTests(unittest.TestCase):
             conn.execute("DELETE FROM sales")
             conn.execute("DELETE FROM finance_entries")
             conn.execute("DELETE FROM products")
+            conn.execute("DELETE FROM audit_log")
             conn.execute(
                 "INSERT OR IGNORE INTO app_users (id, username, password_hash, role) VALUES (1, 'reports-test', 'test-hash', 'admin')"
             )
@@ -125,6 +127,83 @@ class ReportsApiTests(unittest.TestCase):
         self.assertEqual(tuple(finance), ("paid", 3998))
         self.assertEqual(len(movements), 1)
         self.assertEqual(tuple(movements[0]), ("SALE_OUT", -2, 5, 3))
+
+    def test_paid_sale_rolls_back_every_write_when_ledger_insert_fails(self):
+        with app.get_db() as conn:
+            conn.execute("""CREATE TRIGGER reject_sale_movement
+                            BEFORE INSERT ON stock_movements
+                            WHEN NEW.reference_type='sale'
+                            BEGIN SELECT RAISE(ABORT, 'injected ledger failure'); END""")
+
+        with self.assertRaisesRegex(sqlite3.IntegrityError, "injected ledger failure"):
+            self.post_json(
+                "/api/reports/sales",
+                {
+                    "product_id": self.product_id,
+                    "quantity": 2,
+                    "unit_price": "19.99",
+                    "sale_date": "2026-10-13",
+                    "status": "paid",
+                },
+            )
+
+        with app.get_db() as conn:
+            quantity = conn.execute(
+                "SELECT quantity FROM products WHERE id=?", (self.product_id,)
+            ).fetchone()[0]
+            sales = conn.execute("SELECT COUNT(*) FROM sales").fetchone()[0]
+            items = conn.execute("SELECT COUNT(*) FROM sales_items").fetchone()[0]
+            income = conn.execute(
+                "SELECT COUNT(*) FROM finance_entries WHERE category='Vendas'"
+            ).fetchone()[0]
+            movements = conn.execute(
+                "SELECT COUNT(*) FROM stock_movements WHERE reference_type='sale'"
+            ).fetchone()[0]
+            audit_events = conn.execute(
+                "SELECT COUNT(*) FROM audit_log WHERE entity='sale'"
+            ).fetchone()[0]
+            conn.execute("DROP TRIGGER reject_sale_movement")
+
+        self.assertEqual(quantity, 5)
+        self.assertEqual((sales, items, income, movements, audit_events), (0, 0, 0, 0, 0))
+
+    def test_paid_sale_rolls_back_when_audit_insert_fails(self):
+        with app.get_db() as conn:
+            conn.execute("""CREATE TRIGGER reject_sale_audit
+                            BEFORE INSERT ON audit_log
+                            WHEN NEW.entity='sale'
+                            BEGIN SELECT RAISE(ABORT, 'injected audit failure'); END""")
+
+        with self.assertRaisesRegex(sqlite3.IntegrityError, "injected audit failure"):
+            self.post_json(
+                "/api/reports/sales",
+                {
+                    "product_id": self.product_id,
+                    "quantity": 2,
+                    "unit_price": "19.99",
+                    "sale_date": "2026-10-13",
+                    "status": "paid",
+                },
+            )
+
+        with app.get_db() as conn:
+            quantity = conn.execute(
+                "SELECT quantity FROM products WHERE id=?", (self.product_id,)
+            ).fetchone()[0]
+            counts = tuple(
+                conn.execute(query).fetchone()[0]
+                for query in (
+                    "SELECT COUNT(*) FROM sales",
+                    "SELECT COUNT(*) FROM sales_items",
+                    "SELECT COUNT(*) FROM finance_entries WHERE category='Vendas'",
+                    "SELECT COUNT(*) FROM stock_movements WHERE reference_type='sale'",
+                    "SELECT COUNT(*) FROM audit_log WHERE entity='sale'",
+                )
+            )
+            conn.execute("DROP TRIGGER reject_sale_audit")
+
+        self.assertEqual(quantity, 5)
+        self.assertEqual(counts, (0, 0, 0, 0, 0))
 
     def test_planned_sale_does_not_decrease_stock(self):
         status, response = self.post_json(

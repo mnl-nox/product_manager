@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
@@ -44,6 +45,7 @@ class PurchasingSchemaTests(unittest.TestCase):
             conn.execute("DELETE FROM purchase_requests")
             conn.execute("DELETE FROM suppliers")
             conn.execute("DELETE FROM products")
+            conn.execute("DELETE FROM audit_log")
             conn.execute(
                 "INSERT OR IGNORE INTO app_users (username, password_hash, role) VALUES (?, ?, ?)",
                 ("purchasing-test-admin", "test-hash", "admin"),
@@ -217,6 +219,94 @@ class PurchasingSchemaTests(unittest.TestCase):
         self.assertEqual(quantity, 2)
         self.assertEqual(received_quantity, 0)
         self.assertEqual(movement_count, 0)
+
+    def test_receipt_rolls_back_every_write_when_ledger_insert_fails(self):
+        request_id, order_id, item_id = self.create_receipt_order(ordered_quantity=5)
+        with app.get_db() as conn:
+            conn.execute("""CREATE TRIGGER reject_purchase_movement
+                            BEFORE INSERT ON stock_movements
+                            WHEN NEW.reference_type='purchase_order'
+                            BEGIN SELECT RAISE(ABORT, 'injected ledger failure'); END""")
+
+        with self.assertRaisesRegex(sqlite3.IntegrityError, "injected ledger failure"):
+            self.post_json(
+                f"/api/purchasing/orders/{order_id}/receive",
+                {"items": [{"item_id": item_id, "quantity": 3}]},
+            )
+
+        with app.get_db() as conn:
+            product_quantity = conn.execute(
+                "SELECT quantity FROM products WHERE id=?", (self.product_id,)
+            ).fetchone()[0]
+            received_quantity = conn.execute(
+                "SELECT received_quantity FROM purchase_order_items WHERE id=?", (item_id,)
+            ).fetchone()[0]
+            order_status = conn.execute(
+                "SELECT status FROM purchase_orders WHERE id=?", (order_id,)
+            ).fetchone()[0]
+            request_status = conn.execute(
+                "SELECT status FROM purchase_requests WHERE id=?", (request_id,)
+            ).fetchone()[0]
+            movement_count = conn.execute(
+                "SELECT COUNT(*) FROM stock_movements WHERE reference_id=? AND reference_type='purchase_order'",
+                (order_id,),
+            ).fetchone()[0]
+            audit_events = conn.execute(
+                "SELECT COUNT(*) FROM audit_log WHERE entity='purchase_order' AND action='receive' AND entity_id=?",
+                (order_id,),
+            ).fetchone()[0]
+            conn.execute("DROP TRIGGER reject_purchase_movement")
+
+        self.assertEqual(product_quantity, 2)
+        self.assertEqual(received_quantity, 0)
+        self.assertEqual(order_status, "ordered")
+        self.assertEqual(request_status, "ordered")
+        self.assertEqual(movement_count, 0)
+        self.assertEqual(audit_events, 0)
+
+    def test_receipt_rolls_back_when_audit_insert_fails(self):
+        request_id, order_id, item_id = self.create_receipt_order(ordered_quantity=5)
+        with app.get_db() as conn:
+            conn.execute("""CREATE TRIGGER reject_receipt_audit
+                            BEFORE INSERT ON audit_log
+                            WHEN NEW.entity='purchase_order' AND NEW.action='receive'
+                            BEGIN SELECT RAISE(ABORT, 'injected audit failure'); END""")
+
+        with self.assertRaisesRegex(sqlite3.IntegrityError, "injected audit failure"):
+            self.post_json(
+                f"/api/purchasing/orders/{order_id}/receive",
+                {"items": [{"item_id": item_id, "quantity": 3}]},
+            )
+
+        with app.get_db() as conn:
+            product_quantity = conn.execute(
+                "SELECT quantity FROM products WHERE id=?", (self.product_id,)
+            ).fetchone()[0]
+            received_quantity = conn.execute(
+                "SELECT received_quantity FROM purchase_order_items WHERE id=?", (item_id,)
+            ).fetchone()[0]
+            order_status = conn.execute(
+                "SELECT status FROM purchase_orders WHERE id=?", (order_id,)
+            ).fetchone()[0]
+            request_status = conn.execute(
+                "SELECT status FROM purchase_requests WHERE id=?", (request_id,)
+            ).fetchone()[0]
+            movement_count = conn.execute(
+                "SELECT COUNT(*) FROM stock_movements WHERE reference_id=? AND reference_type='purchase_order'",
+                (order_id,),
+            ).fetchone()[0]
+            audit_events = conn.execute(
+                "SELECT COUNT(*) FROM audit_log WHERE entity='purchase_order' AND action='receive' AND entity_id=?",
+                (order_id,),
+            ).fetchone()[0]
+            conn.execute("DROP TRIGGER reject_receipt_audit")
+
+        self.assertEqual(product_quantity, 2)
+        self.assertEqual(received_quantity, 0)
+        self.assertEqual(order_status, "ordered")
+        self.assertEqual(request_status, "ordered")
+        self.assertEqual(movement_count, 0)
+        self.assertEqual(audit_events, 0)
 
     def test_finance_role_cannot_receive_purchase_order(self):
         _, order_id, item_id = self.create_receipt_order(ordered_quantity=5)

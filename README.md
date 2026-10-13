@@ -45,6 +45,8 @@ Catálogo de produtos:
 
 ![Catálogo do Product Manager](docs/screenshots/products.png)
 
+[Ver o tutorial visual de todas as seções](docs/tutorial-visual.md)
+
 ## Pré-requisitos
 
 - Python 3.10 ou superior (sem dependências externas para API e testes).

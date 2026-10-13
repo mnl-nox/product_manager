@@ -114,3 +114,7 @@ As permissões são verificadas no servidor, não apenas na interface. As contas
 ## Backup e atualização
 
 Encerre a aplicação antes de copiar o banco SQLite, proteja o arquivo e os backups como dados corporativos e teste periodicamente a restauração. Faça backup antes de atualizar a versão ou o esquema. Não há processo automatizado de recuperação de senha descrito nesta versão.
+
+## Tutorial visual por seção
+
+Veja [o tutorial visual completo](Tutorial-Visual.md), com login, dashboard, produtos, compras, financeiro, alertas, relatórios, riscos, usuários e RH. As capturas usam dados sintéticos locais.

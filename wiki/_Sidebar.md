@@ -3,6 +3,7 @@
 - [Home](Home.md)
 - [Arquitetura](Architecture.md)
 - [Instalação e uso](Installation-and-Usage.md)
+- [Tutorial visual](Tutorial-Visual.md)
 - [Referência da API](API-Reference.md)
 - [Modelo de dados](Data-Model.md)
 - [Configuração](Configuration.md)

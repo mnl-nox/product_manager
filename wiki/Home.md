@@ -10,6 +10,7 @@
 
 - [Visão geral e arquitetura](Architecture.md)
 - [Instalação e primeiro acesso](Installation-and-Usage.md)
+- [Tutorial visual por seção](Tutorial-Visual.md)
 - [Referência da API](API-Reference.md)
 - [Modelo de dados](Data-Model.md)
 - [Configuração](Configuration.md)
@@ -25,6 +26,10 @@ O Product Manager centraliza cadastros de clientes e produtos, acompanha quantid
 ## Acesso Web
 
 A instância publicada é acessível em [https://product-manager-14fq.onrender.com/login](https://product-manager-14fq.onrender.com/login). A API e o banco são executados pelo serviço hospedado; a disponibilidade depende do provedor. Não use dados reais sem avaliar as limitações de isolamento multi-organização, backups e recuperação.
+
+## Tutorial visual
+
+Veja as [capturas atuais de cada área do aplicativo](Tutorial-Visual.md), produzidas em uma execução local com dados sintéticos.
 
 ## Funcionalidades atuais
 

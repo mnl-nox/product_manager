@@ -39,9 +39,9 @@ A última rodada funcional encontrou e corrigiu defeitos concretos nas rotas de 
 | Permissões | Admin, operação, financeiro, leitura e papel desconhecido | APROVADO nos testes unitários | tests/test_security.py; ainda requer auditoria de cada endpoint |
 | CSRF | Token ausente/inválido e origem estrangeira são rejeitados | APROVADO nos testes unitários | tests/test_security.py; falta E2E HTTP com cookies reais |
 | RH | Constraints de esquema, matrícula, datas e jornada | PARCIAL | tests/test_hr.py; falta cobertura dos endpoints e segregação por papel |
-| Login e sessões | Senha, expiração, revogação, bloqueio e recuperação de sessão | PARCIAL | Revisão de código e testes existentes limitados; ampliar testes de integração |
+| Login e sessões | Senha, expiração, revogação, bloqueio e recuperação de sessão | PARCIAL | Setup e login reais por HTTP no container; sessão, expiração e UI ainda requerem E2E |
 | Migrações | Banco novo e banco legado são atualizados sem perda | PARCIAL | Migrações em ensure_database() e testes específicos; falta matriz representativa de versões antigas e backup pré-migração |
-| Exportações | CSV/XLSX corretos e sem fórmula maliciosa | NÃO VERIFICADO de ponta a ponta | Cobertura E2E e validação de conteúdo exportado ainda necessárias |
+| Exportações | CSV/XLSX corretos e sem fórmula maliciosa | PARCIAL | Endpoints CSV/XLSX validados por HTTP no container; falta download pelo navegador e conteúdo malicioso |
 | PWA | Manifest, ícones e API fora do cache | APROVADO para verificações estáticas | tests/test_pwa.py; instalação real em dispositivos não comprovada nesta rodada |
 | Windows/Linux/Android | Instalação, inicialização, atualização e persistência nativa | NÃO VERIFICADO nesta rodada | Exige execução dos workflows de artefatos e smoke tests por plataforma |
 | Backup/restauração | Backup íntegro, recuperação e RPO/RTO demonstrados | NÃO VERIFICADO | Nenhum ensaio de restauração de produção foi demonstrado |
@@ -167,3 +167,20 @@ Não. Build prova que o artefato foi produzido; homologação exige instalação
 ## 10. Atualização deste relatório
 
 **Estado desta rodada:** a CI da PR #22 foi aprovada no commit 8c99c8d73ac5b3845d7e6f6592f596feddd15b79. O job Python executou 49 testes e terminou em OK; C23 e Conventional Commits também passaram. Evidências: [CI run 38475015757](https://github.com/mnl-nox/product_manager/actions/runs/38475015757) e [Conventional Commits run 38475015689](https://github.com/mnl-nox/product_manager/actions/runs/38475015689). Isso valida a suíte automatizada e as alterações desta PR, não os itens E2E/produção marcados como não verificados. Atualize esta página após cada rodada com data, SHA testado, link da CI, quantidade de testes, artefatos testados, defeitos abertos/fechados e ressalvas. Não altere estados para APROVADO sem evidência verificável.
+
+### Execução local em 13/10/2026
+
+Na execução inicial desta rodada, no checkout `068f4c0`, `python3 -m unittest discover -s tests -v` executou **49 testes; todos passaram**. Os testes do livro-razão emitiram `ResourceWarning` de conexões SQLite não fechadas. A correção e a reexecução posterior com 50 testes estão registradas em `relatorios/qa-e2e-corrections.md`.
+
+Uma verificação HTTP local adicional usou servidor temporário, banco SQLite descartável e conta sintética. Passaram: criação inicial do administrador e login pela API, cadastro de produto, recebimentos parcial e final via API, venda paga com baixa de estoque, receita vinculada, lançamento financeiro e remoção do lançamento, e exportação CSV/XLSX. O saldo final conferido foi 6 unidades (3 iniciais + 5 recebidas − 2 vendidas), e a receita da venda foi R$ 40,00. O pedido de compra foi inserido diretamente no banco de teste para preparar o recebimento; criação, cotação, aprovação e emissão do pedido não foram percorridas nessa execução.
+
+O Chrome headless abriu a página servida `/login` e confirmou o formulário real de acesso. Isso é apenas smoke test visual/DOM: **não** exercitou os formulários de compras, vendas, financeiro, cancelamento ou exportação pela interface autenticada. O cancelamento de compra/venda também permanece sem endpoint ou ação correspondente; a remoção testada foi somente de um lançamento financeiro. Portanto, estes resultados ampliam a evidência da API, mas não fecham o critério de E2E ponta a ponta pela interface.
+
+### Validação do container Podman em 13/10/2026
+
+A suíte atualizada passou com **54 testes**. A imagem `product-manager:qa` foi construída com `podman build --network=none` no Podman 5.4.2. Em runtime rootless com `slirp4netns`, porta restrita a loopback e `/data` em tmpfs, `/healthz` e `/readyz` passaram e o healthcheck ficou `healthy`. O smoke HTTP completou a jornada pela API de compras (solicitação, cotação, aprovação, pedido, recebimento parcial/final), venda, estoque, financeiro e exportações. Saldo final: 6 unidades; exportações CSV/XLSX válidas. O container e o banco temporário foram removidos. Evidência detalhada e comandos reproduzíveis: `relatorios/qa-e2e-corrections.md` e `docs/deployment.md`.
+
+
+## Reexecução real e evidência visual (13/10/2026)
+
+A imagem `product-manager:security-qa` foi iniciada em Podman com banco efêmero. O roteiro HTTP confirmou bootstrap/login, compra com recebimento parcial/final, venda paga, lançamento financeiro, livro-razão e exportações. Chrome headless autenticou pela UI, navegou pelas telas e criou um produto pelo formulário. Veja [relatório da execução e tutorial](../relatorios/real-app-and-tutorial.md) e [tutorial visual](tutorial-visual.md). O container de QA ficou disponível em `127.0.0.1:18002`; não contém dados de produção.

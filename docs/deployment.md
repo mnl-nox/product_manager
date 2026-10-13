@@ -43,6 +43,48 @@ Esse APK é um pacote de instalação para teste/distribuição direta, assinado
 
 Antes de atualizar uma instalação existente, faça backup do arquivo SQLite e confirme que é possível restaurá-lo. A inicialização aplica compatibilidade de esquema e cria um saldo de abertura para produtos legados com quantidade positiva que ainda não possuam movimentos. Essa operação registra o saldo atual como ponto inicial; não reconstrói vendas ou recebimentos antigos. O livro-razão impede alterações/exclusões de movimentos, e produtos com histórico não podem ser removidos definitivamente. Teste essa migração em uma cópia do banco antes de atualizar a instância pública.
 
+## Backup e restauração SQLite
+
+A imagem inclui `scripts/database_recovery.py`. O backup usa a API online do SQLite, verifica integridade/esquema e cria um arquivo novo com permissão `0600`; não sobrescreve backups existentes. A restauração também valida a cópia. Para substituir o banco em uso, pare a aplicação e passe `--replace` explicitamente:
+
+```bash
+python scripts/database_recovery.py backup /data/product_manager.db /caminho-seguro/product_manager-2026-10-13.db
+python scripts/database_recovery.py restore /caminho-seguro/product_manager-2026-10-13.db /data/product_manager.db --replace
+```
+
+Guarde cópias em armazenamento separado, protegido e com retenção definida. O comando é manual: não configura agenda, criptografia externa, cópia fora do host ou política de retenção. Faça backup antes de migrações e teste restauração em uma cópia isolada.
+
+## Testar a imagem local com Podman
+
+O teste abaixo constrói sem rede, publica a aplicação somente no loopback e mantém o banco efêmero em `tmpfs`. Não use dados reais neste smoke test.
+
+```bash
+export PRODUCT_MANAGER_SETUP_TOKEN="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
+podman build --network=none --format docker -t product-manager:qa .
+podman run -d --rm --name product-manager-qa \
+  --network=slirp4netns \
+  -p 127.0.0.1:8000:8000 \
+  --tmpfs /data:rw,size=64m,mode=0777 \
+  -e PRODUCT_MANAGER_SETUP_TOKEN="$PRODUCT_MANAGER_SETUP_TOKEN" \
+  -e PRODUCT_MANAGER_COOKIE_SECURE=0 \
+  product-manager:qa
+```
+
+Espere o healthcheck do container ficar `healthy` e exercite `/healthz`, `/readyz`, bootstrap/login e as APIs necessárias para validar os fluxos do seu build. Para ver o estado e os logs:
+
+```bash
+podman inspect --format '{{.State.Status}} {{.State.Health.Status}}' product-manager-qa
+podman logs product-manager-qa
+```
+
+Ao terminar, pare o container para apagar o banco temporário:
+
+```bash
+podman stop product-manager-qa
+```
+
+O teste local de 13/10/2026 construiu `product-manager:qa` com Podman 5.4.2 e executou os fluxos HTTP documentados em `relatorios/qa-e2e-corrections.md`. Essa verificação do container não substitui E2E de navegador nem valida atualização/migração de um volume persistente.
+
 ## Limites operacionais
 
 - O servidor precisa permanecer ativo e acessível para login, consultas e gravações.

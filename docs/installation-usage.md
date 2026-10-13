@@ -85,3 +85,8 @@ O compartilhamento de diagnósticos fica desativado inicialmente. Para participa
 O administrador precisa configurar `PRODUCT_MANAGER_TELEMETRY_URL` com um endpoint HTTPS controlado pela organização. Sem essa configuração, nenhum evento é transmitido. A integração envia somente o identificador técnico do evento permitido, nome e versão do aplicativo; não envia conteúdo de campos, dados do banco, stack trace, URL, endereço de e-mail ou identificador persistente. O serviço de destino pode receber o endereço IP da conexão nos logs de infraestrutura. Consulte [Política de privacidade](../PRIVACY.md).
 
 Para relatar um erro manualmente, abra uma issue usando o modelo **Bug report**, descreva os passos e resultado esperado e remova dados pessoais e confidenciais. Veja [Contribuição](../CONTRIBUTING.md) e [Segurança](../SECURITY.md).
+
+
+## Tutorial visual
+
+Consulte o [tutorial visual completo](tutorial-visual.md), com capturas das telas de login, dashboard, produtos, compras, financeiro, alertas, relatórios, riscos, usuários e RH. As imagens foram feitas com dados sintéticos locais.

@@ -16,6 +16,7 @@ RUN groupadd --system app \
 COPY --chown=app:app api/ ./api/
 COPY --chown=app:app assets/ ./assets/
 COPY --chown=app:app db/schema.sql ./db/schema.sql
+COPY --chown=app:app scripts/database_recovery.py ./scripts/database_recovery.py
 COPY --chown=app:app ui/ ./ui/
 COPY --chown=app:app VERSION ./VERSION
 

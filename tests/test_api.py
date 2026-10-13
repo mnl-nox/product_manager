@@ -4,6 +4,7 @@ import os
 import sqlite3
 import tempfile
 import unittest
+from unittest.mock import patch
 
 TEMP_DIR = tempfile.TemporaryDirectory(prefix='product-manager-tests-')
 os.environ['PRODUCT_MANAGER_DB'] = os.path.join(TEMP_DIR.name, 'test.db')
@@ -75,6 +76,29 @@ class ProductManagerApiTests(unittest.TestCase):
         status, body = self.request_json('/api/health')
         self.assertEqual(status, 200)
         self.assertEqual(body, {'status': 'ok', 'database': 'connected'})
+
+    def test_database_context_closes_connection(self):
+        class ConnectionDouble:
+            row_factory = None
+            closed = False
+
+            def execute(self, _query):
+                return self
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def close(self):
+                self.closed = True
+
+        connection = ConnectionDouble()
+        with patch.object(app.sqlite3, 'connect', return_value=connection):
+            with app.get_db() as conn:
+                self.assertIs(conn, connection)
+        self.assertTrue(connection.closed)
 
     def test_liveness_probe_is_public_and_minimal(self):
         handler = self.handler('/healthz', authenticated=False)
