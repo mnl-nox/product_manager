@@ -1,5 +1,13 @@
 # Publicação Web e Android
 
+## Instância pública
+
+A instância disponibilizada para acesso pelo navegador está em **[https://product-manager-14fq.onrender.com/login](https://product-manager-14fq.onrender.com/login)**. Use HTTPS e conclua o login ou o provisionamento inicial se a instalação ainda não tiver administrador. Não compartilhe credenciais nem tokens de configuração. A disponibilidade depende do serviço de hospedagem.
+
+![Tela de login da aplicação](screenshots/login.png)
+
+As capturas de tela do repositório são referências visuais; atualize-as quando a interface mudar. Não inclua dados pessoais, tokens ou informações reais de clientes nas capturas.
+
 O Product Manager usa uma API Python e um banco SQLite. O site informativo do GitHub Pages não hospeda a API nem o banco. Para uso real, publique o serviço completo em um servidor HTTPS com armazenamento persistente.
 
 ## 1. Implantar no Render
