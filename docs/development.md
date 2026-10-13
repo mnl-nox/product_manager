@@ -105,3 +105,38 @@ A área de compras está disponível em `/purchasing`. Os endpoints requerem ses
 | POST | `/api/purchasing/orders/{id}/receive` | Registrar recebimento parcial ou total |
 
 Valores são enviados em centavos inteiros. O perfil financeiro pode aprovar até `PRODUCT_MANAGER_FINANCE_APPROVAL_LIMIT_CENTS` (padrão: R$ 100.000,00); valores maiores exigem administrador. A recepção atualiza a quantidade de produtos vinculados dentro de transação. O módulo não substitui validação fiscal, integração com ERP de fornecedor ou conferência física formal.
+
+
+## Recursos humanos
+
+A área administrativa está disponível em `/hr` e é restrita ao perfil `admin`, inclusive nas rotas de API. O escopo inclui departamentos, cadastro de colaboradores, solicitações de férias/ausências e decisão de aprovação. Os endpoints de documentos guardam apenas metadados e uma referência de armazenamento; não recebem nem servem arquivos.
+
+| Método | Endpoint | Finalidade |
+|---|---|---|
+| GET/POST | `/api/hr/departments` | Consultar/cadastrar departamentos |
+| GET/POST | `/api/hr/employees` | Consultar/cadastrar colaboradores |
+| GET/POST | `/api/hr/absences` | Consultar/registrar ausências |
+| POST | `/api/hr/absences/{id}/decision` | Aprovar/rejeitar solicitação |
+| GET/POST | `/api/hr/documents` | Consultar/cadastrar metadados documentais |
+| GET/POST | `/api/hr/work-time` | Consultar/registrar minutos trabalhados por dia |
+
+O registro de jornada permite no máximo 1.440 minutos por dia e um registro por colaborador/data. Não calcula horas extras, adicional noturno, banco de horas ou conformidade trabalhista. A folha de pagamento não é calculada nem integrada nesta entrega. Dados de RH são sensíveis: mantenha acesso administrativo restrito, proteja backups e não armazene conteúdo documental neste banco sem uma política de retenção e criptografia adequada.
+
+
+## Relatórios e indicadores
+
+A área está disponível em `/reports`. O endpoint `GET /api/reports/summary?from=YYYY-MM-DD&to=YYYY-MM-DD` retorna receitas e despesas realizadas, resultado líquido, margem de resultado (não margem bruta), valores planejados, proxy de caixa, contas vencidas, produtos mais vendidos, série mensal e agregação por categoria. `GET /api/reports/sales` lista os últimos registros de vendas.
+
+`POST /api/reports/sales` registra uma venda com produto, quantidade, preço unitário, data e situação. Valores monetários são convertidos para centavos inteiros; vendas realizadas verificam e baixam o estoque dentro de uma transação e criam lançamento de receita. Vendas planejadas não baixam estoque nem contam como venda realizada. A baixa do estoque representa a conclusão da venda nesta versão; devoluções, cancelamentos, custo de mercadoria e estornos ainda não fazem parte do fluxo.
+
+Limitações dos indicadores:
+- A margem exibida é resultado líquido dividido pela receita realizada; não é margem bruta, pois não há custo unitário de aquisição confiável no modelo atual.
+- O giro é um proxy de unidades vendidas dividido pelo estoque atual, não o cálculo contábil de giro médio.
+- O agrupamento disponível é mensal e por categoria. Unidades organizacionais e centros de custo não estão modelados, portanto relatórios por unidade/departamento ainda não são suportados.
+- Contas vencidas são lançamentos `planned` cuja `entry_date` é anterior à data atual; não há cadastro de vencimentos separado.
+- Os indicadores dependem de dados registrados. Não inventam vendas para produtos sem histórico.
+
+
+## Estado de integração dos módulos ERP
+
+Compras/fornecedores, RH e relatórios/indicadores estão integrados nesta branch cumulativa. A aprovação de release exige CI no commit final, revisão funcional em navegador e confirmação das limitações descritas nesta documentação. O aceite do código não substitui validação contábil, fiscal ou trabalhista.

@@ -2,7 +2,7 @@
 
 Data-base: 13/10/2026. Repositório: https://github.com/mnl-nox/product_manager
 
-Esta pasta organiza os casos e evidências de aceite. O aceite final exige todos os checks obrigatórios aprovados no mesmo commit, nenhum defeito P0/P1 aberto e artefatos por plataforma gerados e verificados. Isso reduz o risco, mas não prova ausência absoluta de bugs.
+Esta pasta organiza os casos e evidências de aceite, incluindo os módulos de compras/fornecedores, RH e relatórios/indicadores introduzidos nas branches semânticas. O aceite final exige todos os checks obrigatórios aprovados no mesmo commit, nenhum defeito P0/P1 aberto e artefatos por plataforma gerados e verificados. Isso reduz o risco, mas não prova ausência absoluta de bugs.
 
 ## Índice
 - [Casos](casos.md): cenários funcionais, negativos e de segurança.
@@ -22,3 +22,5 @@ Esta pasta organiza os casos e evidências de aceite. O aceite final exige todos
 
 ## Evidência obrigatória
 Registrar commit SHA, URL do workflow, resultado por job, data, plataforma, artefato e defeitos. Estados permitidos: APROVADO, FALHOU, BLOQUEADO e NÃO EXECUTADO. Nunca marcar como aprovado algo não executado.
+
+Os módulos de compras, RH e relatórios estão organizados em branches e pull requests encadeados para reduzir conflitos. O aceite final depende da execução dos checks no estado mais recente de cada branch.

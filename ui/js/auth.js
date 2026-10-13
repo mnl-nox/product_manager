@@ -35,6 +35,10 @@ if (!response.ok) {
       usersLink.href = '/admin/users';
       usersLink.textContent = 'Usuários';
       nav.append(usersLink);
+      const hrLink = document.createElement('a');
+      hrLink.href = '/hr';
+      hrLink.textContent = 'Recursos humanos';
+      nav.append(hrLink);
     }
     const identity = document.createElement('span');
     identity.className = 'session-identity';

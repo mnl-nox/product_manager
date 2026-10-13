@@ -29,3 +29,12 @@ Esses comandos verificam configuração/sintaxe, não substituem o build complet
 
 ## Evidência de release
 Registrar SHA, URL do workflow, conclusão de cada job, artefatos e tamanhos, versão/tag/changelog, plataforma e data. Nunca publicar cookies, tokens, senhas ou dados pessoais nos logs.
+
+## Compras (API autenticada)
+`POST /api/purchasing/suppliers`, `POST /api/purchasing/requests`, `POST /api/purchasing/quotes`, `POST /api/purchasing/requests/{id}/approve`, `POST /api/purchasing/requests/{id}/order` e `POST /api/purchasing/orders/{id}/receive`. Enviar token CSRF em `X-CSRF-Token`; valores em centavos.
+
+## RH (somente administrador)
+`POST /api/hr/departments`, `POST /api/hr/employees`, `POST /api/hr/absences` e `POST /api/hr/absences/{id}/decision`. A API valida datas ISO e matrícula única.
+
+## Relatórios
+`GET /api/reports/summary?from=2026-10-01&to=2026-10-31` consulta métricas do período. `POST /api/reports/sales` registra venda com produto, quantidade, preço unitário, data e situação. Nunca use dados reais nos testes.

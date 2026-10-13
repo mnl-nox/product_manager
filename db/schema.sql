@@ -185,3 +185,77 @@ CREATE TABLE IF NOT EXISTS purchase_approvals (
 CREATE INDEX IF NOT EXISTS idx_purchase_requests_status ON purchase_requests(status, created_at);
 CREATE INDEX IF NOT EXISTS idx_purchase_orders_status ON purchase_orders(status, created_at);
 
+CREATE TABLE IF NOT EXISTS hr_departments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    description TEXT NOT NULL DEFAULT '',
+    active INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0,1)),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS hr_employees (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_code TEXT NOT NULL UNIQUE,
+    full_name TEXT NOT NULL,
+    email TEXT NOT NULL DEFAULT '',
+    job_title TEXT NOT NULL,
+    department_id INTEGER REFERENCES hr_departments(id),
+    hire_date TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','leave','inactive')),
+    notes TEXT NOT NULL DEFAULT '',
+    created_by INTEGER REFERENCES app_users(id),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_hr_employees_department ON hr_employees(department_id, status);
+CREATE TABLE IF NOT EXISTS hr_absences (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id INTEGER NOT NULL REFERENCES hr_employees(id) ON DELETE CASCADE,
+    absence_type TEXT NOT NULL CHECK(absence_type IN ('vacation','sick_leave','personal','other')),
+    start_date TEXT NOT NULL,
+    end_date TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'requested' CHECK(status IN ('requested','approved','rejected','cancelled')),
+    notes TEXT NOT NULL DEFAULT '',
+    recorded_by INTEGER REFERENCES app_users(id),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CHECK(end_date >= start_date)
+);
+CREATE TABLE IF NOT EXISTS hr_documents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id INTEGER NOT NULL REFERENCES hr_employees(id) ON DELETE CASCADE,
+    document_type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    storage_reference TEXT NOT NULL DEFAULT '',
+    expires_on TEXT,
+    created_by INTEGER REFERENCES app_users(id),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS hr_work_time (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id INTEGER NOT NULL REFERENCES hr_employees(id) ON DELETE CASCADE,
+    work_date TEXT NOT NULL,
+    minutes_worked INTEGER NOT NULL CHECK(minutes_worked BETWEEN 0 AND 1440),
+    notes TEXT NOT NULL DEFAULT '',
+    recorded_by INTEGER REFERENCES app_users(id),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(employee_id, work_date)
+);
+CREATE INDEX IF NOT EXISTS idx_hr_absences_dates ON hr_absences(start_date, end_date, status);
+
+CREATE TABLE IF NOT EXISTS sales (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sale_date TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'paid' CHECK(status IN ('paid','planned')),
+    total_cents INTEGER NOT NULL CHECK(total_cents > 0),
+    recorded_by INTEGER REFERENCES app_users(id),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS sales_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sale_id INTEGER NOT NULL REFERENCES sales(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL REFERENCES products(id),
+    quantity INTEGER NOT NULL CHECK(quantity > 0),
+    unit_price_cents INTEGER NOT NULL CHECK(unit_price_cents > 0),
+    line_total_cents INTEGER NOT NULL CHECK(line_total_cents > 0)
+);
+CREATE INDEX IF NOT EXISTS idx_sales_date ON sales(sale_date, status);
+CREATE INDEX IF NOT EXISTS idx_sales_items_product ON sales_items(product_id, sale_id);
+

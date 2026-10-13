@@ -621,7 +621,7 @@ class AppHandler(BaseHTTPRequestHandler):
             self.serve_file(UI_DIR / 'login.html', 'text/html; charset=utf-8')
             return
 
-        if path in {'/', '/dashboard', '/products', '/finance', '/alerts', '/admin/users', '/work-items', '/purchasing'} or path.startswith('/api/'):
+        if path in {'/', '/dashboard', '/products', '/finance', '/alerts', '/admin/users', '/work-items', '/purchasing', '/hr', '/reports'} or path.startswith('/api/'):
             if path == '/api/auth/setup-status':
                 with get_db() as conn:
                     user_count = conn.execute('SELECT COUNT(*) FROM app_users WHERE active = 1').fetchone()[0]
@@ -631,6 +631,12 @@ class AppHandler(BaseHTTPRequestHandler):
             if user is None:
                 return
             self.current_user = user
+            if path == '/hr' and user['role'] != 'admin':
+                self.send_json({'error': 'Acesso restrito ao administrador.'}, status=403)
+                return
+            if path.startswith('/api/hr/') and user['role'] != 'admin':
+                self.send_json({'error': 'Acesso restrito ao administrador.'}, status=403)
+                return
             if path == '/finance' and not self.require_permission(user, 'finance:read'):
                 return
             if path == '/alerts' and not self.require_permission(user, 'read'):
@@ -670,6 +676,14 @@ class AppHandler(BaseHTTPRequestHandler):
 
         if path == '/purchasing':
             self.serve_file(UI_DIR / 'purchasing.html', 'text/html; charset=utf-8')
+            return
+
+        if path == '/hr':
+            self.serve_file(UI_DIR / 'hr.html', 'text/html; charset=utf-8')
+            return
+
+        if path == '/reports':
+            self.serve_file(UI_DIR / 'reports.html', 'text/html; charset=utf-8')
             return
 
         if path == '/privacy.html':
@@ -787,6 +801,186 @@ class AppHandler(BaseHTTPRequestHandler):
             })
             return
 
+        if path == '/api/reports/sales':
+            if user['role'] not in {'admin', 'operator', 'finance'}:
+                self.send_json({'error': 'Permissão para registrar vendas necessária.'}, status=403)
+                return
+            try:
+                product_id = int(payload.get('product_id'))
+                quantity = int(payload.get('quantity'))
+                unit_price = Decimal(str(payload.get('unit_price')))
+                cents = unit_price * 100
+                sale_date = date.fromisoformat(payload.get('sale_date', date.today().isoformat())).isoformat()
+                status_value = payload.get('status', 'paid')
+                if quantity < 1 or quantity > 1_000_000:
+                    raise ValueError('Quantidade deve ficar entre 1 e 1.000.000.')
+                if not unit_price.is_finite() or cents != cents.to_integral_value() or cents <= 0 or cents > 99_999_999_999:
+                    raise ValueError('Preço unitário inválido.')
+                if status_value not in {'paid', 'planned'}:
+                    raise ValueError('Situação da venda inválida.')
+                unit_cents = int(cents)
+                total_cents = unit_cents * quantity
+                if total_cents > 99_999_999_999_999:
+                    raise ValueError('Valor total excede o limite permitido.')
+            except (TypeError, ValueError, InvalidOperation) as exc:
+                self.send_json({'error': str(exc)}, status=400)
+                return
+            with get_db() as conn:
+                conn.execute('BEGIN IMMEDIATE')
+                product = conn.execute("SELECT id, name, quantity, active FROM products WHERE id=?", (product_id,)).fetchone()
+                if product is None or not product['active']:
+                    self.send_json({'error': 'Produto ativo não encontrado.'}, status=404)
+                    return
+                if status_value == 'paid' and product['quantity'] < quantity:
+                    self.send_json({'error': 'Estoque insuficiente para registrar a venda.'}, status=409)
+                    return
+                cursor = conn.execute('INSERT INTO sales (sale_date, status, total_cents, recorded_by) VALUES (?, ?, ?, ?)',
+                                      (sale_date, status_value, total_cents, user['id']))
+                sale_id = cursor.lastrowid
+                conn.execute('INSERT INTO sales_items (sale_id, product_id, quantity, unit_price_cents, line_total_cents) VALUES (?, ?, ?, ?, ?)',
+                             (sale_id, product_id, quantity, unit_cents, total_cents))
+                if status_value == 'paid':
+                    conn.execute('UPDATE products SET quantity=quantity-? WHERE id=?', (quantity, product_id))
+                conn.execute('INSERT INTO finance_entries (entry_type, category, description, amount_cents, entry_date, status, created_by) VALUES (?,?,?,?,?,?,?)',
+                             ('income', 'Vendas', f'Venda #{sale_id} — {product["name"]}', total_cents, sale_date, status_value, user['id']))
+            audit_record(user['id'], 'create', 'sale', sale_id)
+            self.send_json({'id': sale_id, 'total_cents': total_cents, 'message': 'Venda registrada e estoque atualizado.'}, status=201)
+            return
+
+        if path.startswith('/api/hr/'):
+            if user['role'] != 'admin':
+                self.send_json({'error': 'Acesso restrito ao administrador.'}, status=403)
+                return
+            if path == '/api/hr/departments':
+                try:
+                    name = sanitize_text(payload.get('name'), 'departamento', 100)
+                    description = sanitize_optional_text(payload.get('description'), 'descrição', 300)
+                except ValueError as exc:
+                    self.send_json({'error': str(exc)}, status=400)
+                    return
+                try:
+                    with get_db() as conn:
+                        cursor = conn.execute('INSERT INTO hr_departments (name, description) VALUES (?, ?)', (name, description))
+                except sqlite3.IntegrityError:
+                    self.send_json({'error': 'Departamento já cadastrado.'}, status=409)
+                    return
+                audit_record(user['id'], 'create', 'hr_department', cursor.lastrowid)
+                self.send_json({'id': cursor.lastrowid, 'message': 'Departamento cadastrado.'}, status=201)
+                return
+            if path == '/api/hr/employees':
+                try:
+                    employee_code = sanitize_text(payload.get('employee_code'), 'matrícula', 32)
+                    full_name = sanitize_text(payload.get('full_name'), 'nome completo', 160)
+                    email = sanitize_optional_text(payload.get('email'), 'e-mail', 128)
+                    if email:
+                        email = validate_email(email)
+                    job_title = sanitize_text(payload.get('job_title'), 'cargo', 100)
+                    hire_date = date.fromisoformat(payload.get('hire_date')).isoformat()
+                    department_id = payload.get('department_id')
+                    department_id = int(department_id) if department_id not in (None, '') else None
+                    notes = sanitize_optional_text(payload.get('notes'), 'observações', 512)
+                except (TypeError, ValueError) as exc:
+                    self.send_json({'error': str(exc)}, status=400)
+                    return
+                with get_db() as conn:
+                    if department_id is not None and not conn.execute('SELECT 1 FROM hr_departments WHERE id=? AND active=1', (department_id,)).fetchone():
+                        self.send_json({'error': 'Departamento ativo não encontrado.'}, status=400)
+                        return
+                    try:
+                        cursor = conn.execute('''INSERT INTO hr_employees
+                            (employee_code, full_name, email, job_title, department_id, hire_date, notes, created_by)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                            (employee_code, full_name, email, job_title, department_id, hire_date, notes, user['id']))
+                    except sqlite3.IntegrityError:
+                        self.send_json({'error': 'Matrícula já cadastrada.'}, status=409)
+                        return
+                audit_record(user['id'], 'create', 'hr_employee', cursor.lastrowid)
+                self.send_json({'id': cursor.lastrowid, 'message': 'Colaborador cadastrado.'}, status=201)
+                return
+            if path == '/api/hr/absences':
+                try:
+                    employee_id = int(payload.get('employee_id'))
+                    absence_type = payload.get('absence_type')
+                    start_date = date.fromisoformat(payload.get('start_date')).isoformat()
+                    end_date = date.fromisoformat(payload.get('end_date')).isoformat()
+                    notes = sanitize_optional_text(payload.get('notes'), 'observações', 512)
+                    if absence_type not in {'vacation', 'sick_leave', 'personal', 'other'} or end_date < start_date:
+                        raise ValueError('Tipo ou período de ausência inválido.')
+                except (TypeError, ValueError) as exc:
+                    self.send_json({'error': str(exc)}, status=400)
+                    return
+                with get_db() as conn:
+                    if not conn.execute('SELECT 1 FROM hr_employees WHERE id=? AND status != "inactive"', (employee_id,)).fetchone():
+                        self.send_json({'error': 'Colaborador não encontrado ou inativo.'}, status=404)
+                        return
+                    cursor = conn.execute('INSERT INTO hr_absences (employee_id, absence_type, start_date, end_date, notes, recorded_by) VALUES (?, ?, ?, ?, ?, ?)',
+                                          (employee_id, absence_type, start_date, end_date, notes, user['id']))
+                audit_record(user['id'], 'create', 'hr_absence', cursor.lastrowid)
+                self.send_json({'id': cursor.lastrowid, 'message': 'Ausência registrada para aprovação.'}, status=201)
+                return
+            absence_decision = re.fullmatch(r'/api/hr/absences/(\\d+)/decision', path)
+            if absence_decision:
+                absence_id = int(absence_decision.group(1))
+                decision = payload.get('decision')
+                if decision not in {'approved', 'rejected'}:
+                    self.send_json({'error': 'Decisão inválida.'}, status=400)
+                    return
+                with get_db() as conn:
+                    cursor = conn.execute("UPDATE hr_absences SET status=? WHERE id=? AND status='requested'", (decision, absence_id))
+                    if not cursor.rowcount:
+                        self.send_json({'error': 'Ausência não encontrada ou já decidida.'}, status=409)
+                        return
+                audit_record(user['id'], decision, 'hr_absence', absence_id)
+                self.send_json({'message': 'Decisão registrada.'})
+                return
+            if path == '/api/hr/documents':
+                try:
+                    employee_id = int(payload.get('employee_id'))
+                    document_type = sanitize_text(payload.get('document_type'), 'tipo de documento', 80)
+                    title = sanitize_text(payload.get('title'), 'título', 160)
+                    storage_reference = sanitize_optional_text(payload.get('storage_reference'), 'referência de armazenamento', 256)
+                    expires_on = payload.get('expires_on') or None
+                    if expires_on:
+                        expires_on = date.fromisoformat(expires_on).isoformat()
+                except (TypeError, ValueError) as exc:
+                    self.send_json({'error': str(exc)}, status=400)
+                    return
+                with get_db() as conn:
+                    if not conn.execute('SELECT 1 FROM hr_employees WHERE id=?', (employee_id,)).fetchone():
+                        self.send_json({'error': 'Colaborador não encontrado.'}, status=404)
+                        return
+                    cursor = conn.execute('INSERT INTO hr_documents (employee_id, document_type, title, storage_reference, expires_on, created_by) VALUES (?, ?, ?, ?, ?, ?)',
+                                          (employee_id, document_type, title, storage_reference, expires_on, user['id']))
+                audit_record(user['id'], 'create', 'hr_document', cursor.lastrowid)
+                self.send_json({'id': cursor.lastrowid, 'message': 'Metadados do documento registrados.'}, status=201)
+                return
+            if path == '/api/hr/work-time':
+                try:
+                    employee_id = int(payload.get('employee_id'))
+                    work_date = date.fromisoformat(payload.get('work_date')).isoformat()
+                    minutes_worked = int(payload.get('minutes_worked'))
+                    notes = sanitize_optional_text(payload.get('notes'), 'observações', 256)
+                    if not 0 <= minutes_worked <= 1440:
+                        raise ValueError('Jornada deve ficar entre 0 e 1440 minutos.')
+                except (TypeError, ValueError) as exc:
+                    self.send_json({'error': str(exc)}, status=400)
+                    return
+                try:
+                    with get_db() as conn:
+                        if not conn.execute('SELECT 1 FROM hr_employees WHERE id=?', (employee_id,)).fetchone():
+                            self.send_json({'error': 'Colaborador não encontrado.'}, status=404)
+                            return
+                        cursor = conn.execute('INSERT INTO hr_work_time (employee_id, work_date, minutes_worked, notes, recorded_by) VALUES (?, ?, ?, ?, ?)',
+                                              (employee_id, work_date, minutes_worked, notes, user['id']))
+                except sqlite3.IntegrityError:
+                    self.send_json({'error': 'Já existe jornada registrada para esse colaborador e data.'}, status=409)
+                    return
+                audit_record(user['id'], 'create', 'hr_work_time', cursor.lastrowid)
+                self.send_json({'id': cursor.lastrowid, 'message': 'Jornada registrada.'}, status=201)
+                return
+            self.send_json({'error': 'Rota de RH não encontrada.'}, status=404)
+            return
+
         if path.startswith('/api/purchasing/'):
             if self.current_user['role'] not in {'admin', 'operator', 'finance', 'viewer'}:
                 self.send_json({'error': 'Permissão de consulta necessária.'}, status=403)
@@ -832,6 +1026,100 @@ class AppHandler(BaseHTTPRequestHandler):
                     self.send_json({'request': dict(request_row), 'items': [dict(x) for x in items], 'quotes': [dict(x) for x in quotes]})
                     return
             self.send_json({'error': 'Rota de compras não encontrada.'}, status=404)
+            return
+
+        if path.startswith('/api/hr/'):
+            if self.current_user['role'] != 'admin':
+                self.send_json({'error': 'Acesso restrito ao administrador.'}, status=403)
+                return
+            with get_db() as conn:
+                if path == '/api/hr/departments':
+                    rows = conn.execute('SELECT id, name, description, active, created_at FROM hr_departments ORDER BY name').fetchall()
+                    self.send_json([dict(row) for row in rows])
+                    return
+                if path == '/api/hr/employees':
+                    rows = conn.execute("""SELECT e.id, e.employee_code, e.full_name, e.email, e.job_title,
+                        e.department_id, d.name AS department_name, e.hire_date, e.status, e.notes, e.created_at
+                        FROM hr_employees e LEFT JOIN hr_departments d ON d.id=e.department_id
+                        ORDER BY e.full_name""").fetchall()
+                    self.send_json([dict(row) for row in rows])
+                    return
+                if path == '/api/hr/absences':
+                    rows = conn.execute("""SELECT a.*, e.full_name AS employee_name FROM hr_absences a
+                        JOIN hr_employees e ON e.id=a.employee_id ORDER BY a.start_date DESC, a.id DESC""").fetchall()
+                    self.send_json([dict(row) for row in rows])
+                    return
+                if path == '/api/hr/documents':
+                    rows = conn.execute("""SELECT d.id, d.employee_id, e.full_name AS employee_name, d.document_type,
+                        d.title, d.expires_on, d.created_at FROM hr_documents d JOIN hr_employees e ON e.id=d.employee_id
+                        ORDER BY d.created_at DESC""").fetchall()
+                    self.send_json([dict(row) for row in rows])
+                    return
+                if path == '/api/hr/work-time':
+                    rows = conn.execute("""SELECT w.*, e.full_name AS employee_name FROM hr_work_time w
+                        JOIN hr_employees e ON e.id=w.employee_id ORDER BY w.work_date DESC, w.id DESC LIMIT 500""").fetchall()
+                    self.send_json([dict(row) for row in rows])
+                    return
+            self.send_json({'error': 'Rota de RH não encontrada.'}, status=404)
+            return
+
+        if path == '/api/reports/summary':
+            params = parse_qs(parsed.query)
+            try:
+                start_date = date.fromisoformat(params.get('from', [date.today().replace(day=1).isoformat()])[0]).isoformat()
+                end_date = date.fromisoformat(params.get('to', [date.today().isoformat()])[0]).isoformat()
+                if end_date < start_date:
+                    raise ValueError('O período final deve ser igual ou posterior ao inicial.')
+            except ValueError as exc:
+                self.send_json({'error': str(exc)}, status=400)
+                return
+            with get_db() as conn:
+                totals = conn.execute("""SELECT
+                    COALESCE(SUM(CASE WHEN entry_type='income' AND status='paid' THEN amount_cents ELSE 0 END),0) AS revenue_cents,
+                    COALESCE(SUM(CASE WHEN entry_type='expense' AND status='paid' THEN amount_cents ELSE 0 END),0) AS expenses_cents,
+                    COALESCE(SUM(CASE WHEN entry_type='income' AND status='planned' THEN amount_cents ELSE 0 END),0) AS planned_income_cents,
+                    COALESCE(SUM(CASE WHEN entry_type='expense' AND status='planned' THEN amount_cents ELSE 0 END),0) AS planned_expenses_cents
+                    FROM finance_entries WHERE entry_date BETWEEN ? AND ?""", (start_date, end_date)).fetchone()
+                overdue = conn.execute("""SELECT entry_type, COUNT(*) AS count, COALESCE(SUM(amount_cents),0) AS amount_cents
+                    FROM finance_entries WHERE status='planned' AND entry_date < ? GROUP BY entry_type""", (date.today().isoformat(),)).fetchall()
+                top_products = conn.execute("""SELECT p.id, p.name, p.sku, SUM(si.quantity) AS units_sold,
+                    SUM(si.line_total_cents) AS revenue_cents FROM sales_items si
+                    JOIN sales s ON s.id=si.sale_id JOIN products p ON p.id=si.product_id
+                    WHERE s.status='paid' AND s.sale_date BETWEEN ? AND ? GROUP BY p.id, p.name, p.sku
+                    ORDER BY units_sold DESC, revenue_cents DESC LIMIT 10""", (start_date, end_date)).fetchall()
+                monthly = conn.execute("""SELECT substr(entry_date,1,7) AS period,
+                    COALESCE(SUM(CASE WHEN entry_type='income' AND status='paid' THEN amount_cents ELSE 0 END),0) AS revenue_cents,
+                    COALESCE(SUM(CASE WHEN entry_type='expense' AND status='paid' THEN amount_cents ELSE 0 END),0) AS expenses_cents
+                    FROM finance_entries WHERE entry_date BETWEEN ? AND ? GROUP BY substr(entry_date,1,7) ORDER BY period""",
+                    (start_date, end_date)).fetchall()
+                category = conn.execute("""SELECT category,
+                    COALESCE(SUM(CASE WHEN entry_type='income' AND status='paid' THEN amount_cents ELSE 0 END),0) AS revenue_cents,
+                    COALESCE(SUM(CASE WHEN entry_type='expense' AND status='paid' THEN amount_cents ELSE 0 END),0) AS expenses_cents
+                    FROM finance_entries WHERE entry_date BETWEEN ? AND ? GROUP BY category ORDER BY category""",
+                    (start_date, end_date)).fetchall()
+                stock = conn.execute('SELECT COALESCE(SUM(quantity),0) FROM products WHERE active=1').fetchone()[0]
+                sold = conn.execute("""SELECT COALESCE(SUM(si.quantity),0) FROM sales_items si JOIN sales s ON s.id=si.sale_id
+                    WHERE s.status='paid' AND s.sale_date BETWEEN ? AND ?""", (start_date, end_date)).fetchone()[0]
+            totals = dict(totals)
+            profit = totals['revenue_cents'] - totals['expenses_cents']
+            totals['profit_cents'] = profit
+            totals['profit_margin_percent'] = round((profit / totals['revenue_cents']) * 100, 2) if totals['revenue_cents'] else None
+            totals['projected_cash_cents'] = profit + totals['planned_income_cents'] - totals['planned_expenses_cents']
+            totals['stock_turnover_proxy'] = round(sold / stock, 4) if stock else None
+            overdue_summary = {row['entry_type']: {'count': row['count'], 'amount_cents': row['amount_cents']} for row in overdue}
+            self.send_json({'period': {'from': start_date, 'to': end_date}, 'totals': totals,
+                'overdue': overdue_summary, 'topProducts': [dict(row) for row in top_products],
+                'monthly': [dict(row) for row in monthly], 'byCategory': [dict(row) for row in category]})
+            return
+
+        if path == '/api/reports/sales':
+            with get_db() as conn:
+                rows = conn.execute("""SELECT s.id, s.sale_date, s.status, s.total_cents,
+                    u.username AS recorded_by, p.name AS product_name, p.sku, si.quantity,
+                    si.unit_price_cents, si.line_total_cents FROM sales s
+                    JOIN sales_items si ON si.sale_id=s.id JOIN products p ON p.id=si.product_id
+                    LEFT JOIN app_users u ON u.id=s.recorded_by ORDER BY s.sale_date DESC, s.id DESC LIMIT 500""").fetchall()
+            self.send_json([dict(row) for row in rows])
             return
 
         if path == '/api/health':
