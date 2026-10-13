@@ -10,51 +10,44 @@ on:
       - '.github/labels.yml'
 
 permissions:
+  contents: read
   issues: write
-  pull-requests: write
 
 jobs:
   provision:
     name: Provision labels
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
       - name: Create or update labels
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
-          set -euo pipefail
+          ruby -ryaml -ropen3 <<'RUBY'
+          config = YAML.safe_load_file('.github/labels.yml', permitted_classes: [], aliases: false)
+          labels = config.fetch('labels')
+          abort 'Expected labels to be a non-empty array.' unless labels.is_a?(Array) && !labels.empty?
 
-          declare -a LABELS=(
-            "type: feat|1D76DB|New functionality"
-            "type: fix|D73A4A|Bug fix"
-            "type: docs|0075CA|Documentation"
-            "type: style|5319E7|Formatting or style"
-            "type: refactor|A2EEEF|Internal refactor"
-            "type: perf|FBCA04|Performance improvement"
-            "type: test|7057FF|Tests"
-            "type: build|BFD4F2|Build system"
-            "type: ci|0366D6|Continuous integration"
-            "type: chore|C5DEF5|Maintenance"
-            "type: revert|E4E669|Revert"
-            "type: breaking|B60205|Breaking change"
-            "status: needs-review|D93F0B|Awaiting review"
-            "status: blocked|5319E7|Blocked"
-            "status: ready|0E8A16|Ready for implementation"
-            "status: in-progress|FBCA04|Work in progress"
-            "status: done|0E8A16|Completed"
-            "area: core|C2E0C6|Core domain"
-            "area: terminal|C5DEF5|Terminal interface"
-            "area: persistence|BFD4F2|Persistence"
-            "area: security|D73A4A|Security"
-            "area: documentation|0075CA|Documentation"
-            "area: products|1D76DB|Product catalog"
-            "area: api|0366D6|HTTP API"
-            "area: web|5319E7|Web interface"
-            "area: testing|7057FF|Automated tests"
-          )
+          names = []
+          labels.each do |label|
+            abort "Invalid label record: #{label.inspect}" unless label.is_a?(Hash)
+            name = label['name']
+            color = label['color']
+            description = label['description']
+            abort "Incomplete label record: #{label.inspect}" unless name.is_a?(String) && !name.empty? && color.is_a?(String) && color.match?(/\A[0-9A-Fa-f]{6}\z/) && description.is_a?(String) && !description.empty?
+            abort "Duplicate label name: #{name}" if names.include?(name)
+            names << name
 
-          for item in "${LABELS[@]}"; do
-            IFS='|' read -r name color description <<< "$item"
-            gh label create "$name" --repo "$REPO" --color "$color" --description "$description" --force
-          done
+            output, error, status = Open3.capture3(
+              'gh', 'label', 'create', name, '--repo', ENV.fetch('REPO'),
+              '--color', color, '--description', description, '--force'
+            )
+            print output
+            warn error unless error.empty?
+            abort "Could not provision label: #{name}" unless status.success?
+          end
+          RUBY

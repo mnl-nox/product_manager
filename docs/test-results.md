@@ -35,3 +35,16 @@ python3 -m compileall -q api scripts tests
 make -B
 make package-linux package-pwa
 ```
+
+## Container Podman
+
+Validação adicional em **12/10/2026** com Podman rootless:
+
+| Verificação | Resultado | Observação |
+| --- | --- | --- |
+| `podman build --network=none --format docker -t product-manager-smoke .` | **Aprovado** | A rede de build padrão tentou usar `pasta`, que falhou neste host; o Dockerfile não precisa de rede durante o build. |
+| Execução com `--network=slirp4netns` | **Aprovado** | Porta publicada somente no loopback; banco guardado no volume `product-manager-smoke-data`. |
+| Healthcheck do container | **Aprovado** | O primeiro probe pode ocorrer antes do servidor aceitar conexões; healthcheck usa intervalo de 5 s e período inicial de 15 s, e o estado final ficou `healthy`. |
+| Smoke test HTTP | **Aprovado** | Login servido, bootstrap administrativo fechado após persistência, autenticação concluída e `/api/dashboard` respondeu HTTP 200. |
+
+Para repetir o build rootless neste host, use `podman build --network=none --format docker`. Para iniciar, use a rede `slirp4netns`; a configuração equivalente está no exemplo Podman do README.

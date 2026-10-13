@@ -1,34 +1,80 @@
-# Label catalog
-#
-# Provisioned by .github/workflows/labels.yml.
-# Format:
-# name | color | description
-
-type: feat | 1D76DB | New functionality
-type: fix | D73A4A | Bug fix
-type: docs | 0075CA | Documentation
-type: style | 5319E7 | Formatting or style
-type: refactor | A2EEEF | Internal refactor
-type: perf | FBCA04 | Performance improvement
-type: test | 7057FF | Tests
-type: build | BFD4F2 | Build system
-type: ci | 0366D6 | Continuous integration
-type: chore | C5DEF5 | Maintenance
-type: revert | E4E669 | Revert
-type: breaking | B60205 | Breaking change
-
-status: ready | 0E8A16 | Ready for implementation
-status: in-progress | FBCA04 | Work in progress
-status: needs-review | D93F0B | Awaiting review
-status: blocked | 5319E7 | Blocked
-status: done | 0E8A16 | Completed
-
-area: core | C2E0C6 | Core domain
-area: terminal | C5DEF5 | Terminal interface
-area: persistence | BFD4F2 | Persistence
-area: security | D73A4A | Security
-area: documentation | 0075CA | Documentation
-area: products | 1D76DB | Product catalog
-area: api | 0366D6 | HTTP API
-area: web | 5319E7 | Web interface
-area: testing | 7057FF | Automated tests
+# Repository labels. The labels workflow provisions these values in GitHub.
+labels:
+  - name: "type: feat"
+    color: "1D76DB"
+    description: New functionality
+  - name: "type: fix"
+    color: "D73A4A"
+    description: Bug fix
+  - name: "type: docs"
+    color: "0075CA"
+    description: Documentation
+  - name: "type: style"
+    color: "5319E7"
+    description: Formatting or style
+  - name: "type: refactor"
+    color: "A2EEEF"
+    description: Internal refactor
+  - name: "type: perf"
+    color: "FBCA04"
+    description: Performance improvement
+  - name: "type: test"
+    color: "7057FF"
+    description: Tests
+  - name: "type: build"
+    color: "BFD4F2"
+    description: Build system
+  - name: "type: ci"
+    color: "0366D6"
+    description: Continuous integration
+  - name: "type: chore"
+    color: "C5DEF5"
+    description: Maintenance
+  - name: "type: revert"
+    color: "E4E669"
+    description: Revert
+  - name: "type: breaking"
+    color: "B60205"
+    description: Breaking change
+  - name: "status: ready"
+    color: "0E8A16"
+    description: Ready for implementation
+  - name: "status: in-progress"
+    color: "FBCA04"
+    description: Work in progress
+  - name: "status: needs-review"
+    color: "D93F0B"
+    description: Awaiting review
+  - name: "status: blocked"
+    color: "5319E7"
+    description: Blocked
+  - name: "status: done"
+    color: "0E8A16"
+    description: Completed
+  - name: "area: core"
+    color: "C2E0C6"
+    description: Core domain
+  - name: "area: terminal"
+    color: "C5DEF5"
+    description: Terminal interface
+  - name: "area: persistence"
+    color: "BFD4F2"
+    description: Persistence
+  - name: "area: security"
+    color: "D73A4A"
+    description: Security
+  - name: "area: documentation"
+    color: "0075CA"
+    description: Documentation
+  - name: "area: products"
+    color: "1D76DB"
+    description: Product catalog
+  - name: "area: api"
+    color: "0366D6"
+    description: HTTP API
+  - name: "area: web"
+    color: "5319E7"
+    description: Web interface
+  - name: "area: testing"
+    color: "7057FF"
+    description: Automated tests

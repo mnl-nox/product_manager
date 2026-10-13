@@ -52,6 +52,29 @@ Abra <http://127.0.0.1:8000>. O banco padrão é `db/product_manager.db`. Para u
 PRODUCT_MANAGER_DB=/caminho/product_manager.db python3 api/app.py
 ```
 
+### Executar com Docker
+
+Para testar em um container local, gere um token temporário e suba o serviço com Docker Compose:
+
+```bash
+export PRODUCT_MANAGER_SETUP_TOKEN="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
+docker compose up --build -d
+```
+
+Abra `http://localhost:8000/login#setup_token=$PRODUCT_MANAGER_SETUP_TOKEN` para criar o primeiro administrador. O banco fica no volume `product-manager-data`. Para encerrar, execute `docker compose down`; os dados permanecem no volume. O Compose publica a porta somente no loopback e desativa cookies Secure para permitir o teste local por HTTP. Em uma implantação HTTPS, configure `PRODUCT_MANAGER_COOKIE_SECURE=1`.
+
+No Podman rootless, o mesmo container pode ser construído e iniciado assim (gere o token como no exemplo acima):
+
+```bash
+podman build --network=none --format docker -t product-manager .
+podman run -d --name product-manager --network=slirp4netns \
+  -p 127.0.0.1:8000:8000 \
+  -e PRODUCT_MANAGER_SETUP_TOKEN="$PRODUCT_MANAGER_SETUP_TOKEN" \
+  -e PRODUCT_MANAGER_COOKIE_SECURE=0 \
+  -v product-manager-data:/data:Z,U \
+  product-manager
+```
+
 As rotas principais incluem `GET /api/health`, `GET /api/dashboard`, `GET /api/products`, `POST /api/products`, `POST /api/clients`, além das APIs financeira e de alertas. Veja [API e desenvolvimento](docs/development.md) para detalhes de sessão e permissões.
 
 ## Instalar por plataforma

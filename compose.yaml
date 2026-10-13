@@ -1,0 +1,20 @@
+services:
+  app:
+    build:
+      context: .
+      network: none
+    ports:
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
+    environment:
+      PRODUCT_MANAGER_HOST: 0.0.0.0
+      PRODUCT_MANAGER_PORT: 8000
+      PRODUCT_MANAGER_DB: /data/product_manager.db
+      PRODUCT_MANAGER_SETUP_TOKEN: ${PRODUCT_MANAGER_SETUP_TOKEN:-}
+      # Local HTTP only. Set this to 1 behind HTTPS in production.
+      PRODUCT_MANAGER_COOKIE_SECURE: "0"
+    volumes:
+      - product-manager-data:/data
+    restart: unless-stopped
+
+volumes:
+  product-manager-data:
