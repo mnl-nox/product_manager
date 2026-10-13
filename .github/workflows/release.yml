@@ -23,6 +23,17 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - name: Recover release for an existing tag
+        if: github.ref_type != 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest_tag="$(git tag -l 'v[0-9]*' --sort=-v:refname | head -n 1 || true)"
+          if [[ -n "$latest_tag" ]] && ! gh release view "$latest_tag" >/dev/null 2>&1; then
+            python3 scripts/release_notes.py "$latest_tag" > release-notes.md
+            gh release create "$latest_tag" --verify-tag --title "Product Manager $latest_tag" --notes-file release-notes.md
+          fi
+
       - name: Publish manually pushed version tag
         if: github.ref_type == 'tag'
         env:
