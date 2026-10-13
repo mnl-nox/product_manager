@@ -240,3 +240,22 @@ CREATE TABLE IF NOT EXISTS hr_work_time (
 );
 CREATE INDEX IF NOT EXISTS idx_hr_absences_dates ON hr_absences(start_date, end_date, status);
 
+CREATE TABLE IF NOT EXISTS sales (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sale_date TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'paid' CHECK(status IN ('paid','planned')),
+    total_cents INTEGER NOT NULL CHECK(total_cents > 0),
+    recorded_by INTEGER REFERENCES app_users(id),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS sales_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sale_id INTEGER NOT NULL REFERENCES sales(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL REFERENCES products(id),
+    quantity INTEGER NOT NULL CHECK(quantity > 0),
+    unit_price_cents INTEGER NOT NULL CHECK(unit_price_cents > 0),
+    line_total_cents INTEGER NOT NULL CHECK(line_total_cents > 0)
+);
+CREATE INDEX IF NOT EXISTS idx_sales_date ON sales(sale_date, status);
+CREATE INDEX IF NOT EXISTS idx_sales_items_product ON sales_items(product_id, sale_id);
+
