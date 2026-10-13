@@ -54,6 +54,8 @@ Os estados acima são um retrato do momento da auditoria. Um commit de correçã
 
 ## 5. Riscos prioritários
 
+0. **Fonte de versão inconsistente:** na auditoria inicial, `VERSION` e `CHANGELOG.md` indicavam v1.1.0 enquanto as tags/release chegavam a v1.1.3. O app lê `VERSION` para exibir a versão; o workflow de tags não mantém automaticamente esse arquivo e o changelog sincronizados. Corrigir o fluxo de versionamento de forma atômica e confirmar qual tag está ativa antes de uma próxima release. Essa inconsistência não foi corrigida nesta etapa.
+
 ### P0 — antes de uso com dados reais ou críticos
 
 1. **Recuperação de dados:** não foi apresentada evidência de backup restaurado em ambiente isolado. Criar política de backup, retenção, criptografia, teste de restauração e objetivos RPO/RTO.
