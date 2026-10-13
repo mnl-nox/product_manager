@@ -271,3 +271,36 @@ CREATE TABLE IF NOT EXISTS org_units (
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+
+-- Append-only stock ledger. Current quantities remain on products for fast reads;
+-- every stock-changing business operation records its delta in the same transaction.
+CREATE TABLE IF NOT EXISTS stock_movements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+    movement_type TEXT NOT NULL CHECK(movement_type IN (
+        'OPENING_BALANCE', 'ADJUSTMENT', 'SALE_OUT', 'PURCHASE_IN', 'RETURN_IN', 'RETURN_OUT'
+    )),
+    quantity_delta INTEGER NOT NULL CHECK(quantity_delta <> 0),
+    quantity_before INTEGER NOT NULL CHECK(quantity_before >= 0),
+    quantity_after INTEGER NOT NULL CHECK(quantity_after >= 0),
+    reason TEXT NOT NULL,
+    reference_type TEXT,
+    reference_id INTEGER,
+    actor_id INTEGER REFERENCES app_users(id),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CHECK(quantity_after = quantity_before + quantity_delta)
+);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_product_created
+    ON stock_movements(product_id, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_reference
+    ON stock_movements(reference_type, reference_id);
+CREATE TRIGGER IF NOT EXISTS stock_movements_no_update
+BEFORE UPDATE ON stock_movements
+BEGIN
+    SELECT RAISE(ABORT, 'stock movements are immutable');
+END;
+CREATE TRIGGER IF NOT EXISTS stock_movements_no_delete
+BEFORE DELETE ON stock_movements
+BEGIN
+    SELECT RAISE(ABORT, 'stock movements are immutable');
+END;

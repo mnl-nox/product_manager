@@ -28,6 +28,7 @@ As respostas são JSON, exceto os downloads CSV/XLSX.
 | GET | `/api/categories` | Categorias e contagem de produtos |
 | GET | `/api/clients` | Clientes cadastrados |
 | GET | `/api/products?category=Hardware` | Catálogo; `category=all` lista todos |
+| GET | `/api/inventory/movements?product_id=ID&limit=100` | Histórico de movimentações de estoque (até 500 registros) |
 | POST | `/api/clients` | Cadastra cliente (admin/operação) |
 | POST | `/api/products` | Cadastra produto (admin/operação) |
 | POST | `/api/products/{id}` | Atualiza produto (admin/operação) |
@@ -60,6 +61,11 @@ Papéis disponíveis: `admin` (configuração completa), `operator` (catálogo, 
 ### Financeiro e alertas
 
 O financeiro mantém lançamentos de receita/despesa previstos ou realizados e calcula saldos operacionais em BRL. Não é módulo contábil/fiscal. Alertas de estoque são exibidos no app; use `PRODUCT_MANAGER_LOW_STOCK_DEFAULT` para alterar o limite padrão ou configure um mínimo por produto. O reconhecimento oculta o alerta até que a quantidade mude ou o limite seja atualizado. Não há envio de e-mail ou push nesta versão.
+
+
+### Livro-razão de estoque
+
+A partir desta versão, saldo inicial, ajuste manual, baixa de venda paga e recebimento de compra geram registros em `stock_movements` na mesma transação que atualiza `products.quantity`. O livro-razão é append-only: triggers SQLite bloqueiam alteração ou exclusão de movimentos. Produtos com histórico não podem ser removidos definitivamente; devem ser desativados para preservar rastreabilidade. O endpoint de consulta exige sessão autenticada. Registros históricos anteriores à ativação não são reconstruídos automaticamente, pois o saldo atual não permite inferir com segurança o histórico passado.
 
 ## Exportações para planilhas
 
