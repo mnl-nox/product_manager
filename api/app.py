@@ -621,7 +621,7 @@ class AppHandler(BaseHTTPRequestHandler):
             self.serve_file(UI_DIR / 'login.html', 'text/html; charset=utf-8')
             return
 
-        if path in {'/', '/dashboard', '/products', '/finance', '/alerts', '/admin/users', '/work-items', '/purchasing'} or path.startswith('/api/'):
+        if path in {'/', '/dashboard', '/products', '/finance', '/alerts', '/admin/users', '/work-items', '/purchasing', '/hr'} or path.startswith('/api/'):
             if path == '/api/auth/setup-status':
                 with get_db() as conn:
                     user_count = conn.execute('SELECT COUNT(*) FROM app_users WHERE active = 1').fetchone()[0]
@@ -631,6 +631,12 @@ class AppHandler(BaseHTTPRequestHandler):
             if user is None:
                 return
             self.current_user = user
+            if path == '/hr' and user['role'] != 'admin':
+                self.send_json({'error': 'Acesso restrito ao administrador.'}, status=403)
+                return
+            if path.startswith('/api/hr/') and user['role'] != 'admin':
+                self.send_json({'error': 'Acesso restrito ao administrador.'}, status=403)
+                return
             if path == '/finance' and not self.require_permission(user, 'finance:read'):
                 return
             if path == '/alerts' and not self.require_permission(user, 'read'):
@@ -670,6 +676,10 @@ class AppHandler(BaseHTTPRequestHandler):
 
         if path == '/purchasing':
             self.serve_file(UI_DIR / 'purchasing.html', 'text/html; charset=utf-8')
+            return
+
+        if path == '/hr':
+            self.serve_file(UI_DIR / 'hr.html', 'text/html; charset=utf-8')
             return
 
         if path == '/privacy.html':
@@ -787,6 +797,140 @@ class AppHandler(BaseHTTPRequestHandler):
             })
             return
 
+        if path.startswith('/api/hr/'):
+            if user['role'] != 'admin':
+                self.send_json({'error': 'Acesso restrito ao administrador.'}, status=403)
+                return
+            if path == '/api/hr/departments':
+                try:
+                    name = sanitize_text(payload.get('name'), 'departamento', 100)
+                    description = sanitize_optional_text(payload.get('description'), 'descrição', 300)
+                except ValueError as exc:
+                    self.send_json({'error': str(exc)}, status=400)
+                    return
+                try:
+                    with get_db() as conn:
+                        cursor = conn.execute('INSERT INTO hr_departments (name, description) VALUES (?, ?)', (name, description))
+                except sqlite3.IntegrityError:
+                    self.send_json({'error': 'Departamento já cadastrado.'}, status=409)
+                    return
+                audit_record(user['id'], 'create', 'hr_department', cursor.lastrowid)
+                self.send_json({'id': cursor.lastrowid, 'message': 'Departamento cadastrado.'}, status=201)
+                return
+            if path == '/api/hr/employees':
+                try:
+                    employee_code = sanitize_text(payload.get('employee_code'), 'matrícula', 32)
+                    full_name = sanitize_text(payload.get('full_name'), 'nome completo', 160)
+                    email = sanitize_optional_text(payload.get('email'), 'e-mail', 128)
+                    if email:
+                        email = validate_email(email)
+                    job_title = sanitize_text(payload.get('job_title'), 'cargo', 100)
+                    hire_date = date.fromisoformat(payload.get('hire_date')).isoformat()
+                    department_id = payload.get('department_id')
+                    department_id = int(department_id) if department_id not in (None, '') else None
+                    notes = sanitize_optional_text(payload.get('notes'), 'observações', 512)
+                except (TypeError, ValueError) as exc:
+                    self.send_json({'error': str(exc)}, status=400)
+                    return
+                with get_db() as conn:
+                    if department_id is not None and not conn.execute('SELECT 1 FROM hr_departments WHERE id=? AND active=1', (department_id,)).fetchone():
+                        self.send_json({'error': 'Departamento ativo não encontrado.'}, status=400)
+                        return
+                    try:
+                        cursor = conn.execute('''INSERT INTO hr_employees
+                            (employee_code, full_name, email, job_title, department_id, hire_date, notes, created_by)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                            (employee_code, full_name, email, job_title, department_id, hire_date, notes, user['id']))
+                    except sqlite3.IntegrityError:
+                        self.send_json({'error': 'Matrícula já cadastrada.'}, status=409)
+                        return
+                audit_record(user['id'], 'create', 'hr_employee', cursor.lastrowid)
+                self.send_json({'id': cursor.lastrowid, 'message': 'Colaborador cadastrado.'}, status=201)
+                return
+            if path == '/api/hr/absences':
+                try:
+                    employee_id = int(payload.get('employee_id'))
+                    absence_type = payload.get('absence_type')
+                    start_date = date.fromisoformat(payload.get('start_date')).isoformat()
+                    end_date = date.fromisoformat(payload.get('end_date')).isoformat()
+                    notes = sanitize_optional_text(payload.get('notes'), 'observações', 512)
+                    if absence_type not in {'vacation', 'sick_leave', 'personal', 'other'} or end_date < start_date:
+                        raise ValueError('Tipo ou período de ausência inválido.')
+                except (TypeError, ValueError) as exc:
+                    self.send_json({'error': str(exc)}, status=400)
+                    return
+                with get_db() as conn:
+                    if not conn.execute('SELECT 1 FROM hr_employees WHERE id=? AND status != "inactive"', (employee_id,)).fetchone():
+                        self.send_json({'error': 'Colaborador não encontrado ou inativo.'}, status=404)
+                        return
+                    cursor = conn.execute('INSERT INTO hr_absences (employee_id, absence_type, start_date, end_date, notes, recorded_by) VALUES (?, ?, ?, ?, ?, ?)',
+                                          (employee_id, absence_type, start_date, end_date, notes, user['id']))
+                audit_record(user['id'], 'create', 'hr_absence', cursor.lastrowid)
+                self.send_json({'id': cursor.lastrowid, 'message': 'Ausência registrada para aprovação.'}, status=201)
+                return
+            absence_decision = re.fullmatch(r'/api/hr/absences/(\\d+)/decision', path)
+            if absence_decision:
+                absence_id = int(absence_decision.group(1))
+                decision = payload.get('decision')
+                if decision not in {'approved', 'rejected'}:
+                    self.send_json({'error': 'Decisão inválida.'}, status=400)
+                    return
+                with get_db() as conn:
+                    cursor = conn.execute("UPDATE hr_absences SET status=? WHERE id=? AND status='requested'", (decision, absence_id))
+                    if not cursor.rowcount:
+                        self.send_json({'error': 'Ausência não encontrada ou já decidida.'}, status=409)
+                        return
+                audit_record(user['id'], decision, 'hr_absence', absence_id)
+                self.send_json({'message': 'Decisão registrada.'})
+                return
+            if path == '/api/hr/documents':
+                try:
+                    employee_id = int(payload.get('employee_id'))
+                    document_type = sanitize_text(payload.get('document_type'), 'tipo de documento', 80)
+                    title = sanitize_text(payload.get('title'), 'título', 160)
+                    storage_reference = sanitize_optional_text(payload.get('storage_reference'), 'referência de armazenamento', 256)
+                    expires_on = payload.get('expires_on') or None
+                    if expires_on:
+                        expires_on = date.fromisoformat(expires_on).isoformat()
+                except (TypeError, ValueError) as exc:
+                    self.send_json({'error': str(exc)}, status=400)
+                    return
+                with get_db() as conn:
+                    if not conn.execute('SELECT 1 FROM hr_employees WHERE id=?', (employee_id,)).fetchone():
+                        self.send_json({'error': 'Colaborador não encontrado.'}, status=404)
+                        return
+                    cursor = conn.execute('INSERT INTO hr_documents (employee_id, document_type, title, storage_reference, expires_on, created_by) VALUES (?, ?, ?, ?, ?, ?)',
+                                          (employee_id, document_type, title, storage_reference, expires_on, user['id']))
+                audit_record(user['id'], 'create', 'hr_document', cursor.lastrowid)
+                self.send_json({'id': cursor.lastrowid, 'message': 'Metadados do documento registrados.'}, status=201)
+                return
+            if path == '/api/hr/work-time':
+                try:
+                    employee_id = int(payload.get('employee_id'))
+                    work_date = date.fromisoformat(payload.get('work_date')).isoformat()
+                    minutes_worked = int(payload.get('minutes_worked'))
+                    notes = sanitize_optional_text(payload.get('notes'), 'observações', 256)
+                    if not 0 <= minutes_worked <= 1440:
+                        raise ValueError('Jornada deve ficar entre 0 e 1440 minutos.')
+                except (TypeError, ValueError) as exc:
+                    self.send_json({'error': str(exc)}, status=400)
+                    return
+                try:
+                    with get_db() as conn:
+                        if not conn.execute('SELECT 1 FROM hr_employees WHERE id=?', (employee_id,)).fetchone():
+                            self.send_json({'error': 'Colaborador não encontrado.'}, status=404)
+                            return
+                        cursor = conn.execute('INSERT INTO hr_work_time (employee_id, work_date, minutes_worked, notes, recorded_by) VALUES (?, ?, ?, ?, ?)',
+                                              (employee_id, work_date, minutes_worked, notes, user['id']))
+                except sqlite3.IntegrityError:
+                    self.send_json({'error': 'Já existe jornada registrada para esse colaborador e data.'}, status=409)
+                    return
+                audit_record(user['id'], 'create', 'hr_work_time', cursor.lastrowid)
+                self.send_json({'id': cursor.lastrowid, 'message': 'Jornada registrada.'}, status=201)
+                return
+            self.send_json({'error': 'Rota de RH não encontrada.'}, status=404)
+            return
+
         if path.startswith('/api/purchasing/'):
             if self.current_user['role'] not in {'admin', 'operator', 'finance', 'viewer'}:
                 self.send_json({'error': 'Permissão de consulta necessária.'}, status=403)
@@ -821,6 +965,41 @@ class AppHandler(BaseHTTPRequestHandler):
                     self.send_json({'request': dict(request_row), 'items': [dict(x) for x in items], 'quotes': [dict(x) for x in quotes]})
                     return
             self.send_json({'error': 'Rota de compras não encontrada.'}, status=404)
+            return
+
+        if path.startswith('/api/hr/'):
+            if self.current_user['role'] != 'admin':
+                self.send_json({'error': 'Acesso restrito ao administrador.'}, status=403)
+                return
+            with get_db() as conn:
+                if path == '/api/hr/departments':
+                    rows = conn.execute('SELECT id, name, description, active, created_at FROM hr_departments ORDER BY name').fetchall()
+                    self.send_json([dict(row) for row in rows])
+                    return
+                if path == '/api/hr/employees':
+                    rows = conn.execute("""SELECT e.id, e.employee_code, e.full_name, e.email, e.job_title,
+                        e.department_id, d.name AS department_name, e.hire_date, e.status, e.notes, e.created_at
+                        FROM hr_employees e LEFT JOIN hr_departments d ON d.id=e.department_id
+                        ORDER BY e.full_name""").fetchall()
+                    self.send_json([dict(row) for row in rows])
+                    return
+                if path == '/api/hr/absences':
+                    rows = conn.execute("""SELECT a.*, e.full_name AS employee_name FROM hr_absences a
+                        JOIN hr_employees e ON e.id=a.employee_id ORDER BY a.start_date DESC, a.id DESC""").fetchall()
+                    self.send_json([dict(row) for row in rows])
+                    return
+                if path == '/api/hr/documents':
+                    rows = conn.execute("""SELECT d.id, d.employee_id, e.full_name AS employee_name, d.document_type,
+                        d.title, d.expires_on, d.created_at FROM hr_documents d JOIN hr_employees e ON e.id=d.employee_id
+                        ORDER BY d.created_at DESC""").fetchall()
+                    self.send_json([dict(row) for row in rows])
+                    return
+                if path == '/api/hr/work-time':
+                    rows = conn.execute("""SELECT w.*, e.full_name AS employee_name FROM hr_work_time w
+                        JOIN hr_employees e ON e.id=w.employee_id ORDER BY w.work_date DESC, w.id DESC LIMIT 500""").fetchall()
+                    self.send_json([dict(row) for row in rows])
+                    return
+            self.send_json({'error': 'Rota de RH não encontrada.'}, status=404)
             return
 
         if path == '/api/health':
