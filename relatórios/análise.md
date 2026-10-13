@@ -9,6 +9,11 @@ A aplicação contém API Python, interface Web, SQLite, sessões, permissões p
 - Docker e Render configurados para usar readiness.
 - Testes de sucesso e falha de readiness adicionados.
 - Documentação de qualidade criada e organizada em relatórios/.
+- Site público: seção de avaliações sem depoimentos fictícios, com CTA para feedback no GitHub; contatos por e-mail e Instagram no site e no rodapé.
+
+## Limitações desta implementação de feedback
+- As avaliações ainda não são armazenadas nem moderadas dentro do produto; o CTA direciona para GitHub Discussions. Não há sistema de estrelas, persistência, prevenção de spam ou painel de moderação.
+- Os links e a estrutura HTML foram atualizados no repositório, mas ainda precisam de validação visual e funcional no site publicado.
 
 ## Bloqueios de aceite
 1. CI posterior às alterações: ainda precisa confirmar os novos testes.
