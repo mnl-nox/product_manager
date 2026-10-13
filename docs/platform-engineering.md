@@ -13,7 +13,7 @@ Evoluir o Product Manager existente para uma aplicação sustentável em web, PW
 - PWA possui manifest e service worker; as rotas `/api/` são excluídas do cache.
 - Wrapper Android abre uma instância HTTPS hospedada; não é um cliente offline independente.
 - A API ainda não separa dados por organização. O SQLite e o servidor HTTP da biblioteca padrão são escolhas simples para uma implantação pequena, não uma arquitetura automaticamente escalável.
-- A release 1.1.0 está registrada nos arquivos do repositório, mas a existência da tag, a publicação dos artefatos e a aprovação dos testes precisam ser verificadas no GitHub Actions.
+- As releases v1.1.0 a v1.1.3 foram publicadas; no workflow de pacotes v1.1.3, Windows e PWA passaram, mas RPM falhou por caminhos de documentação no spec. A correção foi aplicada e aguarda uma nova execução verde. Ver [relatório de robustez](quality-report.md).
 
 ## Arquitetura-alvo
 
@@ -58,7 +58,7 @@ A interface deve continuar sendo um cliente da API. Regras de negócio, permiss�
 
 ### P0 — reduzir risco antes de dados reais
 
-- [ ] Confirmar status de CI, tag/release e artefatos 1.1.0.
+- [x] Confirmar CI principal e release v1.1.3; o build Windows e PWA passou. [ ] Validar RPM após correção e confirmar artefatos do workflow seguinte.
 - [ ] Executar testes de autenticação, CSRF, papéis, sessão expirada, validação, concorrência e exportações.
 - [ ] Validar que health/readiness é apropriado ao provedor e não expõe segredos.
 - [ ] Criar backup automático e demonstrar restauração em ambiente separado.
