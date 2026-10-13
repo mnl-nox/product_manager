@@ -6,11 +6,11 @@
 
 Aplicativo de gestão de produtos para desktop Windows/Linux e PWA Android, com catálogo, estoque, usuários, financeiro operacional e exportação de dados.
 
-**[Visite o site do projeto](https://mnl-nox.github.io/product_manager/)** · [Documentação completa (Wiki)](https://github.com/mnl-nox/product_manager/wiki) · [Arquitetura](docs/architecture.md)
+**[Abrir aplicação Web](https://product-manager-14fq.onrender.com/login)** · [Site do projeto](https://mnl-nox.github.io/product_manager/) · [Documentação completa (Wiki)](https://github.com/mnl-nox/product_manager/wiki) · [Arquitetura](docs/architecture.md)
 
 **Mantenedor:** [Manoel E. S. S. (`@mnl-nox`)](https://github.com/mnl-nox).
 
-**Web e Android:** [Guia de implantação pública e APK](docs/deployment.md) · [Instalar como PWA](docs/platforms.md#android-pwa) · [Gerar APK Android](https://github.com/mnl-nox/product_manager/actions/workflows/android-apk.yml). A aplicação requer servidor HTTPS e armazenamento persistente.
+**Web e Android:** [Aplicação publicada](https://product-manager-14fq.onrender.com/login) · [Guia de implantação pública e APK](docs/deployment.md) · [Instalar como PWA](docs/platforms.md#android-pwa) · [Gerar APK Android](https://github.com/mnl-nox/product_manager/actions/workflows/android-apk.yml). A aplicação requer servidor HTTPS e armazenamento persistente.
 
 ## Objetivo do produto
 
