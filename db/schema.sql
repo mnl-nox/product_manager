@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS finance_entries (
     amount_cents INTEGER NOT NULL CHECK(amount_cents > 0),
     entry_date TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'paid' CHECK(status IN ('planned','paid','cancelled')),
+    department_id INTEGER REFERENCES hr_departments(id),
+    org_unit_id INTEGER REFERENCES org_units(id),
     created_by INTEGER REFERENCES app_users(id),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -245,6 +247,8 @@ CREATE TABLE IF NOT EXISTS sales (
     sale_date TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'paid' CHECK(status IN ('paid','planned')),
     total_cents INTEGER NOT NULL CHECK(total_cents > 0),
+    department_id INTEGER REFERENCES hr_departments(id),
+    org_unit_id INTEGER REFERENCES org_units(id),
     recorded_by INTEGER REFERENCES app_users(id),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -258,4 +262,14 @@ CREATE TABLE IF NOT EXISTS sales_items (
 );
 CREATE INDEX IF NOT EXISTS idx_sales_date ON sales(sale_date, status);
 CREATE INDEX IF NOT EXISTS idx_sales_items_product ON sales_items(product_id, sale_id);
+
+CREATE TABLE IF NOT EXISTS org_units (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    description TEXT NOT NULL DEFAULT '',
+    active INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0,1)),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_finance_entries_dimensions ON finance_entries(department_id, org_unit_id, entry_date);
+CREATE INDEX IF NOT EXISTS idx_sales_dimensions ON sales(department_id, org_unit_id, sale_date);
 
