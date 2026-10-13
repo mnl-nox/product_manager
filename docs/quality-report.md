@@ -21,7 +21,7 @@ Durante a verificação do pipeline multiplataforma da versão v1.1.3, os jobs W
 - **PWA:** manifest e service worker; chamadas `/api/` não são armazenadas no cache. Recursos do shell usam cache para suportar carregamento de arquivos estáticos.
 - **Desktop:** launcher local e pacotes Windows/Linux; os clientes usam o mesmo código de interface e API.
 - **Android:** PWA ou wrapper que abre a aplicação HTTPS publicada; o wrapper não é um cliente independente e depende da rede/servidor.
-- **CI/CD:** CI executa compilação Python, testes de API, validação de Conventional Commits e build do núcleo C; workflow de pacotes produz artefatos Windows, Linux e PWA. O status do RPM v1.1.3 permanece falho no run anterior à correção.
+- **CI/CD:** CI executa compilação Python, testes de API, validação de Conventional Commits e build do núcleo C; workflow de pacotes produz artefatos Windows, Linux e PWA. O status do RPM v1.1.3 permanece falho no run anterior à correção. O status do RPM v1.1.3 permanece falho no run anterior à correção.
 
 ## 3. Alteração aplicada nesta etapa
 
@@ -116,6 +116,6 @@ Os estados acima são um retrato do momento da auditoria. Um commit de correçã
 
 ## 8. Conclusão
 
-A base multiplataforma existe e a correção do caminho dos documentos RPM foi aplicada. O próximo marco verificável é deixar o pipeline Linux verde. Para tornar o produto profissional de forma sustentável, a prioridade deve ser: pipeline reproduzível, testes de segurança/autorização, saúde operacional e backup restaurável; em seguida, E2E/acessibilidade/desempenho Web; depois, migrações, contrato de API e isolamento multi-organização caso o produto passe a atender organizações distintas.
+A base multiplataforma existe, a correção do caminho dos documentos RPM foi aplicada e foram adicionados probes de liveness/readiness. O próximo marco verificável é confirmar CI, build Linux e healthcheck após deploy. Para tornar o produto profissional de forma sustentável, a prioridade deve ser: pipeline reproduzível, testes de segurança/autorização, saúde operacional e backup restaurável; em seguida, E2E/acessibilidade/desempenho Web; depois, migrações, contrato de API e isolamento multi-organização caso o produto passe a atender organizações distintas.
 
 Este relatório diferencia implementação existente, correções aplicadas e trabalho pendente. Não afirma que o aplicativo foi submetido a pentest, certificado, validado em dispositivos físicos ou aprovado para uso crítico.
