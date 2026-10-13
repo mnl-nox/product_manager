@@ -1,18 +1,18 @@
 # Política de privacidade
 
-**Última atualização: 12 de outubro de 2026**
+**Última atualização: 13 de outubro de 2026**
 
 Product Manager pode ser usado localmente ou implantado por uma organização. Esta política descreve o comportamento do software fornecido neste repositório. A organização que o instala define seus próprios tratamentos e deve informar seus usuários.
 
 ## Dados operacionais e financeiros
 
-Clientes, produtos, notas, limites de estoque, confirmações de alertas, lançamentos financeiros e registros internos de riscos/bugs são armazenados no banco SQLite da instalação, no caminho indicado no [guia de instalação e uso](docs/installation-usage.md). Os lançamentos financeiros são registros operacionais e não constituem escrituração contábil. O app não envia esses dados aos mantenedores.
+Clientes, produtos, notas, saldos e movimentações de estoque, limites e confirmações de alertas, fornecedores, solicitações/cotações/pedidos de compra, registros de vendas, lançamentos financeiros, dados de colaboradores, ausências, metadados documentais, jornada e registros internos de riscos/bugs são armazenados no banco SQLite da instalação, no caminho indicado no [guia de instalação e uso](docs/installation-usage.md). Os lançamentos financeiros são registros operacionais e não constituem escrituração contábil. O app não envia esses dados aos mantenedores.
 
 Downloads CSV e Excel são gerados localmente. Se um administrador configurar Google Sheets e acionar a exportação, o app envia indicadores agregados e campos de catálogo à planilha escolhida; dados pessoais de clientes não fazem parte dessa exportação. O Google processa os dados conforme a conta e as configurações da organização.
 
 ## Contas, autenticação e auditoria
 
-O app armazena nomes de usuário, hashes de senha derivados com scrypt, papéis, estado da conta, datas de criação e registros de auditoria de ações relevantes. Senhas em texto puro não são armazenadas. Para manter sessões, o banco armazena o hash do token de sessão, um token CSRF e o prazo de expiração. O navegador recebe um cookie de sessão HttpOnly e SameSite; em implantações HTTPS, configure o cookie Secure.
+O app armazena nomes de usuário, hashes de senha derivados com scrypt, papéis, estado da conta, datas de criação, registros de auditoria de ações relevantes e movimentações de estoque append-only. O livro-razão guarda tipo, delta, saldos anterior/posterior, motivo, referência, ator quando disponível e horário; ele não reconstitui operações anteriores ao saldo inicial de migração. Senhas em texto puro não são armazenadas. Para manter sessões, o banco armazena o hash do token de sessão, um token CSRF e o prazo de expiração. O navegador recebe um cookie de sessão HttpOnly e SameSite; em implantações HTTPS, configure o cookie Secure.
 
 Tentativas de login são limitadas por uma chave derivada do nome de usuário e do endereço de rede; o endereço bruto não é gravado nessa tabela. A instalação pode manter metadados de conexão em logs do sistema ou do proxy, conforme sua configuração. Administradores controlam contas, papéis, acesso e retenção do banco.
 
@@ -28,7 +28,7 @@ O aplicativo não usa cookies de publicidade nem analytics de terceiros. O cooki
 
 ## Retenção, segurança e direitos
 
-Os registros locais permanecem até que o usuário ou administrador os remova. Backups e exportações ficam sob controle de quem os cria. Para exercer direitos sobre dados de negócio, contate a organização que opera a instalação; os mantenedores do código não recebem esses dados.
+Os registros locais permanecem até que o usuário ou administrador os remova, conforme as regras de cada entidade. Movimentações de estoque são imutáveis e produtos com histórico não podem ser removidos definitivamente; devem ser desativados. A organização operadora deve definir retenção, descarte e base legal adequados aos dados pessoais e trabalhistas. Backups e exportações ficam sob controle de quem os cria. Para exercer direitos sobre dados de negócio, contate a organização que opera a instalação; os mantenedores do código não recebem esses dados.
 
 ## Alterações e contato
 
