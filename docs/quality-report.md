@@ -60,7 +60,7 @@ Essa implementação melhora a rastreabilidade, mas não constitui inventário c
 
 ## 5. Riscos prioritários
 
-0. **Fonte de versão inconsistente:** `VERSION` continua indicando `1.1.0`, enquanto a release mais recente observada nesta revisão é `v1.7.4`. O app lê `VERSION` para exibir a versão; o workflow cria tags/releases sem sincronizar automaticamente esse arquivo. Corrigir o fluxo de versionamento de forma atômica e confirmar a versão exibida pela aplicação antes de uma próxima release.
+0. **Fonte de versão inconsistente:** `VERSION` continua indicando `1.1.0`, enquanto a release mais recente observada na revisão inicial é `v1.7.5`. O app lê `VERSION` para exibir a versão; o workflow cria tags/releases sem sincronizar automaticamente esse arquivo. Corrigir o fluxo de versionamento de forma atômica e confirmar a versão exibida pela aplicação antes de uma próxima release.
 
 ### P0 — antes de uso com dados reais ou críticos
 
