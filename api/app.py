@@ -621,7 +621,7 @@ class AppHandler(BaseHTTPRequestHandler):
             self.serve_file(UI_DIR / 'login.html', 'text/html; charset=utf-8')
             return
 
-        if path in {'/', '/dashboard', '/products', '/finance', '/alerts', '/admin/users', '/work-items', '/purchasing', '/hr'} or path.startswith('/api/'):
+        if path in {'/', '/dashboard', '/products', '/finance', '/alerts', '/admin/users', '/work-items', '/purchasing', '/hr', '/reports'} or path.startswith('/api/'):
             if path == '/api/auth/setup-status':
                 with get_db() as conn:
                     user_count = conn.execute('SELECT COUNT(*) FROM app_users WHERE active = 1').fetchone()[0]
@@ -680,6 +680,10 @@ class AppHandler(BaseHTTPRequestHandler):
 
         if path == '/hr':
             self.serve_file(UI_DIR / 'hr.html', 'text/html; charset=utf-8')
+            return
+
+        if path == '/reports':
+            self.serve_file(UI_DIR / 'reports.html', 'text/html; charset=utf-8')
             return
 
         if path == '/privacy.html':
@@ -795,6 +799,52 @@ class AppHandler(BaseHTTPRequestHandler):
                 'activeClients': active_count,
                 'totalStock': stock_total,
             })
+            return
+
+        if path == '/api/reports/sales':
+            if user['role'] not in {'admin', 'operator', 'finance'}:
+                self.send_json({'error': 'Permissão para registrar vendas necessária.'}, status=403)
+                return
+            try:
+                product_id = int(payload.get('product_id'))
+                quantity = int(payload.get('quantity'))
+                unit_price = Decimal(str(payload.get('unit_price')))
+                cents = unit_price * 100
+                sale_date = date.fromisoformat(payload.get('sale_date', date.today().isoformat())).isoformat()
+                status_value = payload.get('status', 'paid')
+                if quantity < 1 or quantity > 1_000_000:
+                    raise ValueError('Quantidade deve ficar entre 1 e 1.000.000.')
+                if not unit_price.is_finite() or cents != cents.to_integral_value() or cents <= 0 or cents > 99_999_999_999:
+                    raise ValueError('Preço unitário inválido.')
+                if status_value not in {'paid', 'planned'}:
+                    raise ValueError('Situação da venda inválida.')
+                unit_cents = int(cents)
+                total_cents = unit_cents * quantity
+                if total_cents > 99_999_999_999_999:
+                    raise ValueError('Valor total excede o limite permitido.')
+            except (TypeError, ValueError, InvalidOperation) as exc:
+                self.send_json({'error': str(exc)}, status=400)
+                return
+            with get_db() as conn:
+                conn.execute('BEGIN IMMEDIATE')
+                product = conn.execute("SELECT id, name, quantity, active FROM products WHERE id=?", (product_id,)).fetchone()
+                if product is None or not product['active']:
+                    self.send_json({'error': 'Produto ativo não encontrado.'}, status=404)
+                    return
+                if status_value == 'paid' and product['quantity'] < quantity:
+                    self.send_json({'error': 'Estoque insuficiente para registrar a venda.'}, status=409)
+                    return
+                cursor = conn.execute('INSERT INTO sales (sale_date, status, total_cents, recorded_by) VALUES (?, ?, ?, ?)',
+                                      (sale_date, status_value, total_cents, user['id']))
+                sale_id = cursor.lastrowid
+                conn.execute('INSERT INTO sales_items (sale_id, product_id, quantity, unit_price_cents, line_total_cents) VALUES (?, ?, ?, ?, ?)',
+                             (sale_id, product_id, quantity, unit_cents, total_cents))
+                if status_value == 'paid':
+                    conn.execute('UPDATE products SET quantity=quantity-? WHERE id=?', (quantity, product_id))
+                conn.execute('INSERT INTO finance_entries (entry_type, category, description, amount_cents, entry_date, status, created_by) VALUES (?,?,?,?,?,?,?)',
+                             ('income', 'Vendas', f'Venda #{sale_id} — {product["name"]}', total_cents, sale_date, status_value, user['id']))
+            audit_record(user['id'], 'create', 'sale', sale_id)
+            self.send_json({'id': sale_id, 'total_cents': total_cents, 'message': 'Venda registrada e estoque atualizado.'}, status=201)
             return
 
         if path.startswith('/api/hr/'):
@@ -1011,6 +1061,65 @@ class AppHandler(BaseHTTPRequestHandler):
                     self.send_json([dict(row) for row in rows])
                     return
             self.send_json({'error': 'Rota de RH não encontrada.'}, status=404)
+            return
+
+        if path == '/api/reports/summary':
+            params = parse_qs(parsed.query)
+            try:
+                start_date = date.fromisoformat(params.get('from', [date.today().replace(day=1).isoformat()])[0]).isoformat()
+                end_date = date.fromisoformat(params.get('to', [date.today().isoformat()])[0]).isoformat()
+                if end_date < start_date:
+                    raise ValueError('O período final deve ser igual ou posterior ao inicial.')
+            except ValueError as exc:
+                self.send_json({'error': str(exc)}, status=400)
+                return
+            with get_db() as conn:
+                totals = conn.execute("""SELECT
+                    COALESCE(SUM(CASE WHEN entry_type='income' AND status='paid' THEN amount_cents ELSE 0 END),0) AS revenue_cents,
+                    COALESCE(SUM(CASE WHEN entry_type='expense' AND status='paid' THEN amount_cents ELSE 0 END),0) AS expenses_cents,
+                    COALESCE(SUM(CASE WHEN entry_type='income' AND status='planned' THEN amount_cents ELSE 0 END),0) AS planned_income_cents,
+                    COALESCE(SUM(CASE WHEN entry_type='expense' AND status='planned' THEN amount_cents ELSE 0 END),0) AS planned_expenses_cents
+                    FROM finance_entries WHERE entry_date BETWEEN ? AND ?""", (start_date, end_date)).fetchone()
+                overdue = conn.execute("""SELECT entry_type, COUNT(*) AS count, COALESCE(SUM(amount_cents),0) AS amount_cents
+                    FROM finance_entries WHERE status='planned' AND entry_date < ? GROUP BY entry_type""", (date.today().isoformat(),)).fetchall()
+                top_products = conn.execute("""SELECT p.id, p.name, p.sku, SUM(si.quantity) AS units_sold,
+                    SUM(si.line_total_cents) AS revenue_cents FROM sales_items si
+                    JOIN sales s ON s.id=si.sale_id JOIN products p ON p.id=si.product_id
+                    WHERE s.status='paid' AND s.sale_date BETWEEN ? AND ? GROUP BY p.id, p.name, p.sku
+                    ORDER BY units_sold DESC, revenue_cents DESC LIMIT 10""", (start_date, end_date)).fetchall()
+                monthly = conn.execute("""SELECT substr(entry_date,1,7) AS period,
+                    COALESCE(SUM(CASE WHEN entry_type='income' AND status='paid' THEN amount_cents ELSE 0 END),0) AS revenue_cents,
+                    COALESCE(SUM(CASE WHEN entry_type='expense' AND status='paid' THEN amount_cents ELSE 0 END),0) AS expenses_cents
+                    FROM finance_entries WHERE entry_date BETWEEN ? AND ? GROUP BY substr(entry_date,1,7) ORDER BY period""",
+                    (start_date, end_date)).fetchall()
+                category = conn.execute("""SELECT category,
+                    COALESCE(SUM(CASE WHEN entry_type='income' AND status='paid' THEN amount_cents ELSE 0 END),0) AS revenue_cents,
+                    COALESCE(SUM(CASE WHEN entry_type='expense' AND status='paid' THEN amount_cents ELSE 0 END),0) AS expenses_cents
+                    FROM finance_entries WHERE entry_date BETWEEN ? AND ? GROUP BY category ORDER BY category""",
+                    (start_date, end_date)).fetchall()
+                stock = conn.execute('SELECT COALESCE(SUM(quantity),0) FROM products WHERE active=1').fetchone()[0]
+                sold = conn.execute("""SELECT COALESCE(SUM(si.quantity),0) FROM sales_items si JOIN sales s ON s.id=si.sale_id
+                    WHERE s.status='paid' AND s.sale_date BETWEEN ? AND ?""", (start_date, end_date)).fetchone()[0]
+            totals = dict(totals)
+            profit = totals['revenue_cents'] - totals['expenses_cents']
+            totals['profit_cents'] = profit
+            totals['profit_margin_percent'] = round((profit / totals['revenue_cents']) * 100, 2) if totals['revenue_cents'] else None
+            totals['projected_cash_cents'] = profit + totals['planned_income_cents'] - totals['planned_expenses_cents']
+            totals['stock_turnover_proxy'] = round(sold / stock, 4) if stock else None
+            overdue_summary = {row['entry_type']: {'count': row['count'], 'amount_cents': row['amount_cents']} for row in overdue}
+            self.send_json({'period': {'from': start_date, 'to': end_date}, 'totals': totals,
+                'overdue': overdue_summary, 'topProducts': [dict(row) for row in top_products],
+                'monthly': [dict(row) for row in monthly], 'byCategory': [dict(row) for row in category]})
+            return
+
+        if path == '/api/reports/sales':
+            with get_db() as conn:
+                rows = conn.execute("""SELECT s.id, s.sale_date, s.status, s.total_cents,
+                    u.username AS recorded_by, p.name AS product_name, p.sku, si.quantity,
+                    si.unit_price_cents, si.line_total_cents FROM sales s
+                    JOIN sales_items si ON si.sale_id=s.id JOIN products p ON p.id=si.product_id
+                    LEFT JOIN app_users u ON u.id=s.recorded_by ORDER BY s.sale_date DESC, s.id DESC LIMIT 500""").fetchall()
+            self.send_json([dict(row) for row in rows])
             return
 
         if path == '/api/health':
