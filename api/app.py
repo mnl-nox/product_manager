@@ -601,6 +601,22 @@ class AppHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
 
+        # Minimal public probes for container/platform orchestration. Never return
+        # connection strings, filesystem paths, or exception details here.
+        if path == '/healthz':
+            self.send_json({'status': 'ok'})
+            return
+
+        if path == '/readyz':
+            try:
+                with get_db() as conn:
+                    conn.execute('SELECT 1').fetchone()
+            except sqlite3.Error:
+                self.send_json({'status': 'unavailable'}, status=503)
+                return
+            self.send_json({'status': 'ready'})
+            return
+
         if path == '/login':
             self.serve_file(UI_DIR / 'login.html', 'text/html; charset=utf-8')
             return
