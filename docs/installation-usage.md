@@ -38,7 +38,8 @@ Ao executar o servidor diretamente ou preparar uma instalação PWA, gere um tok
 
 ```bash
 export PRODUCT_MANAGER_SETUP_TOKEN="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
-printf 'Token de configuração: %s\n' "$PRODUCT_MANAGER_SETUP_TOKEN"
+printf 'Token de configuração: %s
+' "$PRODUCT_MANAGER_SETUP_TOKEN"
 python3 api/app.py
 ```
 
@@ -67,7 +68,9 @@ No Windows ou Linux, depois da configuração, inicie o aplicativo pelo menu ou 
 
 As contas compartilham o mesmo espaço de trabalho e banco. Não há isolamento entre organizações nem recuperação automatizada de senha. A administração de usuários permite criar contas e desativá-las, revogando suas sessões.
 
-O dashboard resume clientes, produtos e estoque. Em **Produtos**, cadastre, edite, desative e reative itens; administradores podem remover definitivamente apenas produtos sem histórico de movimentações. Produtos com histórico devem ser desativados para preservar rastreabilidade. Produtos desativados ficam ocultos das consultas e relatórios comuns. O histórico de estoque é registrado para saldo inicial, ajustes manuais, vendas realizadas e recebimentos de compras; movimentos são imutáveis e a consulta está disponível pela API autenticada `GET /api/inventory/movements`. Na primeira inicialização após a migração, produtos antigos com saldo positivo recebem uma referência de saldo inicial, sem reconstrução de eventos passados.\n\nEm **Alertas**, configure o limite por item e reconheça alertas; o padrão é `PRODUCT_MANAGER_LOW_STOCK_DEFAULT` (5 unidades se não configurado). Em **Financeiro**, usuários autorizados registram receitas/despesas previstas ou realizadas, consultam saldo e removem lançamentos incorretos. Isso não substitui contabilidade ou sistema fiscal.
+O dashboard resume clientes, produtos e estoque. Em **Produtos**, cadastre, edite, desative e reative itens; administradores podem remover definitivamente apenas produtos sem histórico de movimentações. Produtos com histórico devem ser desativados para preservar rastreabilidade. Produtos desativados ficam ocultos das consultas e relatórios comuns. O histórico de estoque é registrado para saldo inicial, ajustes manuais, vendas realizadas e recebimentos de compras; movimentos são imutáveis e a consulta está disponível pela API autenticada `GET /api/inventory/movements`. Na primeira inicialização após a migração, produtos antigos com saldo positivo recebem uma referência de saldo inicial, sem reconstrução de eventos passados.
+
+Em **Alertas**, configure o limite por item e reconheça alertas; o padrão é `PRODUCT_MANAGER_LOW_STOCK_DEFAULT` (5 unidades se não configurado). Em **Financeiro**, usuários autorizados registram receitas/despesas previstas ou realizadas, consultam saldo e removem lançamentos incorretos. Isso não substitui contabilidade ou sistema fiscal.
 
 Em **Riscos e bugs**, qualquer conta pode registrar um problema ou risco. Administração/operação pode atualizar o estado e o responsável. O formulário não envia anexos nem transmite os registros para fora da instalação.
 
