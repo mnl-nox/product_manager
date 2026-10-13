@@ -48,3 +48,10 @@ Validação adicional em **12/10/2026** com Podman rootless:
 | Smoke test HTTP | **Aprovado** | Login servido, bootstrap administrativo fechado após persistência, autenticação concluída e `/api/dashboard` respondeu HTTP 200. |
 
 Para repetir o build rootless neste host, use `podman build --network=none --format docker`. Para iniciar, use a rede `slirp4netns`; a configuração equivalente está no exemplo Podman do README.
+
+
+## Atualização da CI — correção de rotas e transações (13/10/2026)
+
+A execução da [CI da PR #20](https://github.com/mnl-nox/product_manager/actions/runs/38474512854) terminou com sucesso após a correção do roteamento e do binding SQL de recebimento: **40 testes Python passaram**, assim como os jobs de C23 e Conventional Commits.
+
+Essa execução precede os oito testes de segurança adicionados na rodada de QA e a limpeza da fixture de RH. A nova cobertura só deve ser considerada aprovada quando o workflow do commit de QA terminar com sucesso. Para a matriz atualizada e as lacunas restantes, consulte [Plano e relatório completo de QA](qa-plan-and-results.md).
