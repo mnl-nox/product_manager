@@ -26,6 +26,16 @@ class PurchasingSchemaTests(unittest.TestCase):
 
     def setUp(self):
         with app.get_db() as conn:
+            # Each test gets an isolated ledger state; production immutability remains enabled.
+            conn.execute("DROP TRIGGER IF EXISTS stock_movements_no_update")
+            conn.execute("DROP TRIGGER IF EXISTS stock_movements_no_delete")
+            conn.execute("DELETE FROM stock_movements")
+            conn.execute("""CREATE TRIGGER stock_movements_no_update
+                            BEFORE UPDATE ON stock_movements
+                            BEGIN SELECT RAISE(ABORT, 'stock movements are immutable'); END""")
+            conn.execute("""CREATE TRIGGER stock_movements_no_delete
+                            BEFORE DELETE ON stock_movements
+                            BEGIN SELECT RAISE(ABORT, 'stock movements are immutable'); END""")
             conn.execute("DELETE FROM purchase_approvals")
             conn.execute("DELETE FROM purchase_order_items")
             conn.execute("DELETE FROM purchase_orders")
