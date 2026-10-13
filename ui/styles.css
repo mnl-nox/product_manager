@@ -80,7 +80,26 @@ button, input, textarea, select {
 
 .brand-block {
   display: grid;
-  gap: 0.12rem;
+  grid-template-columns: 42px minmax(0, 1fr);
+  column-gap: 0.8rem;
+  row-gap: 0.12rem;
+  align-items: center;
+}
+
+.brand-block::before {
+  content: "";
+  display: block;
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #050b1a url("/assets/icons/product-manager-brand.svg") center / cover no-repeat;
+}
+
+.brand-block > .eyebrow,
+.brand-block > h1 {
+  grid-column: 2;
 }
 
 .eyebrow {
