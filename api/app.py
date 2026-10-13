@@ -621,7 +621,7 @@ class AppHandler(BaseHTTPRequestHandler):
             self.serve_file(UI_DIR / 'login.html', 'text/html; charset=utf-8')
             return
 
-        if path in {'/', '/dashboard', '/products', '/finance', '/alerts', '/admin/users', '/work-items'} or path.startswith('/api/'):
+        if path in {'/', '/dashboard', '/products', '/finance', '/alerts', '/admin/users', '/work-items', '/purchasing'} or path.startswith('/api/'):
             if path == '/api/auth/setup-status':
                 with get_db() as conn:
                     user_count = conn.execute('SELECT COUNT(*) FROM app_users WHERE active = 1').fetchone()[0]
@@ -666,6 +666,10 @@ class AppHandler(BaseHTTPRequestHandler):
 
         if path == '/work-items':
             self.serve_file(UI_DIR / 'work-items.html', 'text/html; charset=utf-8')
+            return
+
+        if path == '/purchasing':
+            self.serve_file(UI_DIR / 'purchasing.html', 'text/html; charset=utf-8')
             return
 
         if path == '/privacy.html':
