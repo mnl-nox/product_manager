@@ -1002,6 +1002,17 @@ class AppHandler(BaseHTTPRequestHandler):
                         ORDER BY o.created_at DESC, o.id DESC""").fetchall()
                     self.send_json([dict(row) for row in rows])
                     return
+                order_match = re.fullmatch(r'/api/purchasing/orders/(\\d+)', path)
+                if order_match:
+                    order_id = int(order_match.group(1))
+                    order = conn.execute("""SELECT o.*, s.name AS supplier_name FROM purchase_orders o
+                        JOIN suppliers s ON s.id=o.supplier_id WHERE o.id=?""", (order_id,)).fetchone()
+                    if order is None:
+                        self.send_json({'error': 'Pedido não encontrado.'}, status=404)
+                        return
+                    items = conn.execute('SELECT * FROM purchase_order_items WHERE order_id=? ORDER BY id', (order_id,)).fetchall()
+                    self.send_json({'order': dict(order), 'items': [dict(item) for item in items]})
+                    return
                 request_match = re.fullmatch(r'/api/purchasing/requests/(\\d+)', path)
                 if request_match:
                     request_id = int(request_match.group(1))
