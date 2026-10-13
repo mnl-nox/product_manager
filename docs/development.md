@@ -105,3 +105,19 @@ A área de compras está disponível em `/purchasing`. Os endpoints requerem ses
 | POST | `/api/purchasing/orders/{id}/receive` | Registrar recebimento parcial ou total |
 
 Valores são enviados em centavos inteiros. O perfil financeiro pode aprovar até `PRODUCT_MANAGER_FINANCE_APPROVAL_LIMIT_CENTS` (padrão: R$ 100.000,00); valores maiores exigem administrador. A recepção atualiza a quantidade de produtos vinculados dentro de transação. O módulo não substitui validação fiscal, integração com ERP de fornecedor ou conferência física formal.
+
+
+## Recursos humanos
+
+A área administrativa está disponível em `/hr` e é restrita ao perfil `admin`, inclusive nas rotas de API. O escopo inclui departamentos, cadastro de colaboradores, solicitações de férias/ausências e decisão de aprovação. Os endpoints de documentos guardam apenas metadados e uma referência de armazenamento; não recebem nem servem arquivos.
+
+| Método | Endpoint | Finalidade |
+|---|---|---|
+| GET/POST | `/api/hr/departments` | Consultar/cadastrar departamentos |
+| GET/POST | `/api/hr/employees` | Consultar/cadastrar colaboradores |
+| GET/POST | `/api/hr/absences` | Consultar/registrar ausências |
+| POST | `/api/hr/absences/{id}/decision` | Aprovar/rejeitar solicitação |
+| GET/POST | `/api/hr/documents` | Consultar/cadastrar metadados documentais |
+| GET/POST | `/api/hr/work-time` | Consultar/registrar minutos trabalhados por dia |
+
+O registro de jornada permite no máximo 1.440 minutos por dia e um registro por colaborador/data. Não calcula horas extras, adicional noturno, banco de horas ou conformidade trabalhista. A folha de pagamento não é calculada nem integrada nesta entrega. Dados de RH são sensíveis: mantenha acesso administrativo restrito, proteja backups e não armazene conteúdo documental neste banco sem uma política de retenção e criptografia adequada.
