@@ -75,7 +75,7 @@ sudo dnf install ./product-manager-<versão>-1.x86_64.rpm
 
 ### Android
 
-Abra a URL HTTPS no Chrome para Android e escolha **Instalar app** ou **Adicionar à tela inicial**. A aplicação é um PWA e precisa de hospedagem HTTPS operada pela organização.
+A opção recomendada é o PWA: abra a URL HTTPS no Chrome para Android e escolha **Instalar app** ou **Adicionar à tela inicial**. O repositório também oferece um workflow opcional para gerar um wrapper APK de depuração que abre a mesma URL; ele depende do servidor HTTPS e não é um cliente independente nem um pacote release para Play Store.
 
 ## Fluxo de primeiro acesso
 
