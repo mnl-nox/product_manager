@@ -39,6 +39,10 @@ O repositório inclui um wrapper Android nativo que abre a aplicação hospedada
 
 Esse APK é um pacote de instalação para teste/distribuição direta, assinado com a chave de depuração automática do Android Gradle Plugin. Não é adequado para publicação na Play Store; para isso, gere uma versão release com uma chave de assinatura protegida. O APK depende do servidor HTTPS configurado no build e não funciona como sistema independente/offline.
 
+## Atualização do banco e rastreabilidade de estoque
+
+Antes de atualizar uma instalação existente, faça backup do arquivo SQLite e confirme que é possível restaurá-lo. A inicialização aplica compatibilidade de esquema e cria um saldo de abertura para produtos legados com quantidade positiva que ainda não possuam movimentos. Essa operação registra o saldo atual como ponto inicial; não reconstrói vendas ou recebimentos antigos. O livro-razão impede alterações/exclusões de movimentos, e produtos com histórico não podem ser removidos definitivamente. Teste essa migração em uma cópia do banco antes de atualizar a instância pública.
+
 ## Limites operacionais
 
 - O servidor precisa permanecer ativo e acessível para login, consultas e gravações.
