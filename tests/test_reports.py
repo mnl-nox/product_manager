@@ -1,11 +1,25 @@
 from __future__ import annotations
 
+import tempfile
 import unittest
+from pathlib import Path
 
 from api import app
 
 
 class ReportsApiTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls._previous_db_path = app.DB_PATH
+        cls._temp_dir = tempfile.TemporaryDirectory(prefix="product-manager-reportsapitests-")
+        app.DB_PATH = Path(cls._temp_dir.name) / "test.db"
+        app.ensure_database()
+
+    @classmethod
+    def tearDownClass(cls):
+        app.DB_PATH = cls._previous_db_path
+        cls._temp_dir.cleanup()
+
     def handler(self, path):
         handler = app.AppHandler.__new__(app.AppHandler)
         handler.path = path
