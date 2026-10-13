@@ -16,6 +16,10 @@ A persistência usa SQLite. O esquema inicial está em `db/schema.sql`; regras d
 | `stock_alert_acknowledgements` | Reconhecimento de alerta, quantidade observada, usuário e horário |
 | `finance_entries` | Receitas/despesas previstas, realizadas ou canceladas |
 | `work_items` | Registro interno de bugs e riscos |
+| `suppliers` e tabelas de compras | Fornecedores, solicitações, cotações, pedidos e itens de pedido |
+| `sales`, `sales_items` | Vendas e itens, com quantidades, preços e estado |
+| Tabelas `hr_*` | Departamentos, colaboradores, ausências, metadados documentais e jornada |
+| `org_units` | Unidades organizacionais usadas como dimensão de relatórios; não são tenants |
 | `audit_log` | Ator, ação, entidade, identificador e data/hora |
 
 ## Cliente
