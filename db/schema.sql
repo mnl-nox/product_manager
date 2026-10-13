@@ -270,6 +270,4 @@ CREATE TABLE IF NOT EXISTS org_units (
     active INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0,1)),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX IF NOT EXISTS idx_finance_entries_dimensions ON finance_entries(department_id, org_unit_id, entry_date);
-CREATE INDEX IF NOT EXISTS idx_sales_dimensions ON sales(department_id, org_unit_id, sale_date);
 
