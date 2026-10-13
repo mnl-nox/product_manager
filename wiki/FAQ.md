@@ -36,7 +36,11 @@ Não. O módulo registra receitas/despesas previstas ou realizadas e calcula sal
 
 Não na versão documentada. Os alertas são apresentados dentro do aplicativo.
 
-## Como o histórico de estoque funciona?\n\nO endpoint autenticado `GET /api/inventory/movements` consulta o histórico de saldo inicial, ajustes manuais, baixas de vendas realizadas e recebimentos de compras. O histórico é append-only. Produtos que já possuem movimentações devem ser desativados, não excluídos definitivamente. Devoluções, estornos e transferências entre depósitos ainda não formam um fluxo completo.\n\n## O aplicativo funciona offline no Android?
+## Como o histórico de estoque funciona?
+
+O endpoint autenticado `GET /api/inventory/movements` consulta o histórico de saldo inicial, ajustes manuais, baixas de vendas realizadas e recebimentos de compras. O histórico é append-only. Produtos que já possuem movimentações devem ser desativados, não excluídos definitivamente. Devoluções, estornos e transferências entre depósitos ainda não formam um fluxo completo.
+
+## O aplicativo funciona offline no Android?
 
 O shell da interface pode ser mantido em cache pelo service worker, mas as chamadas `/api/` exigem conexão e não são armazenadas em cache.
 
