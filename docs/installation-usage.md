@@ -26,7 +26,7 @@ sudo dnf install ./product-manager-<versão>-1.x86_64.rpm
 
 ### Android
 
-O pacote Android é um PWA, não um APK. Abra a URL HTTPS publicada pela organização no Chrome para Android e escolha **Instalar app** ou **Adicionar à tela inicial**. A implantação precisa de um servidor HTTPS e controles de autenticação e autorização antes de receber dados corporativos.
+A opção recomendada é o PWA: abra a URL HTTPS publicada pela organização no Chrome para Android e escolha **Instalar app** ou **Adicionar à tela inicial**. Há também um workflow opcional para gerar um wrapper APK de depuração que abre essa mesma URL; ele depende do servidor HTTPS e não deve ser tratado como release assinada para Play Store. A implantação precisa de um servidor HTTPS e controles de autenticação e autorização antes de receber dados corporativos.
 
 ## Primeiro uso
 
