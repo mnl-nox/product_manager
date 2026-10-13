@@ -127,3 +127,12 @@ Essa implementação melhora a rastreabilidade, mas não constitui inventário c
 A base multiplataforma existe, a correção do caminho dos documentos RPM foi aplicada e foram adicionados probes de liveness/readiness. O próximo marco verificável é confirmar CI, build Linux e healthcheck após deploy. Para tornar o produto profissional de forma sustentável, a prioridade deve ser: pipeline reproduzível, testes de segurança/autorização, saúde operacional e backup restaurável; em seguida, E2E/acessibilidade/desempenho Web; depois, migrações, contrato de API e isolamento multi-organização caso o produto passe a atender organizações distintas.
 
 Este relatório diferencia implementação existente, correções aplicadas e trabalho pendente. Não afirma que o aplicativo foi submetido a pentest, certificado, validado em dispositivos físicos ou aprovado para uso crítico.
+
+
+## Aditivo de QA — 13/10/2026
+
+A correção funcional integrada pela PR [#20](https://github.com/mnl-nox/product_manager/pull/20) reparou padrões de rota para IDs numéricos e a consulta SQL do recebimento de compras. A CI da PR #20 aprovou 40 testes Python. A rodada de QA seguinte, PR [#22](https://github.com/mnl-nox/product_manager/pull/22), aprovou **49 testes Python**, além dos jobs C23 e Conventional Commits ([CI run](https://github.com/mnl-nox/product_manager/actions/runs/38475015757)).
+
+Foi criado o relatório [Plano e relatório completo de QA](qa-plan-and-results.md), que separa evidências aprovadas, cobertura parcial, verificações pendentes e capacidades não suportadas. A rodada acrescentou oito testes unitários dedicados à matriz de permissões e validação CSRF e removeu duplicação no setup dos testes de RH.
+
+Limites que permanecem: não foi demonstrado teste E2E em navegador, ensaio de restauração de backup de produção, teste de carga/concorrência, pentest independente nem homologação de instalação em cada plataforma. A aplicação continua sem isolamento multiempresa. Não interpretar este relatório como certificação de segurança ou autorização para uso crítico.
