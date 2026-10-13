@@ -1,5 +1,5 @@
 CC ?= cc
-CFLAGS ?= -std=c23 -Wall -Wextra -Wpedantic -Werror -Iinclude
+CFLAGS ?= -std=c2x -Wall -Wextra -Wpedantic -Werror -Iinclude
 LDFLAGS ?=
 TARGET := build/product_manager
 SOURCES := $(wildcard src/*.c)
