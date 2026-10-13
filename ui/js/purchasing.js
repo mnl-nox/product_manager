@@ -24,7 +24,7 @@
         const tr = document.createElement('tr');
         [r.id,r.description,r.requester,money(r.estimated_total_cents),r.status].forEach(v => tr.append(cell(v)));
         const action = document.createElement('td');
-        if (r.status === 'requested' || r.status === 'quoted') {
+        if (r.status === 'requested') {
           const quote = document.createElement('button'); quote.type='button'; quote.textContent='Registrar cotação'; quote.addEventListener('click', () => addQuote(r.id, suppliers)); action.append(quote);
         } else if (r.status === 'quoted' && ['admin','finance'].includes(window.productManagerRole)) {
           const approve = document.createElement('button'); approve.type='button'; approve.textContent='Aprovar'; approve.addEventListener('click', () => approveRequest(r.id)); action.append(approve);
