@@ -68,6 +68,25 @@ class InventoryLedgerTests(unittest.TestCase):
             ).fetchone()
         self.assertEqual(tuple(row), ("OPENING_BALANCE", 4, 0, 4))
 
+    def test_existing_stock_is_migrated_as_an_opening_balance_once(self):
+        with app.get_db() as conn:
+            product_id = conn.execute(
+                """INSERT INTO products
+                   (name, category, sku, reference, brand, status, price, quantity, supplier)
+                   VALUES ('Legacy item', 'Test', 'LEDGER-LEGACY-1', 'LEGACY-1', 'Test',
+                           'available', 10, 7, 'Test supplier')"""
+            ).lastrowid
+        app.ensure_database()
+        app.ensure_database()
+        with app.get_db() as conn:
+            rows = conn.execute(
+                """SELECT movement_type, quantity_delta, quantity_before, quantity_after
+                   FROM stock_movements WHERE product_id=?""",
+                (product_id,),
+            ).fetchall()
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(tuple(rows[0]), ("OPENING_BALANCE", 7, 0, 7))
+
     def test_zero_stock_does_not_create_a_zero_delta_movement(self):
         status, response = self.create_product("LEDGER-ZERO-1", 0)
         self.assertEqual(status, 201)
