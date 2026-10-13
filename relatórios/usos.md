@@ -32,3 +32,23 @@ Instalar o artefato identificado, testar teclado virtual, rotação, retomada da
 
 ## Limites
 Usar dados sintéticos. Não assumir isolamento multi-organização, pois ele não foi comprovado em todas as entidades. Podman será avaliado em etapa separada.
+
+## Compras e fornecedores
+1. Cadastrar fornecedor.
+2. Abrir solicitação com itens e quantidades.
+3. Registrar cotações por fornecedor e comparar total/prazo.
+4. Enviar a solicitação para aprovação financeira ou administrativa conforme alçada.
+5. Emitir pedido com cotação selecionada e registrar recebimentos parciais ou totais.
+6. Conferir a atualização do estoque e trilha de auditoria.
+
+## Recursos humanos
+1. Cadastrar departamentos e colaboradores.
+2. Registrar férias/ausências e decidir aprovação.
+3. Registrar apenas metadados de documentos; arquivos não são carregados nesta versão.
+4. Quando necessário, registrar minutos de jornada pela API. A aplicação não calcula folha, horas extras ou banco de horas.
+
+## Relatórios e indicadores
+1. Selecionar intervalo de datas.
+2. Registrar vendas realizadas ou previstas.
+3. Consultar resultado, margem de resultado, contas vencidas, previsão simples de caixa, ranking de produtos e agrupamentos mensais/categoria.
+4. Validar definições e limitações em `docs/development.md` antes de usar os indicadores para decisões contábeis.
