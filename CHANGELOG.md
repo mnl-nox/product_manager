@@ -1,5 +1,19 @@
 # Changelog
 
+## [Unreleased]
+
+### Estoque e rastreabilidade
+
+- Adicionado livro-razão append-only `stock_movements` para saldos iniciais, ajustes manuais, baixas de vendas realizadas e recebimentos de compras.
+- Adicionado endpoint autenticado `GET /api/inventory/movements` com filtro por produto e limite de até 500 registros.
+- Incluída referência de saldo inicial para produtos legados com quantidade positiva durante a primeira inicialização; o histórico anterior não é reconstruído.
+- Bloqueada a remoção definitiva de produtos que possuam movimentações, preservando a rastreabilidade.
+
+### Documentação
+
+- Corrigidos os limites e fluxos de estoque descritos na arquitetura, no modelo de dados, nos requisitos, na Wiki e nas políticas.
+- Atualizada a descrição dos módulos de compras, vendas, RH e relatórios para distinguir funcionalidades existentes de limites conhecidos.
+
 ## [v1.1.0] - 2026-10-13
 
 ### Publicação e documentação
