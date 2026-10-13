@@ -12,6 +12,7 @@ A aplicação lê configurações do ambiente. O arquivo `.env.example` é uma r
 | `PRODUCT_MANAGER_SETUP_TOKEN` | Token temporário para criar primeiro administrador | Gere aleatoriamente; use apenas durante bootstrap |
 | `PRODUCT_MANAGER_COOKIE_SECURE` | Configura atributo Secure do cookie | Defina `1` atrás de HTTPS |
 | `PRODUCT_MANAGER_LOW_STOCK_DEFAULT` | Limite padrão para alerta de estoque baixo | O exemplo de configuração usa `5` |
+| `PRODUCT_MANAGER_FINANCE_APPROVAL_LIMIT_CENTS` | Limite monetário para aprovação de compras pelo perfil financeiro | Centavos inteiros; padrão documentado: `10000000` (R$ 100.000,00) |
 | `PRODUCT_MANAGER_DEMO_DATA` | Insere registros demonstrativos para avaliação local | Desativado por padrão; use `1` somente para teste |
 | `PRODUCT_MANAGER_TELEMETRY_URL` | Endpoint opcional de diagnóstico técnico | Deve ser HTTPS e controlado pela organização |
 | `PRODUCT_MANAGER_GOOGLE_SHEETS_SPREADSHEET_ID` | ID da planilha de destino | Opcional |
