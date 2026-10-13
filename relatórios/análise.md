@@ -15,6 +15,11 @@ A aplicação contém API Python, interface Web, SQLite, sessões, permissões p
 - As avaliações ainda não são armazenadas nem moderadas dentro do produto; o CTA direciona para GitHub Discussions. Não há sistema de estrelas, persistência, prevenção de spam ou painel de moderação.
 - Os links e a estrutura HTML foram atualizados no repositório, mas ainda precisam de validação visual e funcional no site publicado.
 
+## Novos módulos em desenvolvimento
+- Compras: cadastro de fornecedores, solicitações, cotações, aprovação por perfil/limite, pedidos e recebimento parcial com atualização de estoque. Necessita testes ponta a ponta de fluxo completo.
+- RH: departamentos, colaboradores, ausências com decisão, metadados de documentos e registro opcional de jornada. Acesso restrito ao administrador; integração com folha não implementada.
+- Relatórios: indicadores financeiros, contas vencidas, ranking de vendas e registro de vendas com baixa de estoque para vendas realizadas. Margem bruta, giro contábil e relatórios por unidade/departamento ainda não existem.
+
 ## Bloqueios de aceite
 1. CI posterior às alterações: ainda precisa confirmar os novos testes.
 2. RPM: execução v1.1.3 falhou antes da correção; nova execução e inspeção do pacote são obrigatórias.
@@ -36,7 +41,8 @@ A aplicação contém API Python, interface Web, SQLite, sessões, permissões p
 5. Adicionar E2E Web para móvel/desktop.
 6. Medir baseline de desempenho.
 7. Testar backup/restauração e acessibilidade.
-8. Só então iniciar análise de ambiente com Podman.
+8. Executar testes e revisão de segurança dos novos módulos, especialmente transações de compra/recebimento, dados pessoais de RH e baixa de estoque.
+9. Só então iniciar análise de ambiente com Podman.
 
 ## Evidências históricas
 - CI principal: https://github.com/mnl-nox/product_manager/actions/runs/38348153696
