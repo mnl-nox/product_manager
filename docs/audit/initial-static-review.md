@@ -121,3 +121,23 @@ Esses itens precisam ser confirmados por execução da CI e revisão de código 
 ## 7. Limitações
 
 Esta revisão não afirma que a aplicação foi executada ou explorada. As classificações são preliminares, condicionadas ao perfil de implantação e devem ser revistas quando houver reprodução, testes e contexto adicional. Não contém dados reais de clientes.
+
+
+## 8. Pendências explícitas — não executadas nesta revisão
+
+Os itens abaixo permanecem **pendentes**. A revisão atual foi estática/documental; não se deve interpretar a existência deste plano como execução ou aprovação.
+
+| Atividade | Estado atual | Evidência exigida para conclusão |
+|---|---|---|
+| Executar a suíte automatizada | **Não executado nesta etapa** | Registrar commit, ambiente, comando e saída de `python -m compileall -q api scripts tests` e `make test`; identificar falhas e testes ignorados |
+| Auditar todas as rotas da API | **Parcial / pendente** | Inventário completo de métodos, caminhos, autenticação, permissão, validação, tabelas tocadas, efeitos colaterais e testes; revisão de acesso por objeto e exportações |
+| Testes de carga e concorrência | **Não executado** | Cenários, volume de dados, concorrência, latência/throughput, erros e limites observados em ambiente isolado |
+| Validar backup e restauração | **Não executado** | Criar backup consistente, restaurar em ambiente separado e verificar integridade, contagens e invariantes; registrar tempos e limitações |
+| Avaliar a interface no navegador | **Não executado** | Navegador/viewport, telas e fluxos avaliados, problemas visuais e funcionais reproduzíveis, acessibilidade básica e evidências sanitizadas |
+| Validar instalação e atualização | **Não executado** | Resultados por plataforma suportada, instalação limpa, upgrade, primeiro acesso e recuperação de falha |
+
+### Condição para atualizar o estado
+
+Cada atividade deve passar de **Não executado** para **Executado** somente quando houver evidência registrada. Falhas encontradas devem virar achados com ID, severidade, passos de reprodução, impacto, issue relacionada e critério de fechamento. Se uma atividade for bloqueada, registrar o motivo e o que falta para executá-la.
+
+Os comandos de teste acima são comandos planejados; nenhuma saída foi produzida por esta revisão documental. Não declarar que a suíte passou até executar os comandos no branch/commit a validar.
