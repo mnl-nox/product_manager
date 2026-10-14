@@ -169,3 +169,19 @@ Nenhum perfil deve ser marcado como aprovado apenas por ter documentação escri
 - **RTO:** tempo máximo desejado para recuperar o serviço.
 - **SLO:** objetivo mensurável de nível de serviço.
 - **Tenant:** organização isolada logicamente dentro de uma instalação compartilhada.
+
+
+## 13. Estado de validação e atividades ainda pendentes
+
+A documentação de arquitetura e a revisão estática não são prova de validação operacional. Na etapa documental inicial, os seguintes trabalhos **não foram executados ou permanecem incompletos**:
+
+- **Suíte de testes:** ainda não executada nesta etapa. Executar `python -m compileall -q api scripts tests` e `make test`, registrando commit, ambiente e saída.
+- **Auditoria completa das rotas:** parcial/pendente. Falta inventariar cada endpoint e verificar autenticação, autorização, CSRF, validação, acesso a dados, exportações, efeitos colaterais e cobertura de testes.
+- **Carga e concorrência:** não executadas. Definir cenário representativo de PME e registrar latência, taxa de erro, uso de recursos e limites observados.
+- **Backup/restauração:** não executados. Restaurar uma cópia em ambiente isolado, verificar integridade e reconciliar dados/invariantes.
+- **Avaliação no navegador:** não executada. Verificar visual e funcionalmente os fluxos essenciais, responsividade, teclado/foco, mensagens de erro e prevenção de ações indevidas.
+- **Instalação/atualização:** não executadas nesta etapa. Validar instalação limpa, upgrade e recuperação por plataforma suportada.
+
+Os procedimentos, estados e critérios de evidência estão em [Plano de auditoria](audit/plan.md), e o acompanhamento está em [Índice de relatórios](audit/README.md). O relatório [AUD-00](audit/initial-static-review.md) registra a limitação de escopo.
+
+Não interpretar comandos listados como comandos já executados. Uma atividade só pode ser marcada como concluída depois de registrar evidência verificável, resultado e limitações.
