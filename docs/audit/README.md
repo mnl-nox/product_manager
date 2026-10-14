@@ -55,3 +55,20 @@ A severidade final considera probabilidade, impacto e exposição, não apenas o
 - Backup/recuperação: #28
 - Migrações de esquema: #30
 - Integração fiscal futura: #47
+
+
+## Pendências operacionais atuais
+
+Na revisão documental inicial, os seguintes trabalhos permanecem **não executados ou incompletos**:
+
+| Atividade | Estado | O que será registrado |
+|---|---|---|
+| Suíte automatizada (`compileall` e `make test`) | Não executada nesta etapa | Commit, ambiente, saída, contagem e falhas |
+| Auditoria completa das rotas | Parcial / pendente | Matriz de rotas, permissões, dados acessados, efeitos e testes |
+| Testes de carga e concorrência | Não executados | Perfil, volume, concorrência, latência, erros e recursos |
+| Backup e restauração | Não executados | Procedimento, integridade restaurada, reconciliação, tempo e limitações |
+| Avaliação no navegador | Não executada | Fluxos, navegador/viewport, falhas visuais/funcionais e acessibilidade |
+| Instalação e atualização | Não executadas | Resultados por plataforma, banco novo/legado e recuperação |
+
+Nenhum destes itens deve ser descrito como aprovado até haver evidência de execução. Consulte o [plano faseado](plan.md) para o checklist e o [relatório AUD-00](initial-static-review.md) para o escopo da revisão estática.
+
