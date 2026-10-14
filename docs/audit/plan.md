@@ -116,3 +116,32 @@ O produto só deve ser declarado pronto para um perfil definido quando os fluxos
 - Declarar multi-tenant sem isolamento completo demonstrado.
 - Adotar PostgreSQL ou HA sem evidência de capacidade/requisitos.
 - Introduzir automação financeira/contábil além do domínio atualmente especificado.
+
+
+## 8. Checklist de execução e registro de evidências
+
+Este checklist separa o trabalho planejado daquilo que já foi realizado. No início deste plano, as atividades abaixo não foram executadas; devem ser atualizadas individualmente com data, commit, ambiente, resultado e link para o relatório correspondente.
+
+- [ ] **Executar os testes existentes:** `python -m compileall -q api scripts tests` e `make test`. Registrar saída completa, total de testes, falhas, skips e limitações.
+- [ ] **Auditar todas as rotas:** enumerar cada método/caminho HTTP, requisitos de sessão, papel/permissão, CSRF, validação, limites, acesso a dados, efeitos colaterais e cobertura de testes. Incluir exportações, integrações e rotas de diagnóstico; revisar autorização por objeto.
+- [ ] **Executar testes de carga e concorrência:** definir perfil de uso de PME, dados sintéticos, número de usuários simultâneos, duração, latência p50/p95/p99, taxa de erro, CPU/memória e comportamento do SQLite. Não executar carga contra produção sem autorização.
+- [ ] **Validar backup e restauração:** criar cópia consistente em ambiente de teste, restaurar em diretório/banco isolado, executar verificações de integridade SQLite e reconciliar entidades/contagens/invariantes. Medir RPO/RTO observado sem confundi-los com metas aprovadas.
+- [ ] **Avaliar visual e funcionalmente no navegador:** validar login/primeiro acesso, dashboard, formulários, compras, recebimento, vendas, financeiro, alertas e exportações. Registrar navegador, viewport, passos, resultado esperado/obtido, problemas de teclado/foco/contraste e screenshots sem dados pessoais.
+- [ ] **Validar instalação e atualização:** executar instalação limpa e upgrade nas plataformas suportadas, com banco novo e fixtures legadas, anotando falhas e rollback.
+
+### Modelo de registro por execução
+
+```text
+Atividade:
+Data/hora:
+Commit/branch:
+Ambiente e versão:
+Comandos ou roteiro:
+Resultado: passou / falhou / bloqueado / não executado
+Resumo da evidência:
+Falhas/achados relacionados:
+Artefato sanitizado (log, captura ou relatório):
+Responsável e próximo passo:
+```
+
+**Regra:** status “passou” exige execução observável e evidência anexada ou vinculada. Documentar o procedimento, revisar código ou criar uma issue não equivale a executar o teste.
