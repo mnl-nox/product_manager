@@ -55,7 +55,7 @@ docker compose down
 
 ## Instalação por plataforma
 
-Os pacotes oficiais estão na [página de Releases](https://github.com/mnl-nox/product_manager/releases/latest). Consulte [Plataformas e implantação](Platforms-and-Deployment.md) para requisitos e limites.
+Os pacotes oficiais estão na [página de Releases](https://github.com/mnl-nox/product_manager/releases/latest). Consulte [Plataformas e implantação](Platforms-and-Deployment-Summary.md) para requisitos e limites.
 
 - **Windows:** instalador `.exe` para Windows 10/11 x64.
 - **Debian/Ubuntu:** pacote `.deb` x64.
@@ -104,4 +104,4 @@ Encerre a aplicação antes de copiar o banco SQLite, proteja o arquivo e os bac
 
 ## Tutorial visual por seção
 
-Veja [o tutorial visual completo](Tutorial-Visual.md), com login, dashboard, produtos, compras, financeiro, alertas, relatórios, riscos, usuários e RH. As capturas usam dados sintéticos locais.
+Veja [o tutorial visual completo](Tutorial-Visual-Wiki.md), com login, dashboard, produtos, compras, financeiro, alertas, relatórios, riscos, usuários e RH. As capturas usam dados sintéticos locais.
