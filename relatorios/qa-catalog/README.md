@@ -1,17 +1,17 @@
-# Relatórios de qualidade — Product Manager
+# Catálogo de QA — Product Manager
 
 Data-base: 13/10/2026. Repositório: https://github.com/mnl-nox/product_manager
 
-Esta pasta organiza casos e evidências de aceite para catálogo, estoque, compras/fornecedores, vendas, RH, financeiro e relatórios/indicadores. Os módulos de compras, RH, relatórios e livro-razão de estoque já foram integrados à `main`; isso não equivale a homologação completa em navegador ou ambiente produtivo. O aceite final exige todos os checks obrigatórios aprovados no mesmo commit, nenhum defeito P0/P1 aberto e artefatos por plataforma gerados e verificados. Isso reduz o risco, mas não prova ausência absoluta de bugs.
+Este catálogo organiza casos, métricas, exemplos e evidências de aceite para catálogo, estoque, compras/fornecedores, vendas, RH, financeiro e relatórios/indicadores. Os módulos de compras, RH, relatórios e livro-razão de estoque já foram integrados à `main`; isso não equivale a homologação completa em navegador ou ambiente produtivo. O aceite final exige todos os checks obrigatórios aprovados no mesmo commit, nenhum defeito P0/P1 aberto e artefatos por plataforma gerados e verificados. Isso reduz o risco, mas não prova ausência absoluta de bugs.
 
 ## Índice
-- [Casos](casos.md): cenários funcionais, negativos e de segurança.
-- [Usos](usos.md): jornadas por perfil e plataforma.
+- [Casos](casos-de-teste.md): cenários funcionais, negativos e de segurança.
+- [Usos](casos-de-uso.md): jornadas por perfil e plataforma.
 - [Exemplos](exemplos.md): comandos e resultados esperados.
-- [Execução](execução.md): procedimento reproduzível.
-- [Métricas](métricas.md): metas e evidências.
+- [Execução](execucao.md): procedimento reproduzível.
+- [Métricas](metricas.md): metas e evidências.
 - [Desempenho](desempenho.md): plano de carga e latência.
-- [Análise](análise.md): riscos e decisão de liberação.
+- [Análise](analise.md): riscos e decisão de liberação.
 
 ## Estado das evidências — snapshot 13/10/2026
 - O commit de merge do PR #16 (`ed2c2cb564958e6a6f06cf395a07b3a0f0113175`) teve checks Python, C23, validação de commits, build, deploy e jobs Windows/Linux/PWA concluídos com sucesso.
