@@ -65,7 +65,7 @@ python3 -m compileall -q api scripts tests
 - [Plataformas, downloads e empacotamento](docs/platforms.md)
 - [Estratégia de testes e QA](docs/qa-plan-and-results.md)
 - [Resultados de validação](docs/test-results.md)
-- [Relatórios de qualidade](relatórios/README.md)
+- [Relatórios de qualidade](relatorios/qa-catalog/README.md)
 
 Builds por plataforma:
 - **Windows:** `packaging/windows/build.ps1` (runner Windows, Python 3.12 e Inno Setup).
@@ -77,7 +77,7 @@ Builds por plataforma:
 
 Consulte o [índice da documentação](docs/README.md) para encontrar o documento canônico de cada assunto.
 
-- [Arquitetura](doc/architecture.md)
+- [Arquitetura](doc/architecture-implementation.md)
 - [Modelo de dados](doc/data-model.md)
 - [Requisitos](doc/requirements.md)
 - [Tutorial visual](docs/tutorial-visual.md)
@@ -94,7 +94,7 @@ android/      wrapper Android e configuração de APK/AAB
 db/           esquema SQLite e banco local
 docs/         guias operacionais e índice documental
 doc/          arquitetura, modelo de dados e requisitos (consolidação pendente)
-relatórios/   casos, evidências e relatórios de qualidade
+relatorios/qa-catalog/ casos, evidências e catálogo de QA
 packaging/    empacotamento Windows, Linux e PWA
 tests/        testes automatizados
 src/, include/ núcleo C23 legado
