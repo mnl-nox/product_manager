@@ -11,7 +11,7 @@ Inspecionados os documentos de arquitetura/modelo de dados, esquema SQL, código
 Arquivos de referência:
 - api/app.py
 - db/schema.sql
-- doc/architecture.md
+- doc/architecture-implementation.md
 - doc/data-model.md
 - tests/test_api.py
 - tests/test_security.py
