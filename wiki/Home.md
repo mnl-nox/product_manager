@@ -8,15 +8,15 @@
 
 ## Navegação
 
-- [Visão geral e arquitetura](Architecture.md)
-- [Instalação e primeiro acesso](Installation-and-Usage.md)
-- [Tutorial visual por seção](Tutorial-Visual.md)
+- [Visão geral e arquitetura](Architecture-Summary.md)
+- [Instalação e primeiro acesso](Installation-and-Usage-Summary.md)
+- [Tutorial visual por seção](Tutorial-Visual-Wiki.md)
 - [Referência da API](API-Reference.md)
-- [Modelo de dados](Data-Model.md)
+- [Modelo de dados](Data-Model-Summary.md)
 - [Configuração](Configuration.md)
 - [Segurança e privacidade](Security-and-Privacy.md)
 - [Desenvolvimento e testes](Development-and-Testing.md)
-- [Plataformas e implantação](Platforms-and-Deployment.md)
+- [Plataformas e implantação](Platforms-and-Deployment-Summary.md)
 - [Limitações e roadmap](Limitations-and-Roadmap.md)
 
 ## Objetivo
@@ -29,7 +29,7 @@ A instância publicada é acessível em [https://product-manager-14fq.onrender.c
 
 ## Tutorial visual
 
-Veja as [capturas atuais de cada área do aplicativo](Tutorial-Visual.md), produzidas em uma execução local com dados sintéticos.
+Veja as [capturas atuais de cada área do aplicativo](Tutorial-Visual-Wiki.md), produzidas em uma execução local com dados sintéticos.
 
 ## Funcionalidades atuais
 
@@ -70,7 +70,7 @@ cd product_manager
 python3 api/app.py
 ```
 
-Abra http://127.0.0.1:8000. Na primeira configuração, crie o administrador usando o fluxo de bootstrap descrito em [Instalação e primeiro acesso](Installation-and-Usage.md). Não existe senha padrão.
+Abra http://127.0.0.1:8000. Na primeira configuração, crie o administrador usando o fluxo de bootstrap descrito em [Instalação e primeiro acesso](Installation-and-Usage-Summary.md). Não existe senha padrão.
 
 Para executar os testes:
 
