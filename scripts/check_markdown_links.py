@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check local Markdown links in explicitly supplied repository documents."""
+"""Check local Markdown links in supplied documents or all repository Markdown files."""
 from __future__ import annotations
 import re
 import sys
@@ -72,9 +72,19 @@ def check_document(path: Path, repo_root: Path) -> list[str]:
 
 def main(argv: list[str]) -> int:
     repo_root = Path.cwd().resolve()
-    documents = [Path(arg) for arg in argv]
+    if argv:
+        documents = [Path(arg) for arg in argv]
+    else:
+        ignored = {".git", ".venv", "venv", "node_modules", "build", "dist"}
+        documents = [
+            path.relative_to(repo_root)
+            for path in repo_root.rglob("*")
+            if path.is_file()
+            and path.suffix.lower() in {".md", ".markdown"}
+            and not any(part in ignored for part in path.relative_to(repo_root).parts)
+        ]
     if not documents:
-        print("Usage: python scripts/check_markdown_links.py README.md docs/README.md", file=sys.stderr)
+        print("No Markdown documents found.", file=sys.stderr)
         return 2
     errors = [error for document in documents for error in check_document(document, repo_root)]
     if errors:
