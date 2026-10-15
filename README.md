@@ -19,9 +19,9 @@ Os instaladores para cada plataforma ficam anexados à página da versão. Os as
 | Android, Google Play | `.aab` assinado, quando a chave de release estiver configurada | Bundle para envio ao Play Console; não pode ser instalado diretamente no aparelho. |
 | Android, PWA | [Aplicação Web](https://product-manager-14fq.onrender.com/login) | No Chrome, use **Instalar app** ou **Adicionar à tela inicial**. Requer HTTPS. |
 
-**macOS e iOS não têm pacote nativo publicado.** O APK de instalação direta depende da instância web e não funciona como servidor independente; o download oficial exige a chave de release Android. O AAB só é publicado quando os secrets de assinatura Android estão configurados no GitHub Actions; os passos estão em [Plataformas e instalação](docs/platforms.md#android-apk-e-aab).
+**macOS e iOS não têm pacote nativo publicado.** O APK de instalação direta depende da instância web e não funciona como servidor independente. O AAB só é publicado quando os secrets de assinatura Android estão configurados no GitHub Actions; consulte [Plataformas e instalação](docs/platforms.md#android-apk-e-aab).
 
-## O que oferece
+## Funcionalidades
 
 - Dashboard, catálogo de produtos e clientes, pesquisa e filtros.
 - Compras com cotações, aprovação, recebimentos parciais/finais e atualização transacional do estoque.
@@ -33,7 +33,7 @@ Os instaladores para cada plataforma ficam anexados à página da versão. Os as
 
 As contas compartilham um único workspace SQLite; não há isolamento multi-organização. Consulte [segurança e limitações](docs/platforms.md#requisitos-de-producao) antes de usar dados reais.
 
-## Começar localmente
+## Início rápido
 
 Requisitos: Python 3.10 ou superior. Para compilar o núcleo C legado, também é necessário GCC/Clang com suporte a C23 e GNU Make.
 
@@ -43,54 +43,61 @@ cd product_manager
 python3 api/app.py
 ```
 
-Abra <http://127.0.0.1:8000>. No primeiro acesso, configure o administrador pelo fluxo de bootstrap; não existe usuário ou senha padrão. Veja [instalação e primeiro acesso](docs/installation-usage.md) e [desenvolvimento e configuração](docs/development.md).
+Abra <http://127.0.0.1:8000>. No primeiro acesso, configure o administrador pelo fluxo de bootstrap; não existe usuário ou senha padrão. Consulte [instalação e primeiro acesso](docs/installation-usage.md).
 
-### Container
+### Executar com Docker Compose
 
 ```bash
 export PRODUCT_MANAGER_SETUP_TOKEN="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
 docker compose up --build -d
 ```
 
-O Compose persiste o banco no volume `product-manager-data` e publica a porta em loopback. Para uso remoto, configure HTTPS, cookies Secure, rede restrita, backup e restauração testada.
+O Compose persiste o banco no volume `product-manager-data` e publica a porta em loopback. Para uso remoto, configure HTTPS, cookies Secure, rede restrita e backup com restauração testada.
 
-## Build por plataforma
-
-- **Windows:** `packaging/windows/build.ps1` (runner Windows, Python 3.12 e Inno Setup).
-- **Linux:** `make package-linux` cria `.deb` e, se `rpmbuild` estiver instalado, `.rpm`.
-- **PWA Android:** `make package-pwa` gera o ZIP de implantação.
-- **APK/AAB Android:** workflow [Cross-platform packages](https://github.com/mnl-nox/product_manager/actions/workflows/packages.yml); APK e AAB de release exigem a chave de assinatura Android; o AAB é enviado ao Play Console.
-
-Veja os detalhes de nomes, requisitos e assinatura em [docs/platforms.md](docs/platforms.md). A visão geral das telas está no [tutorial visual](docs/tutorial-visual.md).
-
-## Testes e validação
+## Desenvolvimento, build e testes
 
 ```bash
 make test
+python3 -m compileall -q api scripts tests
 ```
 
-Os testes usam banco temporário. Consulte [resultados de validação](docs/test-results.md), [plano e resultados de QA](docs/qa-plan-and-results.md) e os [relatórios](relatórios/README.md).
+- [Desenvolvimento e configuração](docs/development.md)
+- [Plataformas, downloads e empacotamento](docs/platforms.md)
+- [Estratégia de testes e QA](docs/qa-plan-and-results.md)
+- [Resultados de validação](docs/test-results.md)
+- [Relatórios de qualidade](relatórios/README.md)
+
+Builds por plataforma:
+- **Windows:** `packaging/windows/build.ps1` (runner Windows, Python 3.12 e Inno Setup).
+- **Linux:** `make package-linux` cria `.deb` e, se `rpmbuild` estiver instalado, `.rpm`.
+- **PWA Android:** `make package-pwa` gera o ZIP de implantação.
+- **APK/AAB Android:** workflow [Cross-platform packages](https://github.com/mnl-nox/product_manager/actions/workflows/packages.yml).
 
 ## Documentação
 
-- [Instalação e primeiro acesso](docs/installation-usage.md)
-- [Plataformas, downloads e empacotamento](docs/platforms.md)
-- [API e desenvolvimento](docs/development.md)
-- [Arquitetura](doc/architecture.md) · [Modelo de dados](doc/data-model.md) · [Requisitos](doc/requirements.md)
-- [Wiki completa](https://github.com/mnl-nox/product_manager/wiki)
-- [Tutorial visual das seções](docs/tutorial-visual.md)
+Consulte o [índice da documentação](docs/README.md) para encontrar o documento canônico de cada assunto.
 
-## Estrutura do repositório
+- [Arquitetura](doc/architecture.md)
+- [Modelo de dados](doc/data-model.md)
+- [Requisitos](doc/requirements.md)
+- [Tutorial visual](docs/tutorial-visual.md)
+- [Wiki do projeto](https://github.com/mnl-nox/product_manager/wiki)
+
+A documentação ainda está distribuída entre `doc/`, `docs/`, `wiki/` e diretórios de relatórios com nomes semelhantes. A consolidação desses materiais deve preservar histórico, referências externas e evidências de QA; não remova arquivos até verificar duplicação real e atualizar todos os links.
+
+## Estrutura principal
 
 ```text
 api/          servidor HTTP e API JSON
 ui/           interface web e PWA
 android/      wrapper Android e configuração de APK/AAB
 db/           esquema SQLite e banco local
-docs/, wiki/  guias, tutoriais e documentação
+docs/         guias operacionais e índice documental
+doc/          arquitetura, modelo de dados e requisitos (consolidação pendente)
+relatórios/   casos, evidências e relatórios de qualidade
 packaging/    empacotamento Windows, Linux e PWA
 tests/        testes automatizados
-src/, include/ núcleo C23 em evolução
+src/, include/ núcleo C23 legado
 ```
 
 ## Segurança, privacidade e licença
