@@ -18,7 +18,7 @@ Reduzir divergência entre documentos sem perder histórico de QA, evidências d
 | QA e evidências históricas | [Plano e resultados de QA](qa-plan-and-results.md) | `docs/test-results.md`, `docs/quality-report.md`, `relatorios/`, `relatorios/qa-catalog/` | Não apagar relatórios por semelhança de título. Separar estado atual de snapshots datados e evidências de execução. |
 | Auditoria | [Índice de auditoria](audit/README.md) | `docs/audit/*` | Preservar como conjunto próprio de achados, plano e evidências. |
 | Relatórios de QA recentes | [Relatórios da rodada de correções](../relatorios/README.md) | `relatorios/*.md` | Preservar os relatórios de execução, correções e segurança; evitar copiar seu conteúdo para o relatório geral. |
-| Casos e métricas de QA | [Relatórios de qualidade](../relatórios/README.md) | `relatórios/*.md` | Preservar como catálogo de casos e critérios de aceite. O nome com acento é legado válido, não prova duplicação. |
+| Casos e métricas de QA | [Catálogo de QA](../relatorios/qa-catalog/README.md) | `relatorios/qa-catalog/*.md` | Preservar casos, métricas e critérios de aceite; o catálogo fica separado dos relatórios de execução. |
 
 ## Duplicação provável versus conteúdo distinto
 
