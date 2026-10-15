@@ -11,7 +11,7 @@ Este diretório contém a documentação operacional, de desenvolvimento e audit
 ## Arquitetura e dados
 
 - [Modelo do sistema e arquitetura — visão consolidada](system-model-and-architecture.md)
-- [Arquitetura técnica existente](../doc/architecture.md)
+- [Arquitetura técnica existente](../doc/architecture-implementation.md)
 - [Modelo de dados](../doc/data-model.md)
 - [Requisitos](../doc/requirements.md)
 - [Inventário e política de consolidação documental](documentation-inventory.md)
@@ -26,8 +26,8 @@ A arquitetura e o modelo de dados também aparecem na Wiki. O inventário docume
 - [Plano de prontidão operacional](enterprise-readiness.md)
 - [Auditoria — índice](audit/README.md)
 - [Tutorial visual](tutorial-visual.md)
-- [Relatórios da rodada de correções](../relatorios/README.md)
-- [Casos e métricas de QA](../relatórios/README.md)
+- [Relatórios de execução e correções](../relatorios/README.md)
+- [Catálogo de casos, métricas e exemplos de QA](../relatorios/qa-catalog/README.md)
 
 Os relatórios possuem datas, escopos e evidências diferentes. Não combinar resultados históricos como se tivessem sido executados no mesmo commit nem marcar validações como aprovadas sem evidência reproduzível.
 
