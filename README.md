@@ -31,7 +31,7 @@ Os instaladores para cada plataforma ficam anexados à página da versão. Os as
 - Usuários com papéis de acesso, sessões protegidas e API JSON.
 - Recursos de RH e exportação de dados para folha.
 
-As contas compartilham um único workspace SQLite; não há isolamento multi-organização. Consulte [segurança e limitações](docs/platforms.md#requisitos-de-producao) antes de usar dados reais.
+As contas compartilham um único workspace SQLite; não há isolamento multi-organização. Consulte [segurança e limitações](docs/platforms.md#requisitos-de-produção) antes de usar dados reais.
 
 ## Início rápido
 
