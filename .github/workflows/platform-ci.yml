@@ -1,0 +1,115 @@
+name: Platform build and validation
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: platform-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_URL: https://product-manager-14fq.onrender.com/
+
+jobs:
+  tests:
+    name: Tests / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+        python-version: ['3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Compile Python sources
+        run: python -m compileall -q api scripts tests
+      - name: Run automated tests
+        run: python -m unittest discover -s tests -v
+
+  windows:
+    name: Windows installer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build Windows installer
+        shell: pwsh
+        run: ./packaging/windows/build.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: product-manager-windows-x64
+          path: build/packages/ProductManager-*-windows-x64-setup.exe
+          if-no-files-found: error
+          retention-days: 14
+
+  linux:
+    name: Debian and RPM packages
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install package builders
+        run: sudo apt-get update && sudo apt-get install -y rpm
+      - name: Build DEB and RPM packages
+        run: bash packaging/linux/build-packages.sh "$(cat VERSION)" --require-rpm
+      - uses: actions/upload-artifact@v4
+        with:
+          name: product-manager-linux-x64
+          path: |
+            build/packages/*.deb
+            build/packages/*.rpm
+          if-no-files-found: error
+          retention-days: 14
+
+  android:
+    name: Android APK validation
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - name: Install Android SDK components
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Build debug APK
+        run: gradle --no-daemon -p android assembleDebug "-PappUrl=$APP_URL"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: product-manager-android-debug-validation
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  android-pwa:
+    name: Android PWA package
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build PWA deployment archive
+        run: bash packaging/android/build-pwa.sh "$(cat VERSION)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: product-manager-pwa
+          path: build/packages/product-manager-pwa-*.zip
+          if-no-files-found: error
+          retention-days: 14
