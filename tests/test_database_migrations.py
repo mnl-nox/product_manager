@@ -31,7 +31,7 @@ class LegacyDatabaseMigrationTests(unittest.TestCase):
                 );
                 CREATE TABLE finance_entries (
                     id INTEGER PRIMARY KEY, entry_type TEXT NOT NULL, category TEXT NOT NULL,
-                    description TEXT NOT NULL, amount REAL NOT NULL, entry_date TEXT NOT NULL,
+                    description TEXT NOT NULL, amount REAL, entry_date TEXT NOT NULL,
                     status TEXT NOT NULL DEFAULT 'paid', created_by INTEGER,
                     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
@@ -51,6 +51,34 @@ class LegacyDatabaseMigrationTests(unittest.TestCase):
     def tearDown(self):
         app.DB_PATH = self.previous_db_path
         self.temp_dir.cleanup()
+
+    def test_legacy_finance_migration_aborts_without_losing_invalid_rows(self):
+        with closing(sqlite3.connect(self.legacy_path)) as conn, conn:
+            conn.executemany(
+                "INSERT INTO finance_entries(id, entry_type, category, description, amount, entry_date, status, created_by) "
+                "VALUES (?, 'expense', 'Legacy', ?, ?, '2026-01-03', 'paid', 1)",
+                (
+                    (2, "Zero amount", 0),
+                    (3, "Negative amount", -4.25),
+                    (4, "Null amount", None),
+                ),
+            )
+
+        with self.assertRaisesRegex(RuntimeError, r"invalid row IDs: 2, 3, 4"):
+            app.ensure_database()
+
+        # The legacy table and every row must remain intact after the abort.
+        with closing(sqlite3.connect(self.legacy_path)) as conn:
+            columns = {row[1] for row in conn.execute("PRAGMA table_info(finance_entries)")}
+            rows = conn.execute(
+                "SELECT id, amount FROM finance_entries ORDER BY id"
+            ).fetchall()
+            integrity = conn.execute("PRAGMA integrity_check").fetchone()[0]
+
+        self.assertIn("amount", columns)
+        self.assertNotIn("amount_cents", columns)
+        self.assertEqual(rows, [(1, 12.34), (2, 0.0), (3, -4.25), (4, None)])
+        self.assertEqual(integrity, "ok")
 
     def test_legacy_schema_migrates_once_and_preserves_values(self):
         app.ensure_database()
