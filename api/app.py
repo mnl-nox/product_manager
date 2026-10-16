@@ -118,6 +118,18 @@ def ensure_database() -> None:
                 conn.execute('ALTER TABLE products ADD COLUMN active INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0,1))')
         finance_columns = {row[1] for row in conn.execute('PRAGMA table_info(finance_entries)')}
         if 'amount' in finance_columns and 'amount_cents' not in finance_columns:
+            # Do not silently discard legacy rows that the new ledger schema
+            # cannot represent. Validate before starting the destructive rebuild.
+            invalid_rows = conn.execute(
+                'SELECT id FROM finance_entries WHERE amount IS NULL OR amount <= 0 ORDER BY id'
+            ).fetchall()
+            if invalid_rows:
+                invalid_ids = ', '.join(str(row[0]) for row in invalid_rows)
+                raise RuntimeError(
+                    'Cannot migrate finance_entries: legacy amounts must be positive '
+                    f'and non-null; invalid row IDs: {invalid_ids}'
+                )
+
             conn.executescript('''
                 BEGIN IMMEDIATE;
                 CREATE TABLE finance_entries_v2 (
