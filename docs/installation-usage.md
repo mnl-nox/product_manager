@@ -74,7 +74,7 @@ Em **Alertas**, configure o limite por item e reconheça alertas; o padrão é `
 
 Em **Riscos e bugs**, qualquer conta pode registrar um problema ou risco. Administração/operação pode atualizar o estado e o responsável. O formulário não envia anexos nem transmite os registros para fora da instalação.
 
-No dashboard, baixe CSV ou Excel (`.xlsx`). Para enviar diretamente ao Google Sheets, o administrador configura o ID da planilha e um token de acesso no servidor, conforme [Desenvolvimento e operação](development.md#exportacoes-para-planilhas). O banco local é criado automaticamente; faça cópias de segurança com o aplicativo encerrado e proteja-as como dados corporativos.
+No dashboard, baixe CSV ou Excel (`.xlsx`). Para enviar diretamente ao Google Sheets, o administrador configura o ID da planilha e um token de acesso no servidor, conforme [Desenvolvimento e operação](development.md#exportações-para-planilhas). O banco local é criado automaticamente; faça cópias de segurança com o aplicativo encerrado e proteja-as como dados corporativos.
 
 O workspace começa vazio. Se `PRODUCT_MANAGER_DEMO_DATA=1` estiver definido, a aplicação cria registros de exemplo para avaliação local; não use os dados fictícios como dados de clientes reais. Não exponha o servidor desktop na rede; para serviço compartilhado use HTTPS, cookies Secure, controle de acesso de rede, backups e gestão segura dos segredos.
 

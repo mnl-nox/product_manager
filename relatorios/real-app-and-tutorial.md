@@ -21,7 +21,7 @@ Não existe endpoint nem fluxo de interface para cancelamento/estorno rastreáve
 ## Documentação atualizada
 
 - [Tutorial visual para o site](../docs/tutorial.html) e [versão Markdown](../docs/tutorial-visual.md).
-- [Tutorial visual da Wiki local](../wiki/Tutorial-Visual.md), linkado pela Home, sidebar e instalação/uso.
+- [Tutorial visual da Wiki local](../wiki/Tutorial-Visual-Wiki.md), linkado pela Home, sidebar e instalação/uso.
 - [Guia de instalação e uso](../docs/installation-usage.md), README e página inicial do site agora apontam para o tutorial.
 
 O site e a Wiki hospedados não foram publicados neste passo; os arquivos fonte estão prontos no checkout. É necessário publicar a atualização do repositório/Wiki para que os links externos exibam as novas páginas e capturas.

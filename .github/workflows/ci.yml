@@ -18,8 +18,8 @@ jobs:
           python-version: '3.12'
       - name: Compile Python modules
         run: python -m compileall -q api scripts tests
-      - name: Check README documentation links
-        run: python scripts/check_markdown_links.py README.md docs/README.md
+      - name: Check all Markdown documentation links
+        run: python scripts/check_markdown_links.py
       - name: Run API tests
         run: make test
   conventional-commits:

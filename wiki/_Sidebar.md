@@ -1,15 +1,15 @@
 **Product Manager**
 
 - [Home](Home.md)
-- [Arquitetura](Architecture.md)
-- [Instalação e uso](Installation-and-Usage.md)
-- [Tutorial visual](Tutorial-Visual.md)
+- [Arquitetura](Architecture-Summary.md)
+- [Instalação e uso](Installation-and-Usage-Summary.md)
+- [Tutorial visual](Tutorial-Visual-Wiki.md)
 - [Referência da API](API-Reference.md)
-- [Modelo de dados](Data-Model.md)
+- [Modelo de dados](Data-Model-Summary.md)
 - [Configuração](Configuration.md)
 - [Segurança e privacidade](Security-and-Privacy.md)
 - [Desenvolvimento e testes](Development-and-Testing.md)
-- [Plataformas e implantação](Platforms-and-Deployment.md)
+- [Plataformas e implantação](Platforms-and-Deployment-Summary.md)
 - [Limitações e roadmap](Limitations-and-Roadmap.md)
 
 **Projeto**

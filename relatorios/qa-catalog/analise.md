@@ -8,7 +8,7 @@ A aplicação contém API Python, interface Web, SQLite, sessões, permissões p
 - Endpoints /healthz e /readyz adicionados.
 - Docker e Render configurados para usar readiness.
 - Testes de sucesso e falha de readiness adicionados.
-- Documentação de qualidade criada e organizada em relatórios/.
+- Documentação de qualidade criada e organizada em relatorios/qa-catalog/.
 - Site público: seção de avaliações sem depoimentos fictícios, com CTA para feedback no GitHub; contatos por e-mail e Instagram no site e no rodapé.
 
 ## Limitações desta implementação de feedback

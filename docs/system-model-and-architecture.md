@@ -7,7 +7,7 @@
 Este documento consolida a visão de contexto, componentes, domínios, persistência, fluxos, controles e limitações conhecidas. Descreve o estado observado no repositório; não significa que o sistema tenha sido certificado para operações críticas.
 
 Documentos complementares:
-- [Arquitetura existente](../doc/architecture.md)
+- [Arquitetura existente](../doc/architecture-implementation.md)
 - [Modelo de dados funcional](../doc/data-model.md)
 - [Plano de auditoria](audit/plan.md)
 - [Revisão estática inicial](audit/initial-static-review.md)

@@ -11,26 +11,26 @@ Reduzir divergência entre documentos sem perder histórico de QA, evidências d
 
 | Assunto | Fonte canônica proposta | Conteúdo relacionado | Ação segura |
 |---|---|---|---|
-| Visão do sistema e arquitetura | [Modelo do sistema e arquitetura](system-model-and-architecture.md) | `doc/architecture.md`, `wiki/Architecture.md` | Comparar detalhes únicos; migrar conteúdo relevante e transformar os demais em referências curtas. |
-| Modelo de dados | [Modelo de dados técnico](../doc/data-model.md) | `wiki/Data-Model.md` | Manter `doc/data-model.md` como referência detalhada de tabelas e invariantes; atualizar a Wiki para resumir e apontar para ele. |
+| Visão do sistema e arquitetura | [Modelo do sistema e arquitetura](system-model-and-architecture.md) | `doc/architecture-implementation.md`, `wiki/Architecture-Summary.md` | Comparar detalhes únicos; migrar conteúdo relevante e transformar os demais em referências curtas. |
+| Modelo de dados | [Modelo de dados técnico](../doc/data-model.md) | `wiki/Data-Model-Summary.md` | Manter `doc/data-model.md` como referência detalhada de tabelas e invariantes; atualizar a Wiki para resumir e apontar para ele. |
 | Requisitos funcionais | [Requisitos do sistema](../doc/requirements.md) | Roadmap e descrições de funcionalidades na Wiki | Usar o documento de requisitos como contrato descritivo; manter o roadmap como planejamento, não como cópia. |
-| Instalação e uso | [Instalação e primeiro acesso](installation-usage.md) | `wiki/Installation-and-Usage.md`, `wiki/Platforms-and-Deployment.md` | Unificar instruções operacionais; manter na Wiki apenas navegação/resumo se for útil. |
-| QA e evidências históricas | [Plano e resultados de QA](qa-plan-and-results.md) | `docs/test-results.md`, `docs/quality-report.md`, `relatorios/`, `relatórios/` | Não apagar relatórios por semelhança de título. Separar estado atual de snapshots datados e evidências de execução. |
+| Instalação e uso | [Instalação e primeiro acesso](installation-usage.md) | `wiki/Installation-and-Usage-Summary.md`, `wiki/Platforms-and-Deployment-Summary.md` | Unificar instruções operacionais; manter na Wiki apenas navegação/resumo se for útil. |
+| QA e evidências históricas | [Plano e resultados de QA](qa-plan-and-results.md) | `docs/test-results.md`, `docs/quality-report.md`, `relatorios/`, `relatorios/qa-catalog/` | Não apagar relatórios por semelhança de título. Separar estado atual de snapshots datados e evidências de execução. |
 | Auditoria | [Índice de auditoria](audit/README.md) | `docs/audit/*` | Preservar como conjunto próprio de achados, plano e evidências. |
 | Relatórios de QA recentes | [Relatórios da rodada de correções](../relatorios/README.md) | `relatorios/*.md` | Preservar os relatórios de execução, correções e segurança; evitar copiar seu conteúdo para o relatório geral. |
-| Casos e métricas de QA | [Relatórios de qualidade](../relatórios/README.md) | `relatórios/*.md` | Preservar como catálogo de casos e critérios de aceite. O nome com acento é legado válido, não prova duplicação. |
+| Casos e métricas de QA | [Catálogo de QA](../relatorios/qa-catalog/README.md) | `relatorios/qa-catalog/*.md` | Preservar casos, métricas e critérios de aceite; o catálogo fica separado dos relatórios de execução. |
 
 ## Duplicação provável versus conteúdo distinto
 
 ### Sobreposição alta — revisar primeiro
 
-- `doc/architecture.md`, `docs/system-model-and-architecture.md` e `wiki/Architecture.md` descrevem topologia e componentes. A visão consolidada deve ser a fonte narrativa principal; migrar apenas informações técnicas que ainda não estejam cobertas.
-- `doc/data-model.md` e `wiki/Data-Model.md` descrevem as mesmas entidades, mas a versão em `doc/` contém regras de domínio adicionais. Não substituir a versão detalhada por um resumo da Wiki.
+- `doc/architecture-implementation.md`, `docs/system-model-and-architecture.md` e `wiki/Architecture-Summary.md` descrevem topologia e componentes. A visão consolidada deve ser a fonte narrativa principal; migrar apenas informações técnicas que ainda não estejam cobertas.
+- `doc/data-model.md` e `wiki/Data-Model-Summary.md` descrevem as mesmas entidades, mas a versão em `doc/` contém regras de domínio adicionais. Não substituir a versão detalhada por um resumo da Wiki.
 
 ### Sobreposição parcial — preservar até comparar evidências
 
 - `docs/qa-plan-and-results.md`, `docs/quality-report.md` e `docs/test-results.md` têm escopos e datas de referência diferentes. Os resultados datados são snapshots históricos e não devem ser combinados como se tivessem sido executados no mesmo commit.
-- `relatorios/` contém relatórios de correções e validações da rodada recente; `relatórios/` contém casos, jornadas, exemplos, métricas, desempenho e análise de aceite. Os dois diretórios não são intercambiáveis.
+- `relatorios/` contém relatórios de correções e validações da rodada recente; `relatorios/qa-catalog/` contém casos, jornadas, exemplos, métricas, desempenho e análise de aceite. Os dois diretórios não são intercambiáveis.
 - Documentos da Wiki podem conter detalhes de configuração, privacidade, limitações e operação que não aparecem integralmente nos documentos locais. A Wiki precisa ser comparada antes de ser encurtada.
 
 ## Regras de consolidação

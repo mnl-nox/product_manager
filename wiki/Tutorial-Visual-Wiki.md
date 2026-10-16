@@ -64,4 +64,4 @@ A área administrativa reúne departamentos, colaboradores, ausências, document
 
 ## Encerrar sessão, exportar e limites
 
-Use **Sair** para invalidar a sessão. Proteja os arquivos exportados. Nesta versão não há fluxo rastreável de cancelamento/estorno de vendas ou compras. Para instalação, atualização e recuperação do banco, veja [Instalação e uso](Installation-and-Usage.md) e [Configuração](Configuration.md).
+Use **Sair** para invalidar a sessão. Proteja os arquivos exportados. Nesta versão não há fluxo rastreável de cancelamento/estorno de vendas ou compras. Para instalação, atualização e recuperação do banco, veja [Instalação e uso](Installation-and-Usage-Summary.md) e [Configuração](Configuration.md).
