@@ -22,6 +22,7 @@ A arquitetura e o modelo de dados também aparecem na Wiki. O inventário docume
 
 - [Plano e resultados de QA](qa-plan-and-results.md)
 - [Resultados históricos de validação](test-results.md)
+- [Relatório de resolução de issues e validação](issue-resolution-validation.md)
 - [Relatório de robustez e engenharia multiplataforma](quality-report.md)
 - [Plano de prontidão operacional](enterprise-readiness.md)
 - [Auditoria — índice](audit/README.md)
