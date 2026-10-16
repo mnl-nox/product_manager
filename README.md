@@ -81,6 +81,7 @@ Consulte o [índice da documentação](docs/README.md) para encontrar o document
 - [Modelo de dados](doc/data-model.md)
 - [Requisitos](doc/requirements.md)
 - [Tutorial visual](docs/tutorial-visual.md)
+- [Relatório de resolução de issues e validação](docs/issue-resolution-validation.md)
 - [Wiki do projeto](https://github.com/mnl-nox/product_manager/wiki)
 
 A documentação ainda está distribuída entre `doc/`, `docs/`, `wiki/` e diretórios de relatórios com nomes semelhantes. A consolidação desses materiais deve preservar histórico, referências externas e evidências de QA; não remova arquivos até verificar duplicação real e atualizar todos os links.
