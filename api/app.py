@@ -338,9 +338,27 @@ def validate_phone(phone: str) -> str:
 
 def validate_cpf(cpf: str) -> str:
     cleaned = re.sub(r'[^0-9]', '', cpf)
-    if len(cleaned) != 11:
+    if len(cleaned) != 11 or len(set(cleaned)) == 1:
         raise ValueError('CPF inválido.')
-    return cpf
+
+    digits = [int(char) for char in cleaned]
+    first_sum = sum(digit * weight for digit, weight in zip(digits[:9], range(10, 1, -1)))
+    first_remainder = first_sum % 11
+    first_digit = 0 if first_remainder < 2 else 11 - first_remainder
+
+    second_sum = sum(
+        digit * weight
+        for digit, weight in zip(digits[:9] + [first_digit], range(11, 1, -1))
+    )
+    second_remainder = second_sum % 11
+    second_digit = 0 if second_remainder < 2 else 11 - second_remainder
+
+    if digits[9:] != [first_digit, second_digit]:
+        raise ValueError('CPF inválido.')
+
+    # Store a canonical representation so the database UNIQUE constraint
+    # also rejects duplicate CPFs submitted with different punctuation.
+    return cleaned
 
 
 def validate_product_payload(payload: dict) -> tuple[str, str, str, str, str, str, float, int, str, str]:
