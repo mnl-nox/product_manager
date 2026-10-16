@@ -72,6 +72,26 @@ class ProductManagerApiTests(unittest.TestCase):
         }
         return payload | overrides
 
+    def test_validate_cpf_normalizes_formatted_and_unformatted_values(self):
+        self.assertEqual(app.validate_cpf('529.982.247-25'), '52998224725')
+        self.assertEqual(app.validate_cpf('52998224725'), '52998224725')
+
+    def test_validate_cpf_rejects_invalid_check_digits(self):
+        with self.assertRaisesRegex(ValueError, 'CPF inválido'):
+            app.validate_cpf('529.982.247-24')
+
+    def test_validate_cpf_rejects_repeated_digits(self):
+        for cpf in ('00000000000', '111.111.111-11', '99999999999'):
+            with self.subTest(cpf=cpf):
+                with self.assertRaisesRegex(ValueError, 'CPF inválido'):
+                    app.validate_cpf(cpf)
+
+    def test_validate_cpf_rejects_wrong_length_or_non_cpf_input(self):
+        for cpf in ('5299822472', '529982247250', 'abc.def.ghi-jk'):
+            with self.subTest(cpf=cpf):
+                with self.assertRaisesRegex(ValueError, 'CPF inválido'):
+                    app.validate_cpf(cpf)
+
     def test_health_reports_service_and_database(self):
         status, body = self.request_json('/api/health')
         self.assertEqual(status, 200)
